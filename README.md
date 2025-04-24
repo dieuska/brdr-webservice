@@ -7,7 +7,7 @@ docker build -f Dockerfile . -t grb_webservice
 ```
 ## start.sh
 ```
-docker run --rm -p 80:7999 --name grb_webservice grb_webservice
+docker run --rm -p 80:80 --name grb_webservice grb_webservice
 ```
 
 ### Webservice available
