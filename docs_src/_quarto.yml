@@ -14,6 +14,10 @@ website:
         href: example.qmd
       - text: plot
         href: plot.qmd
+      - text: plot2
+        href: plot2.qmd
+      - text: example brdr
+        href: example_brdr.qmd
 
 
 

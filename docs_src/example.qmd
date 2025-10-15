@@ -1,10 +1,10 @@
 
 ---
 title: "Voorbeeld: Python Code"
-format: html
+format:
+  html:
+    code-fold: true
 jupyter: python3
-execute:
-  enabled: true
 ---
 
 
@@ -13,6 +13,24 @@ execute:
 Hieronder zie je een Python-codeblok dat een lijst sorteert en afdrukt:
 
 ```{python}
+#| label: fig-plot
+#| fig-cap: "A line"
+
+import numpy as np
+import matplotlib.pyplot as plt
+
 data = [5, 2, 9, 1, 7]
 sorted_data = sorted(data)
 print("Gesorteerde data:", sorted_data)
+
+x = [1, 2, 3, 4, 5]
+y = [2, 4, 6, 8, 10]
+
+fig, ax = plt.subplots(figsize=(6, 4))
+ax.plot(x, y, marker='o')
+ax.set_title("Voorbeeldplot")
+ax.set_xlabel("X-as")
+ax.set_ylabel("Y-as")
+ax.grid(True)
+plt.show()
+```
