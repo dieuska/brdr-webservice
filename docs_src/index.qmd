@@ -1,8 +1,0 @@
----
-title: "Mijn Documentatie22"
-format: html
----
-
-## Welkom
-
-Dit is een voorbeeld van Quarto op GitHub Pages.
