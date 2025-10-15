@@ -18,7 +18,7 @@ jobs:
 
       - name: Install Python and Jupyter
         run: |
-          pip install notebook ipykernel
+          pip install notebook ipykernel matplotlib brdr
           python -m ipykernel install --user
 
       - name: Render Quarto site from subfolder

@@ -1,10 +1,10 @@
 
 ---
-title: "Voorbeeld: Python Plot"
-format: html
-execute:
-  enabled: true
-  engine: jupyter
+title: "matplotlib demo1"
+format:
+  html:
+    code-fold: true
+jupyter: python3
 ---
 
 
@@ -13,6 +13,10 @@ execute:
 Hieronder zie je een lijnplot van een dataset:
 
 ```{python}
+#| label: fig-plot
+#| fig-cap: "A line"
+
+import numpy as np
 import matplotlib.pyplot as plt
 
 x = [1, 2, 3, 4, 5]
@@ -25,3 +29,4 @@ ax.set_xlabel("X-as")
 ax.set_ylabel("Y-as")
 ax.grid(True)
 plt.show()
+```
