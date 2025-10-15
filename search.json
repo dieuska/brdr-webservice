@@ -1,17 +1,17 @@
 [
   {
-    "objectID": "brdr-webservice.html",
-    "href": "brdr-webservice.html",
-    "title": "brdr-webservice",
+    "objectID": "plot.html",
+    "href": "plot.html",
+    "title": "Voorbeeld: Python Plot",
     "section": "",
-    "text": "Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see https://quarto.org."
+    "text": "Hieronder zie je een lijnplot van een dataset:\nimport matplotlib.pyplot as plt\nx = [1, 2, 3, 4, 5] y = [2, 4, 6, 8, 10]\nfig, ax = plt.subplots(figsize=(6, 4)) ax.plot(x, y, marker=‘o’) ax.set_title(“Voorbeeldplot”) ax.set_xlabel(“X-as”) ax.set_ylabel(“Y-as”) ax.grid(True) plt.show()"
   },
   {
-    "objectID": "brdr-webservice.html#quarto",
-    "href": "brdr-webservice.html#quarto",
-    "title": "brdr-webservice",
+    "objectID": "plot.html#een-eenvoudige-plot-met-matplotlib",
+    "href": "plot.html#een-eenvoudige-plot-met-matplotlib",
+    "title": "Voorbeeld: Python Plot",
     "section": "",
-    "text": "Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see https://quarto.org."
+    "text": "Hieronder zie je een lijnplot van een dataset:\nimport matplotlib.pyplot as plt\nx = [1, 2, 3, 4, 5] y = [2, 4, 6, 8, 10]\nfig, ax = plt.subplots(figsize=(6, 4)) ax.plot(x, y, marker=‘o’) ax.set_title(“Voorbeeldplot”) ax.set_xlabel(“X-as”) ax.set_ylabel(“Y-as”) ax.grid(True) plt.show()"
   },
   {
     "objectID": "index.html",
@@ -26,5 +26,33 @@
     "title": "Mijn Documentatie33",
     "section": "",
     "text": "Dit is een voorbeeld van Quarto op GitHub Pages."
+  },
+  {
+    "objectID": "example.html",
+    "href": "example.html",
+    "title": "Voorbeeld: Python Code",
+    "section": "",
+    "text": "Hieronder zie je een Python-codeblok dat een lijst sorteert en afdrukt:\ndata = [5, 2, 9, 1, 7] sorted_data = sorted(data) print(“Gesorteerde data:”, sorted_data)"
+  },
+  {
+    "objectID": "example.html#een-eenvoudig-python-voorbeeld",
+    "href": "example.html#een-eenvoudig-python-voorbeeld",
+    "title": "Voorbeeld: Python Code",
+    "section": "",
+    "text": "Hieronder zie je een Python-codeblok dat een lijst sorteert en afdrukt:\ndata = [5, 2, 9, 1, 7] sorted_data = sorted(data) print(“Gesorteerde data:”, sorted_data)"
+  },
+  {
+    "objectID": "brdr-webservice.html",
+    "href": "brdr-webservice.html",
+    "title": "brdr-webservice",
+    "section": "",
+    "text": "Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see https://quarto.org."
+  },
+  {
+    "objectID": "brdr-webservice.html#quarto",
+    "href": "brdr-webservice.html#quarto",
+    "title": "brdr-webservice",
+    "section": "",
+    "text": "Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see https://quarto.org."
   }
 ]

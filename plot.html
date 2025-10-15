@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Mijn Documentatie33 – Mijn Project</title>
+<title>Voorbeeld: Python Plot – Mijn Project</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -92,7 +92,7 @@ ul.task-list li input[type="checkbox"] {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" aria-current="page"> 
+    <a class="nav-link" href="./index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
@@ -104,7 +104,7 @@ ul.task-list li input[type="checkbox"] {
 <span class="menu-text">voorbeeld</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./plot.html"> 
+    <a class="nav-link active" href="./plot.html" aria-current="page"> 
 <span class="menu-text">plot</span></a>
   </li>  
 </ul>
@@ -124,7 +124,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Mijn Documentatie33</h1>
+<h1 class="title">Voorbeeld: Python Plot</h1>
 </div>
 
 
@@ -141,9 +141,12 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="welkom" class="level2">
-<h2 class="anchored" data-anchor-id="welkom">Welkom</h2>
-<p>Dit is een voorbeeld van Quarto op GitHub Pages.</p>
+<section id="een-eenvoudige-plot-met-matplotlib" class="level2">
+<h2 class="anchored" data-anchor-id="een-eenvoudige-plot-met-matplotlib">Een eenvoudige plot met matplotlib</h2>
+<p>Hieronder zie je een lijnplot van een dataset:</p>
+<p>import matplotlib.pyplot as plt</p>
+<p>x = [1, 2, 3, 4, 5] y = [2, 4, 6, 8, 10]</p>
+<p>fig, ax = plt.subplots(figsize=(6, 4)) ax.plot(x, y, marker=‘o’) ax.set_title(“Voorbeeldplot”) ax.set_xlabel(“X-as”) ax.set_ylabel(“Y-as”) ax.grid(True) plt.show()</p>
 
 
 </section>
