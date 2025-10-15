@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Voorbeeld: Python Code – Mijn Project</title>
+<title>brdr demo – Mijn Project</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -135,7 +135,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">webservice</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="./example.html" aria-current="page"> 
+    <a class="nav-link" href="./example.html"> 
 <span class="menu-text">voorbeeld</span></a>
   </li>  
   <li class="nav-item">
@@ -147,7 +147,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">plot2</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./example_brdr.html"> 
+    <a class="nav-link active" href="./example_brdr.html" aria-current="page"> 
 <span class="menu-text">example brdr</span></a>
   </li>  
 </ul>
@@ -167,7 +167,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Voorbeeld: Python Code</h1>
+<h1 class="title">brdr demo</h1>
 </div>
 
 
@@ -184,49 +184,53 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="een-eenvoudig-python-voorbeeld" class="level2">
-<h2 class="anchored" data-anchor-id="een-eenvoudig-python-voorbeeld">Een eenvoudig Python-voorbeeld</h2>
-<p>Hieronder zie je een Python-codeblok dat een lijst sorteert en afdrukt:</p>
-<div id="cell-fig-plot" class="cell" data-execution_count="1">
+<p>For a demonstration of brdr.</p>
+<div id="brdr" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> [<span class="dv">5</span>, <span class="dv">2</span>, <span class="dv">9</span>, <span class="dv">1</span>, <span class="dv">7</span>]</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>sorted_data <span class="op">=</span> <span class="bu">sorted</span>(data)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Gesorteerde data:"</span>, sorted_data)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>]</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> [<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">10</span>]</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="dv">4</span>))</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>ax.plot(x, y, marker<span class="op">=</span><span class="st">'o'</span>)</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Voorbeeldplot"</span>)</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"X-as"</span>)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"Y-as"</span>)</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>ax.grid(<span class="va">True</span>)</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> brdr.aligner <span class="im">import</span> Aligner</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> brdr.enums <span class="im">import</span> OpenDomainStrategy</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> brdr.geometry_utils <span class="im">import</span> geom_from_wkt</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> brdr.loader <span class="im">import</span> DictLoader</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># CREATE AN ALIGNER</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>aligner <span class="op">=</span> Aligner(</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    crs<span class="op">=</span><span class="st">"EPSG:31370"</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ADD A THEMATIC POLYGON TO THEMATIC DICTIONARY and LOAD into Aligner</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>thematic_dict <span class="op">=</span> {<span class="st">"theme_id_1"</span>: geom_from_wkt(<span class="st">"POLYGON ((0 0, 0 9, 5 10, 10 0, 0 0))"</span>)}</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>loader <span class="op">=</span> DictLoader(thematic_dict)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>aligner.load_thematic_data(loader)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># ADD A REFERENCE POLYGON TO REFERENCE DICTIONARY and LOAD into Aligner</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>reference_dict <span class="op">=</span> {<span class="st">"ref_id_1"</span>: geom_from_wkt(<span class="st">"POLYGON ((0 1, 0 10,8 10,10 1,0 1))"</span>)}</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>loader <span class="op">=</span> DictLoader(reference_dict)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>aligner.load_reference_data(loader)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co"># EXECUTE THE ALIGNMENT</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>relevant_distance <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>process_result <span class="op">=</span> aligner.process(</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    relevant_distance<span class="op">=</span>relevant_distance,</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    od_strategy<span class="op">=</span>OpenDomainStrategy.SNAP_INNER_SIDE,</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    threshold_overlap_percentage<span class="op">=</span><span class="dv">50</span>,</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"># PRINT RESULTS IN WKT</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"result: "</span> <span class="op">+</span> process_result[<span class="st">"theme_id_1"</span>][relevant_distance][<span class="st">"result"</span>].wkt)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"added area: "</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    <span class="op">+</span> process_result[<span class="st">"theme_id_1"</span>][relevant_distance][<span class="st">"result_diff_plus"</span>].wkt</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"removed area: "</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="op">+</span> process_result[<span class="st">"theme_id_1"</span>][relevant_distance][<span class="st">"result_diff_min"</span>].wkt</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Gesorteerde data: [1, 2, 5, 7, 9]</code></pre>
-</div>
-<div class="cell-output cell-output-display">
-<div id="fig-plot" class="quarto-float quarto-figure quarto-figure-center anchored">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-plot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="example_files/figure-html/fig-plot-output-2.png" width="510" height="376" class="figure-img">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-plot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1: A line
-</figcaption>
-</figure>
-</div>
+<pre><code>result: POLYGON ((0.2928932188134523 0.2928932188134525, 0.1685303876974549 0.4444297669803975, 0.0761204674887134 0.6173165676349098, 0.0192147195967695 0.8049096779838716, 0 1, 0 10, 4.999999999999999 10, 9.500000000000004 1, 9.381966011250102 1, 9.36275129165333 0.8049096779838723, 9.305845543761384 0.6173165676348947, 9.213435623552671 0.4444297669804294, 9.089072792436635 0.2928932188134386, 8.937536244269706 0.1685303876974548, 8.76464944361519 0.0761204674887132, 8.577056333266233 0.0192147195967696, 8.3819660112501 -1.734723475976807e-18, 0.9999999999999997 -1.734723475976807e-18, 0.8049096779838718 0.0192147195967696, 0.6173165676349087 0.0761204674887139, 0.4444297669803966 0.1685303876974555, 0.2928932188134523 0.2928932188134525))
+added area: POLYGON ((0 10, 4.99850865709512 10, 4.9985376179666465 9.99970752359333, 0 9, 0 10))
+removed area: MULTIPOLYGON (((0.0761204674887134 0.6173165676349098, 0.1685303876974549 0.4444297669803975, 0.2928932188134523 0.2928932188134525, 0.4444297669803966 0.1685303876974556, 0.6173165676349087 0.0761204674887139, 0.8682521196030504 0, 1.734723475976807e-18 0, 1.734723475976807e-18 0.86825211960305, 0.0761204674887134 0.6173165676349098)), ((8.76464944361519 0.0761204674887132, 8.937536244269706 0.1685303876974548, 9.089072792436633 0.2928932188134385, 9.213435623552671 0.4444297669804296, 9.305845543761384 0.6173165676348947, 9.36275129165333 0.8049096779838723, 9.381966011250102 1, 9.5 1, 10 0, 8.513713891647056 0, 8.76464944361519 0.0761204674887132)))</code></pre>
 </div>
 </div>
 
 
-</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
