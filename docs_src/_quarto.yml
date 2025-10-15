@@ -2,6 +2,18 @@ project:
   title: "brdr-webservice"
   type: website
 
+website:
+  title: "Mijn Project"
+  navbar:
+    left:
+      - text: Home
+        href: index.qmd
+      - text: webservice
+        href: brdr-webservice.qmd
+      - text: voorbeeld
+        href: example.qmd
+
+
 
 
 
