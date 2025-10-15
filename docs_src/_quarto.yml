@@ -12,6 +12,8 @@ website:
         href: brdr-webservice.qmd
       - text: voorbeeld
         href: example.qmd
+      - text: plot
+        href: plot.qmd
 
 
 

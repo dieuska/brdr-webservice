@@ -1,0 +1,27 @@
+
+---
+title: "Voorbeeld: Python Plot"
+format: html
+execute:
+  enabled: true
+  engine: jupyter
+---
+
+
+## Een eenvoudige plot met matplotlib
+
+Hieronder zie je een lijnplot van een dataset:
+
+```{python}
+import matplotlib.pyplot as plt
+
+x = [1, 2, 3, 4, 5]
+y = [2, 4, 6, 8, 10]
+
+fig, ax = plt.subplots(figsize=(6, 4))
+ax.plot(x, y, marker='o')
+ax.set_title("Voorbeeldplot")
+ax.set_xlabel("X-as")
+ax.set_ylabel("Y-as")
+ax.grid(True)
+plt.show()

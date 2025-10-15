@@ -15,6 +15,12 @@ jobs:
       - name: Setup Quarto
         uses: quarto-dev/quarto-actions/setup@v2
 
+
+      - name: Install Python and Jupyter
+        run: |
+          pip install notebook ipykernel
+          python -m ipykernel install --user
+
       - name: Render Quarto site from subfolder
         run: quarto render docs_src
 
