@@ -7,17 +7,20 @@ on:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Setup Quarto
         uses: quarto-dev/quarto-actions/setup@v2
 
-      - name: Render site
-        run: quarto render quarto_docs
+      - name: Render Quarto site from subfolder
+        run: quarto render docs_src
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: quarto_docs/_site
+          publish_dir: docs_src/_site
+          publish_branch: gh-pages  # branch for documentation deployment for github pages
