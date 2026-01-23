@@ -60,8 +60,8 @@
   },
   "params": {
     "crs": "EPSG:31370",
-    "grb_type": "adp",
-    "prediction_strategy": "prefer_full"
+    "grb_type": "GRB - ADP - administratief perceel",
+    "full_reference_strategy": "prefer_full_reference"
   }
 }
 
