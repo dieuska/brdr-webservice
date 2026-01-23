@@ -18,6 +18,8 @@ website:
         href: plot2.qmd
       - text: example brdr
         href: example_brdr.qmd
+      - text: Notebook
+        href: notebook.ipynb
 
 
 
