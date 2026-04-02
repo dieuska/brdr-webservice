@@ -261,3 +261,5 @@ class ViewerStep(BaseModel):
 class ViewerResponse(BaseModel):
     series: Dict[str, ViewerStep]
     diffs: Dict[str, float]
+    predictions: Dict[str, bool]
+    prediction_scores: Dict[str, float]

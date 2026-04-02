@@ -1,8 +1,20 @@
-FROM python:3
-#ADD index.html index.html
+FROM node:20-bookworm-slim AS viewer-build
+
+WORKDIR /app/viewer
+COPY brdr-viewer/brdr-viewer/package.json brdr-viewer/brdr-viewer/package-lock.json ./
+RUN npm ci
+COPY brdr-viewer/brdr-viewer/ ./
+RUN npm run build
+
+FROM python:3.12-slim
+
+WORKDIR /app
 RUN python -m pip install --upgrade pip
 RUN python -m pip install fastapi uvicorn brdr==0.15.6 shapely pydantic geojson_pydantic
-ADD grb_webservice.py grb_webservice.py
-ADD grb_webservice_typings.py grb_webservice_typings.py
+
+COPY grb_webservice.py grb_webservice.py
+COPY grb_webservice_typings.py grb_webservice_typings.py
+COPY --from=viewer-build /app/viewer/dist ./frontend_dist
+
 EXPOSE 80
-ENTRYPOINT ["python3", "grb_webservice.py"]
+ENTRYPOINT ["python", "grb_webservice.py"]

@@ -57,7 +57,13 @@ docker build -f Dockerfile . -t grb_webservice
 docker run --rm -p 80:80 --name grb_webservice grb_webservice
 ```
 
-Then run the viewer as above.
+Make sure Docker Desktop / Docker Engine is running before executing these commands.
+
+This image bundles both backend and viewer:
+
+- API: `http://127.0.0.1:80`
+- Swagger: `http://127.0.0.1:80/docs`
+- Viewer: `http://127.0.0.1:80/viewer`
 
 ## Common Issues
 

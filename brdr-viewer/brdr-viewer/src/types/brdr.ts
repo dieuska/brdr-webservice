@@ -19,6 +19,8 @@ export interface BrdrStep {
 export interface BrdrResponse {
   series: Record<string, BrdrStep>;
   diffs: Record<string, number>;
+  predictions: Record<string, boolean>;
+  prediction_scores: Record<string, number>;
 }
 
 export interface BrdrFeature {

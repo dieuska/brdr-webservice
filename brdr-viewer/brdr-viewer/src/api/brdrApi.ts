@@ -1,7 +1,9 @@
 import requestBody from "../data/request_body.json";
 import type { BrdrRequestBody, BrdrResponse } from "../types/brdr";
 
-const API_BASE_URL = import.meta.env.VITE_BRDR_API_BASE_URL ?? "http://127.0.0.1:80";
+const API_BASE_URL =
+  import.meta.env.VITE_BRDR_API_BASE_URL ??
+  (window.location.port === "5173" ? "http://127.0.0.1:80" : window.location.origin);
 
 export function getDefaultRequestBody(): BrdrRequestBody {
   return requestBody as BrdrRequestBody;

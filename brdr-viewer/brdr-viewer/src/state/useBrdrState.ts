@@ -22,6 +22,8 @@ export function useBrdrState() {
   const [response, setResponse] = useState<BrdrResponse | null>(null);
   const [steps, setSteps] = useState<string[]>([]);
   const [values, setValues] = useState<number[]>([]);
+  const [predictionScoreByStep, setPredictionScoreByStep] = useState<Record<string, number>>({});
+  const [predictionByStep, setPredictionByStep] = useState<Record<string, boolean>>({});
   const [stepIndex, setStepIndex] = useState(0);
   const [stepKey, setStepKey] = useState<string>("");
   const [currentStep, setCurrentStep] = useState<BrdrStep | null>(null);
@@ -41,9 +43,22 @@ export function useBrdrState() {
     setResponse(nextResponse);
     setSteps(orderedSteps);
     setValues(orderedSteps.map((k) => nextResponse.diffs[k] ?? 0));
-    setStepIndex(0);
-    setStepKey(orderedSteps[0]);
-    setCurrentStep(nextResponse.series[orderedSteps[0]]);
+    setPredictionByStep(nextResponse.predictions ?? {});
+    setPredictionScoreByStep(nextResponse.prediction_scores ?? {});
+
+    let bestIndex = 0;
+    let bestScore = -Infinity;
+    orderedSteps.forEach((step, index) => {
+      const score = nextResponse.prediction_scores?.[step] ?? 0;
+      if (score > bestScore) {
+        bestScore = score;
+        bestIndex = index;
+      }
+    });
+
+    setStepIndex(bestIndex);
+    setStepKey(orderedSteps[bestIndex]);
+    setCurrentStep(nextResponse.series[orderedSteps[bestIndex]]);
   }
 
   async function runCalculation(nextRequestBody: BrdrRequestBody) {
@@ -82,6 +97,24 @@ export function useBrdrState() {
     });
   }
 
+  function updateRequestParam(
+    key: "crs" | "grb_type" | "full_reference_strategy",
+    value: string
+  ) {
+    setRequestBody((prev) => {
+      const next = structuredClone(prev);
+      if (!next.params) {
+        next.params = {
+          crs: "EPSG:31370",
+          grb_type: "GRB - ADP - administratief perceel",
+          full_reference_strategy: "prefer_full_reference",
+        };
+      }
+      next.params[key] = value;
+      return next;
+    });
+  }
+
   async function calculateForCurrentGeometry() {
     await runCalculation(requestBody);
   }
@@ -101,8 +134,13 @@ export function useBrdrState() {
     currentStep,
     stepKey,
     stepIndex,
+    predictionByStep,
+    currentStepPredictionScore: predictionScoreByStep[stepKey] ?? 0,
+    currentStepIsPrediction: predictionByStep[stepKey] ?? false,
     loading,
     error,
+    requestParams: requestBody.params,
+    updateRequestParam,
     inputGeometry: requestBody.featurecollection.features[0]?.geometry ?? null,
     updateInputGeometry,
     calculateForCurrentGeometry,

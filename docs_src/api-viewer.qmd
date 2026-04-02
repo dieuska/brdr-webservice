@@ -9,6 +9,11 @@ format: html
 
 Returns the detailed BRDR output as GeoJSON feature collections.
 
+Query parameter:
+
+- `result_mode=predictions` (default): evaluated predictions output
+- `result_mode=all`: full process steps output
+
 Request body (shape):
 
 ```json
@@ -29,7 +34,7 @@ Request body (shape):
   },
   "params": {
     "crs": "EPSG:31370",
-    "grb_type": "Administratieve percelen",
+    "grb_type": "GRB - ADP - administratief perceel",
     "full_reference_strategy": "prefer_full_reference"
   }
 }
@@ -50,6 +55,12 @@ Returns a viewer-oriented structure:
   },
   "diffs": {
     "0.0": 0.0
+  },
+  "predictions": {
+    "0.0": false
+  },
+  "prediction_scores": {
+    "0.0": 0.0
   }
 }
 ```
@@ -57,6 +68,7 @@ Returns a viewer-oriented structure:
 Optional query parameter:
 
 - `feature_id` when request contains multiple features
+- `result_mode=all` (default) or `result_mode=predictions`
 
 ## Status Codes
 
@@ -72,6 +84,7 @@ The viewer:
 1. keeps an input geometry in local state
 2. sends that geometry to `/actualiser/viewer`
 3. updates timeline and map layers from returned `series` and `diffs`
+4. highlights prediction steps and can jump to previous/next prediction quickly
 
 Main frontend files:
 
