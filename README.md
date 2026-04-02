@@ -2,10 +2,8 @@
 Webservice to align thematic features to GRB reference features, based on [brdr](https://github.com/OnroerendErfgoed/brdr).
 
 ## Documentation
-- GitHub Pages: https://kareldieussaert.github.io/brdr-webservice/
-- Docs are built and deployed automatically on every push to `main` via:
-  - `.github/workflows/publish.yml`
-- If you fork this repository, replace the URL with your own `https://<owner>.github.io/brdr-webservice/`.
+- GitHub Pages: https://dieuska.github.io/brdr-webservice/
+
 
 ## Quick Start (Docker)
 ```bash
