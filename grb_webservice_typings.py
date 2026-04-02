@@ -1,9 +1,10 @@
 from typing import Optional, Dict, Any, Union
 
+from brdr.be.grb.enums import GRBType
+from brdr.enums import FullReferenceStrategy
 from geojson_pydantic import Feature, FeatureCollection, MultiPolygon, Polygon
 from pydantic import BaseModel, model_validator
 
-from brdr.enums import GRBType, FullStrategy
 
 
 class ReferenceSource(BaseModel):
@@ -113,15 +114,15 @@ class RequestProperties(BaseModel):
 class RequestParams(BaseModel):
     crs: Optional[str] = "EPSG:31370"
     grb_type: Optional[GRBType] = GRBType.ADP
-    prediction_strategy: Optional[FullStrategy] = FullStrategy.PREFER_FULL
+    full_reference_strategy: Optional[FullReferenceStrategy] = FullReferenceStrategy.PREFER_FULL_REFERENCE
 
     model_config = {
         "json_schema_extra": {
             "examples": [
                 {
                     "crs": "EPSG:31370",
-                    "grb_type": "adp",
-                    "prediction_strategy": "prefer_full",
+                    "grb_type": "GRB - ADP - administratief perceel",
+                    "full_reference_strategy": "prefer_full_reference",
                 }
             ]
         }
@@ -186,8 +187,8 @@ class RequestBody(BaseModel):
                     },
                     "params": {
                         "crs": "EPSG:31370",
-                        "grb_type": "adp",
-                        "prediction_strategy": "prefer_full",
+                        "grb_type": "GRB - ADP - administratief perceel",
+                        "full_reference_strategy": "prefer_full_reference",
                     },
                 }
             ]
@@ -196,7 +197,7 @@ class RequestBody(BaseModel):
 
 
 class ResponseProperties(BaseModel):
-    brdr_formula: str
+    brdr_metadata: str
     brdr_evaluation: str
     brdr_full_base: Optional[bool]
     brdr_full_actual: bool
@@ -209,7 +210,7 @@ class ResponseProperties(BaseModel):
     brdr_id: Optional[Any]
     brdr_nr_calculations: int
     brdr_relevant_distance: float
-    brdr_remark: str
+    brdr_remark: Optional[list]
     brdr_area: float
     brdr_perimeter: float
     brdr_shape_index: float

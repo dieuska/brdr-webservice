@@ -1,11 +1,15 @@
 import numpy as np
 import uvicorn
+from brdr.be.grb.enums import GRBType
+from brdr.be.grb.loader import GRBActualLoader
+from brdr.configs import ProcessorConfig, AlignerConfig
+from brdr.enums import OpenDomainStrategy, FullReferenceStrategy, AlignerResultType
+from brdr.processor import AlignerGeometryProcessor
 from fastapi import FastAPI, HTTPException
 from shapely.geometry import shape
 
 from brdr.aligner import Aligner
-from brdr.enums import GRBType, AlignerResultType, OpenDomainStrategy, FullStrategy
-from brdr.grb import GRBActualLoader
+
 from brdr.loader import DictLoader
 from grb_webservice_typings import ResponseBody, RequestBody
 
@@ -21,9 +25,10 @@ def actualiser(request_body: RequestBody):
     Returns GRB-actualised predictions (+ score) for a set of features
 
     - **featurecollection**: a geojson featurecollection with the features to align
-    - **params**: optional: CRS, prediction_strategy
+    - **params**: optional: CRS, full_reference_strategy
     """
     try:
+        #TODO - read params from request_body.params
         # DEFAULT
         relevant_distances = [
             round(k, 2) for k in np.arange(0, 310, 10, dtype=int) / 100
@@ -33,18 +38,26 @@ def actualiser(request_body: RequestBody):
         od_strategy = OpenDomainStrategy.SNAP_ALL_SIDE
         area_limit = 100000
         grb_type = GRBType.ADP
-        full_strategy = FullStrategy.PREFER_FULL
+        full_strategy = FullReferenceStrategy.PREFER_FULL_REFERENCE
         # get geometry
         data_dict = {}
         for f in request_body.featurecollection.features:
             data_dict[f.id] = shape(f.geometry.model_dump())
+        processor_config = ProcessorConfig()
+        processor_config.od_strategy=od_strategy
+        processor_config.threshold_overlap_percentage=threshold_overlap_percentage
+        processor_config.area_limit=area_limit
+
+
+        processor = AlignerGeometryProcessor(config=processor_config)
+
+        aligner_config = AlignerConfig()
 
         # start a new aligner
         aligner = Aligner(
             crs=crs,
-            threshold_overlap_percentage=threshold_overlap_percentage,
-            od_strategy=od_strategy,
-            area_limit=area_limit,
+            processor=processor,
+            config=aligner_config,
         )
         # load geometry into thematic dictionary
         aligner.load_thematic_data(DictLoader(data_dict=data_dict))
@@ -54,15 +67,16 @@ def actualiser(request_body: RequestBody):
         )
 
         # EXECUTE EVALUATION
-        aligner.evaluate(
-            relevant_distances=relevant_distances, full_strategy=full_strategy
+        aligner_result=aligner.evaluate(
+            relevant_distances=relevant_distances,
+            full_reference_strategy=full_strategy
         )
 
         # GET RESULTS
-        fc = aligner.get_results_as_geojson(
-            resulttype=AlignerResultType.EVALUATED_PREDICTIONS,
-            formula=True,
-            attributes=False,
+        fc = aligner_result.get_results_as_geojson(
+            result_type=AlignerResultType.EVALUATED_PREDICTIONS,
+            aligner=aligner,
+            add_metadata=True,
         )
         # return the featureclasses with the evaluated predictions
         return fc
