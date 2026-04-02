@@ -2,7 +2,8 @@ import numpy as np
 import uvicorn
 import logging
 import requests
-from typing import Any, Optional
+import os
+from typing import Any, Optional, Literal
 from brdr.be.grb.enums import GRBType
 from brdr.be.grb.loader import GRBActualLoader
 from brdr.configs import ProcessorConfig, AlignerConfig
@@ -10,6 +11,7 @@ from brdr.enums import OpenDomainStrategy, FullReferenceStrategy, AlignerResultT
 from brdr.processor import AlignerGeometryProcessor
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from shapely.geometry import shape
 
 from brdr.aligner import Aligner
@@ -32,6 +34,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+frontend_dist_dir = os.path.join(os.path.dirname(__file__), "frontend_dist")
+local_viewer_dist_dir = os.path.join(
+    os.path.dirname(__file__), "brdr-viewer", "brdr-viewer", "dist"
+)
+
+viewer_static_dir = None
+for candidate in (frontend_dist_dir, local_viewer_dist_dir):
+    if os.path.isdir(candidate):
+        viewer_static_dir = candidate
+        break
+
+if viewer_static_dir:
+    app.mount("/viewer", StaticFiles(directory=viewer_static_dir, html=True), name="viewer")
+    legacy_assets_dir = os.path.join(viewer_static_dir, "assets")
+    if os.path.isdir(legacy_assets_dir):
+        app.mount("/assets", StaticFiles(directory=legacy_assets_dir), name="viewer-assets")
 
 
 def _format_distance_key(value: Any) -> str:
@@ -60,6 +79,8 @@ def _extract_distance_data(
         distance_data[key] = {
             "geometry": feature.get("geometry"),
             "diff_area": properties.get("brdr_diff_area"),
+            "evaluation": properties.get("brdr_evaluation"),
+            "prediction_score": properties.get("brdr_prediction_score"),
         }
 
     return distance_data
@@ -91,6 +112,17 @@ def _safe_geometry_area(geometry: Optional[dict[str, Any]]) -> float:
         return float(shape(geometry).area)
     except Exception:
         return 0.0
+
+
+def _is_prediction_step(evaluation: Any, prediction_score: Any) -> bool:
+    if isinstance(evaluation, str) and "prediction" in evaluation.lower():
+        return True
+    if prediction_score is not None:
+        try:
+            return float(prediction_score) > 0
+        except (TypeError, ValueError):
+            return False
+    return False
 
 
 def build_viewer_response(
@@ -139,6 +171,8 @@ def build_viewer_response(
     ordered_distances = sorted(result_by_distance.keys(), key=float)
     series = {}
     diffs = {}
+    predictions = {}
+    prediction_scores = {}
 
     for distance_key in ordered_distances:
         result_geometry = result_by_distance[distance_key]["geometry"]
@@ -170,11 +204,26 @@ def build_viewer_response(
                 _safe_geometry_area(diff_min_geometry)
                 + _safe_geometry_area(diff_plus_geometry)
             )
+        predictions[distance_key] = _is_prediction_step(
+            result_by_distance[distance_key].get("evaluation"),
+            result_by_distance[distance_key].get("prediction_score"),
+        )
+        try:
+            prediction_scores[distance_key] = float(
+                result_by_distance[distance_key].get("prediction_score") or 0.0
+            )
+        except (TypeError, ValueError):
+            prediction_scores[distance_key] = 0.0
 
     if not series:
         raise ValueError(f"No geometries found for feature_id '{selected_feature_id}'")
 
-    return {"series": series, "diffs": diffs}
+    return {
+        "series": series,
+        "diffs": diffs,
+        "predictions": predictions,
+        "prediction_scores": prediction_scores,
+    }
 
 
 def calculate_alignment_geojson(
@@ -184,7 +233,7 @@ def calculate_alignment_geojson(
     params = request_body.params
 
     relevant_distances = [
-        round(k, 2) for k in np.arange(0, 310, 10, dtype=int) / 100
+        round(k, 2) for k in np.arange(0, 610, 10, dtype=int) / 100
     ]
     crs = params.crs if params and params.crs else "EPSG:31370"
     threshold_overlap_percentage = 50
@@ -231,8 +280,22 @@ def calculate_alignment_geojson(
     )
 
 
-@app.post("/actualiser", response_model=ResponseBody)
-def actualiser(request_body: RequestBody):
+def _result_type_from_mode(
+    result_mode: Literal["all", "predictions"],
+) -> AlignerResultType:
+    if result_mode == "all":
+        return AlignerResultType.PROCESSRESULTS
+    return AlignerResultType.EVALUATED_PREDICTIONS
+
+
+@app.post("/actualiser")
+def actualiser(
+    request_body: RequestBody,
+    result_mode: Literal["all", "predictions"] = Query(
+        default="predictions",
+        description="all = full process steps, predictions = evaluated prediction output",
+    ),
+):
     """
     Returns GRB-actualised predictions (+ score) for a set of features
 
@@ -242,7 +305,7 @@ def actualiser(request_body: RequestBody):
     try:
         return calculate_alignment_geojson(
             request_body,
-            result_type=AlignerResultType.EVALUATED_PREDICTIONS,
+            result_type=_result_type_from_mode(result_mode),
         )
     except HTTPException:
         raise
@@ -263,11 +326,15 @@ def actualiser_viewer(
         default=None,
         description="Optional feature id when request contains multiple features",
     ),
+    result_mode: Literal["all", "predictions"] = Query(
+        default="all",
+        description="all = full process steps, predictions = evaluated prediction output",
+    ),
 ):
     try:
         process_results = calculate_alignment_geojson(
             request_body,
-            result_type=AlignerResultType.PROCESSRESULTS,
+            result_type=_result_type_from_mode(result_mode),
         )
         return build_viewer_response(process_results, feature_id=feature_id)
     except HTTPException:
@@ -280,8 +347,20 @@ def actualiser_viewer(
 def home():
     return (
         "Welcome to GRB-actualiser webservice!.You can actualise on '/actualiser'."
-        "Docs can be found at '/docs'"
+        "Docs can be found at '/docs'. Viewer (if bundled) is available at '/viewer'."
     )
+
+
+if not viewer_static_dir:
+    @app.get("/viewer")
+    def viewer_unavailable():
+        return {
+            "detail": (
+                "Viewer assets not found. Run the frontend dev server on "
+                "http://127.0.0.1:5173 or build the viewer (`npm run build` in "
+                "`brdr-viewer/brdr-viewer`) or use the Docker image that bundles the viewer."
+            )
+        }
 
 
 def start_server():

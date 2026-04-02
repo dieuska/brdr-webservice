@@ -7,6 +7,7 @@ from pydantic import ValidationError
 from grb_webservice import app, build_viewer_response
 from grb_webservice_typings import RequestBody
 from brdr.be.grb.enums import GRBType
+from brdr.enums import AlignerResultType
 
 
 def make_feature(feature_id):
@@ -164,6 +165,7 @@ class ApiTests(unittest.TestCase):
         parsed = response.json()
         self.assertIn("series", parsed)
         self.assertIn("diffs", parsed)
+        self.assertIn("predictions", parsed)
         self.assertEqual(parsed["diffs"]["0.1"], 12.5)
 
     def test_build_viewer_response_uses_geometry_area_when_diff_missing(self):
@@ -173,6 +175,33 @@ class ApiTests(unittest.TestCase):
         viewer = build_viewer_response(payload, feature_id="feat-1")
         self.assertGreater(viewer["diffs"]["0.0"], 0.0)
         self.assertGreater(viewer["diffs"]["0.1"], 0.0)
+
+    def test_actualiser_result_mode_all_uses_processresults(self):
+        payload = make_actualiser_result()
+        request_body = make_request_body([make_feature("feat-1")])
+        with patch("grb_webservice.calculate_alignment_geojson", return_value=payload) as mocked:
+            response = self.client.post("/actualiser?result_mode=all", json=request_body)
+        self.assertEqual(response.status_code, 200)
+        mocked.assert_called_once()
+        self.assertEqual(
+            mocked.call_args.kwargs["result_type"],
+            AlignerResultType.PROCESSRESULTS,
+        )
+
+    def test_actualiser_viewer_result_mode_predictions(self):
+        payload = make_actualiser_result()
+        request_body = make_request_body([make_feature("feat-1")])
+        with patch("grb_webservice.calculate_alignment_geojson", return_value=payload) as mocked:
+            response = self.client.post(
+                "/actualiser/viewer?result_mode=predictions",
+                json=request_body,
+            )
+        self.assertEqual(response.status_code, 200)
+        mocked.assert_called_once()
+        self.assertEqual(
+            mocked.call_args.kwargs["result_type"],
+            AlignerResultType.EVALUATED_PREDICTIONS,
+        )
 
 
 if __name__ == "__main__":

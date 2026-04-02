@@ -1,0 +1,11 @@
+.git
+.github
+.idea
+venv
+__pycache__
+*.pyc
+docs_src/.quarto
+docs_src/_site
+brdr-viewer/brdr-viewer/node_modules
+brdr-viewer/brdr-viewer/dist
+brdr-viewer/brdr-viewer/.vite

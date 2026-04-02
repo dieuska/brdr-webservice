@@ -10,6 +10,7 @@ import "./BrdrChart.css";
 interface Props {
   values: number[];
   activeIndex: number;
+  predictionFlags: boolean[];
 }
 
 const VIEWBOX_WIDTH = 150;
@@ -19,6 +20,7 @@ const PADDING = 3;
 export function BrdrChart({
   values,
   activeIndex,
+  predictionFlags,
 }: Props) {
   const max = getMaxAbs(values);
 
@@ -70,7 +72,13 @@ export function BrdrChart({
           cy={getY(v)}
           r={i === activeIndex ? 2 : 1}
           fill={
-            i === activeIndex ? "#ff0000" : "#000000"
+            i === activeIndex
+              ? predictionFlags[i]
+                ? "#d97706"
+                : "#ff0000"
+              : predictionFlags[i]
+                ? "#f59e0b"
+                : "#000000"
           }
         />
       ))}

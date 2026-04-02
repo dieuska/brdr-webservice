@@ -22,3 +22,51 @@
   font-size: 13px;
   color: #6b7280;
 }
+
+.prediction-score-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #111827;
+}
+
+.prediction-badge {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #92400e;
+  background: #fde68a;
+  border: 1px solid #f59e0b;
+  border-radius: 999px;
+  padding: 2px 6px;
+}
+
+.prediction-steps {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: #374151;
+}
+
+.prediction-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.prediction-nav button {
+  flex: 1;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.prediction-nav button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
