@@ -67,14 +67,14 @@
     "href": "api-viewer.html#post-actualiser",
     "title": "API and Viewer",
     "section": "POST /actualiser",
-    "text": "POST /actualiser\nReturns the detailed BRDR output as GeoJSON feature collections.\nRequest body (shape):\n{\n  \"featurecollection\": {\n    \"type\": \"FeatureCollection\",\n    \"features\": [\n      {\n        \"type\": \"Feature\",\n        \"id\": \"2\",\n        \"properties\": {},\n        \"geometry\": {\n          \"type\": \"Polygon\",\n          \"coordinates\": [[[0,0],[1,0],[1,1],[0,1],[0,0]]]\n        }\n      }\n    ]\n  },\n  \"params\": {\n    \"crs\": \"EPSG:31370\",\n    \"grb_type\": \"Administratieve percelen\",\n    \"full_reference_strategy\": \"prefer_full_reference\"\n  }\n}"
+    "text": "POST /actualiser\nReturns the detailed BRDR output as GeoJSON feature collections.\nQuery parameter:\n\nresult_mode=predictions (default): evaluated predictions output\nresult_mode=all: full process steps output\n\nRequest body (shape):\n{\n  \"featurecollection\": {\n    \"type\": \"FeatureCollection\",\n    \"features\": [\n      {\n        \"type\": \"Feature\",\n        \"id\": \"2\",\n        \"properties\": {},\n        \"geometry\": {\n          \"type\": \"Polygon\",\n          \"coordinates\": [[[0,0],[1,0],[1,1],[0,1],[0,0]]]\n        }\n      }\n    ]\n  },\n  \"params\": {\n    \"crs\": \"EPSG:31370\",\n    \"grb_type\": \"GRB - ADP - administratief perceel\",\n    \"full_reference_strategy\": \"prefer_full_reference\"\n  }\n}"
   },
   {
     "objectID": "api-viewer.html#post-actualiserviewer",
     "href": "api-viewer.html#post-actualiserviewer",
     "title": "API and Viewer",
     "section": "POST /actualiser/viewer",
-    "text": "POST /actualiser/viewer\nReturns a viewer-oriented structure:\n{\n  \"series\": {\n    \"0.0\": {\n      \"result\": { \"type\": \"Polygon\", \"coordinates\": [] },\n      \"result_diff_min\": { \"type\": \"Polygon\", \"coordinates\": [] },\n      \"result_diff_plus\": { \"type\": \"Polygon\", \"coordinates\": [] }\n    }\n  },\n  \"diffs\": {\n    \"0.0\": 0.0\n  }\n}\nOptional query parameter:\n\nfeature_id when request contains multiple features"
+    "text": "POST /actualiser/viewer\nReturns a viewer-oriented structure:\n{\n  \"series\": {\n    \"0.0\": {\n      \"result\": { \"type\": \"Polygon\", \"coordinates\": [] },\n      \"result_diff_min\": { \"type\": \"Polygon\", \"coordinates\": [] },\n      \"result_diff_plus\": { \"type\": \"Polygon\", \"coordinates\": [] }\n    }\n  },\n  \"diffs\": {\n    \"0.0\": 0.0\n  },\n  \"predictions\": {\n    \"0.0\": false\n  },\n  \"prediction_scores\": {\n    \"0.0\": 0.0\n  }\n}\nOptional query parameter:\n\nfeature_id when request contains multiple features\nresult_mode=all (default) or result_mode=predictions"
   },
   {
     "objectID": "api-viewer.html#status-codes",
@@ -88,7 +88,7 @@
     "href": "api-viewer.html#viewer-integration",
     "title": "API and Viewer",
     "section": "Viewer Integration",
-    "text": "Viewer Integration\nThe viewer:\n\nkeeps an input geometry in local state\nsends that geometry to /actualiser/viewer\nupdates timeline and map layers from returned series and diffs\n\nMain frontend files:\n\nsrc/api/brdrApi.ts\nsrc/state/useBrdrState.ts\nsrc/components/map/MapView.tsx"
+    "text": "Viewer Integration\nThe viewer:\n\nkeeps an input geometry in local state\nsends that geometry to /actualiser/viewer\nupdates timeline and map layers from returned series and diffs\nhighlights prediction steps and can jump to previous/next prediction quickly\n\nMain frontend files:\n\nsrc/api/brdrApi.ts\nsrc/state/useBrdrState.ts\nsrc/components/map/MapView.tsx"
   },
   {
     "objectID": "api-viewer.html#testing-the-api-with-curl",
@@ -130,7 +130,7 @@
     "href": "run-locally.html#docker-backend-option",
     "title": "Run Locally",
     "section": "Docker Backend Option",
-    "text": "Docker Backend Option\nFrom repository root:\ndocker build -f Dockerfile . -t grb_webservice\ndocker run --rm -p 80:80 --name grb_webservice grb_webservice\nThen run the viewer as above."
+    "text": "Docker Backend Option\nFrom repository root:\ndocker build -f Dockerfile . -t grb_webservice\ndocker run --rm -p 80:80 --name grb_webservice grb_webservice\nMake sure Docker Desktop / Docker Engine is running before executing these commands.\nThis image bundles both backend and viewer:\n\nAPI: http://127.0.0.1:80\nSwagger: http://127.0.0.1:80/docs\nViewer: http://127.0.0.1:80/viewer"
   },
   {
     "objectID": "run-locally.html#common-issues",

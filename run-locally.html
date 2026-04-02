@@ -217,7 +217,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>From repository root:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> build <span class="at">-f</span> Dockerfile . <span class="at">-t</span> grb_webservice</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="at">-p</span> 80:80 <span class="at">--name</span> grb_webservice grb_webservice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Then run the viewer as above.</p>
+<p>Make sure Docker Desktop / Docker Engine is running before executing these commands.</p>
+<p>This image bundles both backend and viewer:</p>
+<ul>
+<li>API: <code>http://127.0.0.1:80</code></li>
+<li>Swagger: <code>http://127.0.0.1:80/docs</code></li>
+<li>Viewer: <code>http://127.0.0.1:80/viewer</code></li>
+</ul>
 </section>
 <section id="common-issues" class="level2">
 <h2 class="anchored" data-anchor-id="common-issues">Common Issues</h2>

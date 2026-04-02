@@ -182,6 +182,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="post-actualiser" class="level2">
 <h2 class="anchored" data-anchor-id="post-actualiser"><code>POST /actualiser</code></h2>
 <p>Returns the detailed BRDR output as GeoJSON feature collections.</p>
+<p>Query parameter:</p>
+<ul>
+<li><code>result_mode=predictions</code> (default): evaluated predictions output</li>
+<li><code>result_mode=all</code>: full process steps output</li>
+</ul>
 <p>Request body (shape):</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"featurecollection"</span><span class="fu">:</span> <span class="fu">{</span></span>
@@ -200,7 +205,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"params"</span><span class="fu">:</span> <span class="fu">{</span></span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"crs"</span><span class="fu">:</span> <span class="st">"EPSG:31370"</span><span class="fu">,</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"grb_type"</span><span class="fu">:</span> <span class="st">"Administratieve percelen"</span><span class="fu">,</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"grb_type"</span><span class="fu">:</span> <span class="st">"GRB - ADP - administratief perceel"</span><span class="fu">,</span></span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"full_reference_strategy"</span><span class="fu">:</span> <span class="st">"prefer_full_reference"</span></span>
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -218,11 +223,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"diffs"</span><span class="fu">:</span> <span class="fu">{</span></span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"0.0"</span><span class="fu">:</span> <span class="fl">0.0</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"predictions"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"0.0"</span><span class="fu">:</span> <span class="kw">false</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"prediction_scores"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"0.0"</span><span class="fu">:</span> <span class="fl">0.0</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Optional query parameter:</p>
 <ul>
 <li><code>feature_id</code> when request contains multiple features</li>
+<li><code>result_mode=all</code> (default) or <code>result_mode=predictions</code></li>
 </ul>
 </section>
 <section id="status-codes" class="level2">
@@ -241,6 +253,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>keeps an input geometry in local state</li>
 <li>sends that geometry to <code>/actualiser/viewer</code></li>
 <li>updates timeline and map layers from returned <code>series</code> and <code>diffs</code></li>
+<li>highlights prediction steps and can jump to previous/next prediction quickly</li>
 </ol>
 <p>Main frontend files:</p>
 <ul>
