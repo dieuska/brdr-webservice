@@ -1,9 +1,9 @@
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Dict, Any, Union, Self
 
 from brdr.be.grb.enums import GRBType
 from brdr.enums import FullReferenceStrategy
 from geojson_pydantic import Feature, FeatureCollection, MultiPolygon, Polygon
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, model_validator, field_validator
 
 
 
@@ -116,12 +116,32 @@ class RequestParams(BaseModel):
     grb_type: Optional[GRBType] = GRBType.ADP
     full_reference_strategy: Optional[FullReferenceStrategy] = FullReferenceStrategy.PREFER_FULL_REFERENCE
 
+    @field_validator("grb_type", mode="before")
+    @classmethod
+    def normalize_grb_type(cls, value):
+        if value is None or isinstance(value, GRBType):
+            return value
+        if isinstance(value, str):
+            stripped = value.strip()
+            if stripped in GRBType.__members__:
+                return GRBType[stripped]
+
+            lowered = stripped.lower()
+            legacy_to_enum = {
+                "grb - adp - administratief perceel": GRBType.ADP,
+                "grb - gbg - gebouwen": GRBType.GBG,
+                "grb - knw - kunstwerken": GRBType.KNW,
+            }
+            if lowered in legacy_to_enum:
+                return legacy_to_enum[lowered]
+        return value
+
     model_config = {
         "json_schema_extra": {
             "examples": [
                 {
                     "crs": "EPSG:31370",
-                    "grb_type": "GRB - ADP - administratief perceel",
+                    "grb_type": "Administratieve percelen",
                     "full_reference_strategy": "prefer_full_reference",
                 }
             ]
@@ -137,14 +157,14 @@ class RequestBody(BaseModel):
     featurecollection: FeatureCollection[RequestFeatureModel]
     params: Optional[RequestParams] = None
 
-    @model_validator(mode="before")
-    def check_unique_ids(cls, values):
-        features = values.get("features", [])
-        # ids = [feature['properties']['id'] for feature in features]
-        ids = [feature["id"] for feature in features]
+    @model_validator(mode="after")
+    def check_unique_ids(self) -> Self:
+        ids = [feature.id for feature in self.featurecollection.features]
+        if any(feature_id is None for feature_id in ids):
+            raise ValueError("All features must have an ID")
         if len(ids) != len(set(ids)):
             raise ValueError("All feature IDs must be unique")
-        return values
+        return self
 
     model_config = {
         "json_schema_extra": {
@@ -187,7 +207,7 @@ class RequestBody(BaseModel):
                     },
                     "params": {
                         "crs": "EPSG:31370",
-                        "grb_type": "GRB - ADP - administratief perceel",
+                        "grb_type": "Administratieve percelen",
                         "full_reference_strategy": "prefer_full_reference",
                     },
                 }
@@ -227,3 +247,17 @@ class ResponseBody(BaseModel):
     result_diff_min: FeatureCollection[ResponseFeatureModel]
     result_relevant_intersection: FeatureCollection[ResponseFeatureModel]
     result_relevant_diff: FeatureCollection[ResponseFeatureModel]
+
+
+ViewerGeometry = Union[Polygon, MultiPolygon]
+
+
+class ViewerStep(BaseModel):
+    result: ViewerGeometry
+    result_diff_min: ViewerGeometry
+    result_diff_plus: ViewerGeometry
+
+
+class ViewerResponse(BaseModel):
+    series: Dict[str, ViewerStep]
+    diffs: Dict[str, float]

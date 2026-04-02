@@ -1,0 +1,49 @@
+---
+title: "Architecture"
+format: html
+---
+
+## High-Level Flow
+
+1. The viewer sends a GeoJSON feature collection to the backend.
+2. The backend loads GRB reference data and evaluates multiple distances.
+3. The backend returns:
+   - full BRDR output via `/actualiser`
+   - reduced viewer-oriented output via `/actualiser/viewer`
+4. The viewer renders:
+   - `result` geometry
+   - `result_diff_min` (negative diff)
+   - `result_diff_plus` (positive diff)
+   - `diffs` chart values per distance step
+
+## Backend
+
+- Framework: **FastAPI**
+- Main file: `grb_webservice.py`
+- Typings/models: `grb_webservice_typings.py`
+- BRDR dependency: `brdr` package
+
+Important behavior:
+
+- Request validation on feature IDs (must be present and unique).
+- Compatibility handling for GRB type labels across BRDR versions.
+- `503` when upstream GRB service is unavailable.
+
+## Viewer
+
+- Framework: **React + TypeScript + Vite**
+- Map library: **OpenLayers**
+- Path: `brdr-viewer/brdr-viewer`
+
+Capabilities:
+
+- draw a new polygon
+- edit polygon vertices
+- trigger recalculation
+- inspect timeline steps and surface-diff chart
+
+## Runtime Modes
+
+- **Native**: Python backend + Node viewer
+- **Containerized backend**: Docker backend + Node viewer
+- **One-command local startup**: `start-local.ps1` / `start-local.cmd`

@@ -1,0 +1,91 @@
+---
+title: "API and Viewer"
+format: html
+---
+
+## API Endpoints
+
+## `POST /actualiser`
+
+Returns the detailed BRDR output as GeoJSON feature collections.
+
+Request body (shape):
+
+```json
+{
+  "featurecollection": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "id": "2",
+        "properties": {},
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [[[0,0],[1,0],[1,1],[0,1],[0,0]]]
+        }
+      }
+    ]
+  },
+  "params": {
+    "crs": "EPSG:31370",
+    "grb_type": "Administratieve percelen",
+    "full_reference_strategy": "prefer_full_reference"
+  }
+}
+```
+
+## `POST /actualiser/viewer`
+
+Returns a viewer-oriented structure:
+
+```json
+{
+  "series": {
+    "0.0": {
+      "result": { "type": "Polygon", "coordinates": [] },
+      "result_diff_min": { "type": "Polygon", "coordinates": [] },
+      "result_diff_plus": { "type": "Polygon", "coordinates": [] }
+    }
+  },
+  "diffs": {
+    "0.0": 0.0
+  }
+}
+```
+
+Optional query parameter:
+
+- `feature_id` when request contains multiple features
+
+## Status Codes
+
+- `200`: Success
+- `400`: Validation or request-shape issue
+- `503`: Upstream GRB service unavailable
+- `500`: Unexpected internal error
+
+## Viewer Integration
+
+The viewer:
+
+1. keeps an input geometry in local state
+2. sends that geometry to `/actualiser/viewer`
+3. updates timeline and map layers from returned `series` and `diffs`
+
+Main frontend files:
+
+- `src/api/brdrApi.ts`
+- `src/state/useBrdrState.ts`
+- `src/components/map/MapView.tsx`
+
+## Testing the API with curl
+
+With `body.json` in repository root:
+
+```bash
+curl -X POST "http://127.0.0.1:80/actualiser/viewer?feature_id=2" \
+  -H "accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d @body.json
+```
