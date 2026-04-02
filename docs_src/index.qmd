@@ -1,8 +1,31 @@
 ---
-title: "Mijn Documentatie33"
+title: "Overview"
 format: html
 ---
 
-## Welkom
+## BRDR Webservice Proof of Concept
 
-Dit is een voorbeeld van Quarto op GitHub Pages.
+This project provides a proof-of-concept stack to align user geometries against GRB reference data:
+
+- a **FastAPI webservice** (`grb_webservice.py`)
+- a **viewer** (`brdr-viewer`) to draw/edit geometry and inspect BRDR steps
+- **Docker and local scripts** for quick startup
+
+## What You Can Do
+
+1. Start backend and viewer locally.
+2. Draw or edit an input polygon in the viewer.
+3. Trigger BRDR alignment.
+4. Inspect intermediate steps on the map and in the chart timeline.
+
+## Components at a Glance
+
+- **Backend endpoint for full output**: `POST /actualiser`
+- **Backend endpoint for viewer format**: `POST /actualiser/viewer`
+- **Frontend map + timeline**: OpenLayers + React app in `brdr-viewer/brdr-viewer`
+
+Continue with:
+
+- [Architecture](architecture.qmd)
+- [Run Locally](run-locally.qmd)
+- [API and Viewer](api-viewer.qmd)

@@ -1,0 +1,73 @@
+---
+title: "Run Locally"
+format: html
+---
+
+## Prerequisites
+
+- Python 3.x
+- Node.js 18+
+- npm
+- Optional: Docker Desktop
+
+## Fastest Start (Recommended)
+
+From repository root:
+
+```powershell
+.\start-local.ps1
+```
+
+Or:
+
+```cmd
+start-local.cmd
+```
+
+This starts:
+
+- backend on `http://127.0.0.1:80`
+- viewer on `http://127.0.0.1:5173`
+- browser opens automatically
+
+## Manual Start
+
+### 1. Start backend
+
+```powershell
+python grb_webservice.py
+```
+
+### 2. Start viewer
+
+```powershell
+cd brdr-viewer\brdr-viewer
+npm install
+npm run dev -- --host 127.0.0.1 --port 5173
+```
+
+Open `http://127.0.0.1:5173`.
+
+## Docker Backend Option
+
+From repository root:
+
+```bash
+docker build -f Dockerfile . -t grb_webservice
+docker run --rm -p 80:80 --name grb_webservice grb_webservice
+```
+
+Then run the viewer as above.
+
+## Common Issues
+
+### Viewer shows fetch errors
+
+- Ensure backend is running on `http://127.0.0.1:80`.
+- Check CORS origin (`localhost:5173` / `127.0.0.1:5173`).
+- Verify outbound access from backend to GRB upstream services.
+
+### Empty or flat chart values
+
+- Trigger recalculation after drawing or editing geometry.
+- Ensure geometry is valid and has area.

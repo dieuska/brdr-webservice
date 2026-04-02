@@ -3,12 +3,12 @@ import threading
 
 import requests
 
-from grb_webservice import start_server
+from grb_webservice import start_server, port
 
-base_url = "http://localhost:7999"
+base_url = f"http://localhost:{port}"
 
 # Start the web service in a separate thread
-thread = threading.Thread(target=start_server)
+thread = threading.Thread(target=start_server, daemon=True)
 thread.start()
 
 # Wait a moment for the server to start
