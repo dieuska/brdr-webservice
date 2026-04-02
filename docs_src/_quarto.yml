@@ -1,27 +1,17 @@
 project:
-  title: "brdr-webservice"
+  title: "BRDR Webservice Proof of Concept"
   type: website
 
 website:
-  title: "Mijn Project"
+  title: "BRDR Webservice PoC"
   navbar:
     left:
-      - text: Home
+      - text: Overview
         href: index.qmd
-      - text: webservice
-        href: brdr-webservice.qmd
-      - text: voorbeeld
-        href: example.qmd
-      - text: plot
-        href: plot.qmd
-      - text: plot2
-        href: plot2.qmd
-      - text: example brdr
-        href: example_brdr.qmd
-      - text: Notebook
-        href: notebook.ipynb
-
-
-
-
+      - text: Architecture
+        href: architecture.qmd
+      - text: Run Locally
+        href: run-locally.qmd
+      - text: API and Viewer
+        href: api-viewer.qmd
 
