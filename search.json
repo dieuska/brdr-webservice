@@ -1,72 +1,142 @@
 [
   {
-    "objectID": "plot2.html",
-    "href": "plot2.html",
-    "title": "matplotlib demo",
-    "section": "",
-    "text": "For a demonstration of a line plot on a polar axis, see Figure 1.\n\n\nCode\nimport numpy as np\nimport matplotlib.pyplot as plt\n\nr = np.arange(0, 2, 0.01)\ntheta = 2 * np.pi * r\nfig, ax = plt.subplots(\n  subplot_kw = {'projection': 'polar'}\n)\nax.plot(theta, r)\nax.set_rticks([0.5, 1, 1.5, 2])\nax.grid(True)\nplt.show()\n\n\n\n\n\n\n\n\nFigure 1: A line plot on a polar axis"
-  },
-  {
-    "objectID": "example_brdr.html",
-    "href": "example_brdr.html",
-    "title": "brdr demo",
-    "section": "",
-    "text": "For a demonstration of brdr.\n\n\nCode\nfrom brdr.aligner import Aligner\nfrom brdr.enums import OpenDomainStrategy\nfrom brdr.geometry_utils import geom_from_wkt\nfrom brdr.loader import DictLoader\n\n# CREATE AN ALIGNER\naligner = Aligner(\n    crs=\"EPSG:31370\",\n)\n# ADD A THEMATIC POLYGON TO THEMATIC DICTIONARY and LOAD into Aligner\nthematic_dict = {\"theme_id_1\": geom_from_wkt(\"POLYGON ((0 0, 0 9, 5 10, 10 0, 0 0))\")}\nloader = DictLoader(thematic_dict)\naligner.load_thematic_data(loader)\n# ADD A REFERENCE POLYGON TO REFERENCE DICTIONARY and LOAD into Aligner\nreference_dict = {\"ref_id_1\": geom_from_wkt(\"POLYGON ((0 1, 0 10,8 10,10 1,0 1))\")}\nloader = DictLoader(reference_dict)\naligner.load_reference_data(loader)\n# EXECUTE THE ALIGNMENT\nrelevant_distance = 1\nprocess_result = aligner.process(\n    relevant_distance=relevant_distance,\n    od_strategy=OpenDomainStrategy.SNAP_INNER_SIDE,\n    threshold_overlap_percentage=50,\n)\n# PRINT RESULTS IN WKT\nprint(\"result: \" + process_result[\"theme_id_1\"][relevant_distance][\"result\"].wkt)\nprint(\n    \"added area: \"\n    + process_result[\"theme_id_1\"][relevant_distance][\"result_diff_plus\"].wkt\n)\nprint(\n    \"removed area: \"\n    + process_result[\"theme_id_1\"][relevant_distance][\"result_diff_min\"].wkt\n)\n\n\nresult: POLYGON ((0.2928932188134523 0.2928932188134525, 0.1685303876974549 0.4444297669803975, 0.0761204674887134 0.6173165676349098, 0.0192147195967695 0.8049096779838716, 0 1, 0 10, 4.999999999999999 10, 9.500000000000004 1, 9.381966011250102 1, 9.36275129165333 0.8049096779838723, 9.305845543761384 0.6173165676348947, 9.213435623552671 0.4444297669804294, 9.089072792436635 0.2928932188134386, 8.937536244269706 0.1685303876974548, 8.76464944361519 0.0761204674887132, 8.577056333266233 0.0192147195967696, 8.3819660112501 -1.734723475976807e-18, 0.9999999999999997 -1.734723475976807e-18, 0.8049096779838718 0.0192147195967696, 0.6173165676349087 0.0761204674887139, 0.4444297669803966 0.1685303876974555, 0.2928932188134523 0.2928932188134525))\nadded area: POLYGON ((0 10, 4.99850865709512 10, 4.9985376179666465 9.99970752359333, 0 9, 0 10))\nremoved area: MULTIPOLYGON (((0.0761204674887134 0.6173165676349098, 0.1685303876974549 0.4444297669803975, 0.2928932188134523 0.2928932188134525, 0.4444297669803966 0.1685303876974556, 0.6173165676349087 0.0761204674887139, 0.8682521196030504 0, 1.734723475976807e-18 0, 1.734723475976807e-18 0.86825211960305, 0.0761204674887134 0.6173165676349098)), ((8.76464944361519 0.0761204674887132, 8.937536244269706 0.1685303876974548, 9.089072792436633 0.2928932188134385, 9.213435623552671 0.4444297669804296, 9.305845543761384 0.6173165676348947, 9.36275129165333 0.8049096779838723, 9.381966011250102 1, 9.5 1, 10 0, 8.513713891647056 0, 8.76464944361519 0.0761204674887132)))"
-  },
-  {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "Mijn Documentatie33",
+    "title": "Overview",
     "section": "",
-    "text": "Dit is een voorbeeld van Quarto op GitHub Pages."
+    "text": "This project provides a proof-of-concept stack to align user geometries against GRB reference data:\n\na FastAPI webservice (grb_webservice.py)\na viewer (brdr-viewer) to draw/edit geometry and inspect BRDR steps\nDocker and local scripts for quick startup"
   },
   {
-    "objectID": "index.html#welkom",
-    "href": "index.html#welkom",
-    "title": "Mijn Documentatie33",
+    "objectID": "index.html#brdr-webservice-proof-of-concept",
+    "href": "index.html#brdr-webservice-proof-of-concept",
+    "title": "Overview",
     "section": "",
-    "text": "Dit is een voorbeeld van Quarto op GitHub Pages."
+    "text": "This project provides a proof-of-concept stack to align user geometries against GRB reference data:\n\na FastAPI webservice (grb_webservice.py)\na viewer (brdr-viewer) to draw/edit geometry and inspect BRDR steps\nDocker and local scripts for quick startup"
   },
   {
-    "objectID": "example.html",
-    "href": "example.html",
-    "title": "Voorbeeld: Python Code",
-    "section": "",
-    "text": "Hieronder zie je een Python-codeblok dat een lijst sorteert en afdrukt:\n\n\nCode\nimport numpy as np\nimport matplotlib.pyplot as plt\n\ndata = [5, 2, 9, 1, 7]\nsorted_data = sorted(data)\nprint(\"Gesorteerde data:\", sorted_data)\n\nx = [1, 2, 3, 4, 5]\ny = [2, 4, 6, 8, 10]\n\nfig, ax = plt.subplots(figsize=(6, 4))\nax.plot(x, y, marker='o')\nax.set_title(\"Voorbeeldplot\")\nax.set_xlabel(\"X-as\")\nax.set_ylabel(\"Y-as\")\nax.grid(True)\nplt.show()\n\n\nGesorteerde data: [1, 2, 5, 7, 9]\n\n\n\n\n\n\n\n\nFigure 1: A line"
+    "objectID": "index.html#what-you-can-do",
+    "href": "index.html#what-you-can-do",
+    "title": "Overview",
+    "section": "What You Can Do",
+    "text": "What You Can Do\n\nStart backend and viewer locally.\nDraw or edit an input polygon in the viewer.\nTrigger BRDR alignment.\nInspect intermediate steps on the map and in the chart timeline."
   },
   {
-    "objectID": "example.html#een-eenvoudig-python-voorbeeld",
-    "href": "example.html#een-eenvoudig-python-voorbeeld",
-    "title": "Voorbeeld: Python Code",
-    "section": "",
-    "text": "Hieronder zie je een Python-codeblok dat een lijst sorteert en afdrukt:\n\n\nCode\nimport numpy as np\nimport matplotlib.pyplot as plt\n\ndata = [5, 2, 9, 1, 7]\nsorted_data = sorted(data)\nprint(\"Gesorteerde data:\", sorted_data)\n\nx = [1, 2, 3, 4, 5]\ny = [2, 4, 6, 8, 10]\n\nfig, ax = plt.subplots(figsize=(6, 4))\nax.plot(x, y, marker='o')\nax.set_title(\"Voorbeeldplot\")\nax.set_xlabel(\"X-as\")\nax.set_ylabel(\"Y-as\")\nax.grid(True)\nplt.show()\n\n\nGesorteerde data: [1, 2, 5, 7, 9]\n\n\n\n\n\n\n\n\nFigure 1: A line"
+    "objectID": "index.html#components-at-a-glance",
+    "href": "index.html#components-at-a-glance",
+    "title": "Overview",
+    "section": "Components at a Glance",
+    "text": "Components at a Glance\n\nBackend endpoint for full output: POST /actualiser\nBackend endpoint for viewer format: POST /actualiser/viewer\nFrontend map + timeline: OpenLayers + React app in brdr-viewer/brdr-viewer\n\nContinue with:\n\nArchitecture\nRun Locally\nAPI and Viewer"
   },
   {
-    "objectID": "brdr-webservice.html",
-    "href": "brdr-webservice.html",
-    "title": "brdr-webservice",
+    "objectID": "architecture.html",
+    "href": "architecture.html",
+    "title": "Architecture",
     "section": "",
-    "text": "Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see https://quarto.org."
+    "text": "The viewer sends a GeoJSON feature collection to the backend.\nThe backend loads GRB reference data and evaluates multiple distances.\nThe backend returns:\n\nfull BRDR output via /actualiser\nreduced viewer-oriented output via /actualiser/viewer\n\nThe viewer renders:\n\nresult geometry\nresult_diff_min (negative diff)\nresult_diff_plus (positive diff)\ndiffs chart values per distance step"
   },
   {
-    "objectID": "brdr-webservice.html#quarto",
-    "href": "brdr-webservice.html#quarto",
-    "title": "brdr-webservice",
+    "objectID": "architecture.html#high-level-flow",
+    "href": "architecture.html#high-level-flow",
+    "title": "Architecture",
     "section": "",
-    "text": "Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see https://quarto.org."
+    "text": "The viewer sends a GeoJSON feature collection to the backend.\nThe backend loads GRB reference data and evaluates multiple distances.\nThe backend returns:\n\nfull BRDR output via /actualiser\nreduced viewer-oriented output via /actualiser/viewer\n\nThe viewer renders:\n\nresult geometry\nresult_diff_min (negative diff)\nresult_diff_plus (positive diff)\ndiffs chart values per distance step"
   },
   {
-    "objectID": "plot.html",
-    "href": "plot.html",
-    "title": "matplotlib demo1",
-    "section": "",
-    "text": "Hieronder zie je een lijnplot van een dataset:\n\n\nCode\nimport numpy as np\nimport matplotlib.pyplot as plt\n\nx = [1, 2, 3, 4, 5]\ny = [2, 4, 6, 8, 10]\n\nfig, ax = plt.subplots(figsize=(6, 4))\nax.plot(x, y, marker='o')\nax.set_title(\"Voorbeeldplot\")\nax.set_xlabel(\"X-as\")\nax.set_ylabel(\"Y-as\")\nax.grid(True)\nplt.show()\n\n\n\n\n\n\n\n\nFigure 1: A line"
+    "objectID": "architecture.html#backend",
+    "href": "architecture.html#backend",
+    "title": "Architecture",
+    "section": "Backend",
+    "text": "Backend\n\nFramework: FastAPI\nMain file: grb_webservice.py\nTypings/models: grb_webservice_typings.py\nBRDR dependency: brdr package\n\nImportant behavior:\n\nRequest validation on feature IDs (must be present and unique).\nCompatibility handling for GRB type labels across BRDR versions.\n503 when upstream GRB service is unavailable."
   },
   {
-    "objectID": "plot.html#een-eenvoudige-plot-met-matplotlib",
-    "href": "plot.html#een-eenvoudige-plot-met-matplotlib",
-    "title": "matplotlib demo1",
+    "objectID": "architecture.html#viewer",
+    "href": "architecture.html#viewer",
+    "title": "Architecture",
+    "section": "Viewer",
+    "text": "Viewer\n\nFramework: React + TypeScript + Vite\nMap library: OpenLayers\nPath: brdr-viewer/brdr-viewer\n\nCapabilities:\n\ndraw a new polygon\nedit polygon vertices\ntrigger recalculation\ninspect timeline steps and surface-diff chart"
+  },
+  {
+    "objectID": "architecture.html#runtime-modes",
+    "href": "architecture.html#runtime-modes",
+    "title": "Architecture",
+    "section": "Runtime Modes",
+    "text": "Runtime Modes\n\nNative: Python backend + Node viewer\nContainerized backend: Docker backend + Node viewer\nOne-command local startup: start-local.ps1 / start-local.cmd"
+  },
+  {
+    "objectID": "api-viewer.html#post-actualiser",
+    "href": "api-viewer.html#post-actualiser",
+    "title": "API and Viewer",
+    "section": "POST /actualiser",
+    "text": "POST /actualiser\nReturns the detailed BRDR output as GeoJSON feature collections.\nRequest body (shape):\n{\n  \"featurecollection\": {\n    \"type\": \"FeatureCollection\",\n    \"features\": [\n      {\n        \"type\": \"Feature\",\n        \"id\": \"2\",\n        \"properties\": {},\n        \"geometry\": {\n          \"type\": \"Polygon\",\n          \"coordinates\": [[[0,0],[1,0],[1,1],[0,1],[0,0]]]\n        }\n      }\n    ]\n  },\n  \"params\": {\n    \"crs\": \"EPSG:31370\",\n    \"grb_type\": \"Administratieve percelen\",\n    \"full_reference_strategy\": \"prefer_full_reference\"\n  }\n}"
+  },
+  {
+    "objectID": "api-viewer.html#post-actualiserviewer",
+    "href": "api-viewer.html#post-actualiserviewer",
+    "title": "API and Viewer",
+    "section": "POST /actualiser/viewer",
+    "text": "POST /actualiser/viewer\nReturns a viewer-oriented structure:\n{\n  \"series\": {\n    \"0.0\": {\n      \"result\": { \"type\": \"Polygon\", \"coordinates\": [] },\n      \"result_diff_min\": { \"type\": \"Polygon\", \"coordinates\": [] },\n      \"result_diff_plus\": { \"type\": \"Polygon\", \"coordinates\": [] }\n    }\n  },\n  \"diffs\": {\n    \"0.0\": 0.0\n  }\n}\nOptional query parameter:\n\nfeature_id when request contains multiple features"
+  },
+  {
+    "objectID": "api-viewer.html#status-codes",
+    "href": "api-viewer.html#status-codes",
+    "title": "API and Viewer",
+    "section": "Status Codes",
+    "text": "Status Codes\n\n200: Success\n400: Validation or request-shape issue\n503: Upstream GRB service unavailable\n500: Unexpected internal error"
+  },
+  {
+    "objectID": "api-viewer.html#viewer-integration",
+    "href": "api-viewer.html#viewer-integration",
+    "title": "API and Viewer",
+    "section": "Viewer Integration",
+    "text": "Viewer Integration\nThe viewer:\n\nkeeps an input geometry in local state\nsends that geometry to /actualiser/viewer\nupdates timeline and map layers from returned series and diffs\n\nMain frontend files:\n\nsrc/api/brdrApi.ts\nsrc/state/useBrdrState.ts\nsrc/components/map/MapView.tsx"
+  },
+  {
+    "objectID": "api-viewer.html#testing-the-api-with-curl",
+    "href": "api-viewer.html#testing-the-api-with-curl",
+    "title": "API and Viewer",
+    "section": "Testing the API with curl",
+    "text": "Testing the API with curl\nWith body.json in repository root:\ncurl -X POST \"http://127.0.0.1:80/actualiser/viewer?feature_id=2\" \\\n  -H \"accept: application/json\" \\\n  -H \"Content-Type: application/json\" \\\n  -d @body.json"
+  },
+  {
+    "objectID": "run-locally.html",
+    "href": "run-locally.html",
+    "title": "Run Locally",
     "section": "",
-    "text": "Hieronder zie je een lijnplot van een dataset:\n\n\nCode\nimport numpy as np\nimport matplotlib.pyplot as plt\n\nx = [1, 2, 3, 4, 5]\ny = [2, 4, 6, 8, 10]\n\nfig, ax = plt.subplots(figsize=(6, 4))\nax.plot(x, y, marker='o')\nax.set_title(\"Voorbeeldplot\")\nax.set_xlabel(\"X-as\")\nax.set_ylabel(\"Y-as\")\nax.grid(True)\nplt.show()\n\n\n\n\n\n\n\n\nFigure 1: A line"
+    "text": "Python 3.x\nNode.js 18+\nnpm\nOptional: Docker Desktop"
+  },
+  {
+    "objectID": "run-locally.html#prerequisites",
+    "href": "run-locally.html#prerequisites",
+    "title": "Run Locally",
+    "section": "",
+    "text": "Python 3.x\nNode.js 18+\nnpm\nOptional: Docker Desktop"
+  },
+  {
+    "objectID": "run-locally.html#fastest-start-recommended",
+    "href": "run-locally.html#fastest-start-recommended",
+    "title": "Run Locally",
+    "section": "Fastest Start (Recommended)",
+    "text": "Fastest Start (Recommended)\nFrom repository root:\n.\\start-local.ps1\nOr:\nstart-local.cmd\nThis starts:\n\nbackend on http://127.0.0.1:80\nviewer on http://127.0.0.1:5173\nbrowser opens automatically"
+  },
+  {
+    "objectID": "run-locally.html#manual-start",
+    "href": "run-locally.html#manual-start",
+    "title": "Run Locally",
+    "section": "Manual Start",
+    "text": "Manual Start\n\n1. Start backend\npython grb_webservice.py\n\n\n2. Start viewer\ncd brdr-viewer\\brdr-viewer\nnpm install\nnpm run dev -- --host 127.0.0.1 --port 5173\nOpen http://127.0.0.1:5173."
+  },
+  {
+    "objectID": "run-locally.html#docker-backend-option",
+    "href": "run-locally.html#docker-backend-option",
+    "title": "Run Locally",
+    "section": "Docker Backend Option",
+    "text": "Docker Backend Option\nFrom repository root:\ndocker build -f Dockerfile . -t grb_webservice\ndocker run --rm -p 80:80 --name grb_webservice grb_webservice\nThen run the viewer as above."
+  },
+  {
+    "objectID": "run-locally.html#common-issues",
+    "href": "run-locally.html#common-issues",
+    "title": "Run Locally",
+    "section": "Common Issues",
+    "text": "Common Issues\n\nViewer shows fetch errors\n\nEnsure backend is running on http://127.0.0.1:80.\nCheck CORS origin (localhost:5173 / 127.0.0.1:5173).\nVerify outbound access from backend to GRB upstream services.\n\n\n\nEmpty or flat chart values\n\nTrigger recalculation after drawing or editing geometry.\nEnsure geometry is valid and has area."
   }
 ]
