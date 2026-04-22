@@ -4,49 +4,71 @@
 }
 
 .timeline-inner {
-  padding: 0 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.slider-wrapper {
+  --chart-axis-inset: 2%;
+  padding: 0 8px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
+.workflow-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.chart-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chart-frame {
+  min-height: 72px;
+}
+
+.slider-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.slider-axis-wrap {
+  margin-left: var(--chart-axis-inset);
+  margin-right: var(--chart-axis-inset);
+}
+
 .slider-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: 12px;
   color: #6b7280;
 }
 
 .prediction-score-row {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: 11px;
   color: #111827;
 }
 
 .prediction-badge {
-  margin-left: 8px;
-  font-size: 11px;
+  margin-left: 6px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   color: #92400e;
   background: #fde68a;
   border: 1px solid #f59e0b;
   border-radius: 999px;
-  padding: 2px 6px;
+  padding: 1px 5px;
 }
 
 .prediction-steps {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  font-size: 12px;
+  font-size: 11px;
   color: #374151;
 }
 
@@ -61,12 +83,33 @@
   background: #ffffff;
   color: #111827;
   border-radius: 6px;
-  padding: 6px 8px;
-  font-size: 12px;
+  padding: 5px 7px;
+  font-size: 11px;
   cursor: pointer;
 }
 
 .prediction-nav button:disabled {
   opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.apply-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.apply-actions button {
+  flex: 1;
+  border: 1px solid #1d4ed8;
+  background: #1d4ed8;
+  color: #fff;
+  border-radius: 6px;
+  padding: 6px 9px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.apply-actions button:disabled {
+  opacity: 0.55;
   cursor: not-allowed;
 }

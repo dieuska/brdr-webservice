@@ -1,0 +1,98 @@
+.distance-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.distance-chart {
+  height: 86px;
+}
+
+.distance-chart svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.distance-area {
+  fill: rgba(59, 130, 246, 0.1);
+}
+
+.distance-line {
+  fill: none;
+  stroke: #2563eb;
+  stroke-width: 1.2;
+}
+
+.distance-point {
+  fill: #111827;
+}
+
+.distance-point.active {
+  fill: #000000;
+}
+
+.distance-point.prediction {
+  fill: #16a34a;
+}
+
+.distance-point.prediction.active {
+  fill: #0f766e;
+}
+
+.distance-rail-wrap {
+  padding-top: 2px;
+}
+
+.distance-rail {
+  position: relative;
+  height: 24px;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.distance-rail-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 4px;
+  transform: translateY(-50%);
+  background: #d1d5db;
+  border-radius: 999px;
+}
+
+.distance-rail-progress {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 4px;
+  transform: translateY(-50%);
+  background: #2563eb;
+  border-radius: 999px;
+}
+
+.distance-prediction-ring {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #16a34a;
+  background: rgba(34, 197, 94, 0.15);
+  padding: 0;
+  cursor: pointer;
+}
+
+.distance-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #111827;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.25);
+}

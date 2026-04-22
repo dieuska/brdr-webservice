@@ -9,20 +9,24 @@ import {
 export function useBrdrLayers(
   map: Map | null,
   step: BrdrStep | null,
-  showDiffLayers: boolean
+  showDiffLayers: boolean,
+  suspendLayers: boolean
 ) {
   const hasZoomedRef = useRef(false);
 
   useEffect(() => {
-    if (!map || !step) return;
-
-    const layers = createBrdrLayersWithOptions(step, { showDiffLayers });
-
+    if (!map) return;
     map
       .getLayers()
       .getArray()
       .filter((l) => l.get(BRDR_LAYER_KEY))
       .forEach((l) => map.removeLayer(l));
+
+    if (!step || suspendLayers) {
+      return;
+    }
+
+    const layers = createBrdrLayersWithOptions(step, { showDiffLayers });
 
     layers.forEach((layer) => {
       layer.set(BRDR_LAYER_KEY, true);
@@ -42,5 +46,5 @@ export function useBrdrLayers(
       });
       hasZoomedRef.current = true;
     }
-  }, [map, step, showDiffLayers]);
+  }, [map, step, showDiffLayers, suspendLayers]);
 }

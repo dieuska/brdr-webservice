@@ -24,6 +24,7 @@ export function useBrdrState() {
   const [values, setValues] = useState<number[]>([]);
   const [predictionScoreByStep, setPredictionScoreByStep] = useState<Record<string, number>>({});
   const [predictionByStep, setPredictionByStep] = useState<Record<string, boolean>>({});
+  const [diffMetric, setDiffMetric] = useState<"area" | "length" | "count">("area");
   const [stepIndex, setStepIndex] = useState(0);
   const [stepKey, setStepKey] = useState<string>("");
   const [currentStep, setCurrentStep] = useState<BrdrStep | null>(null);
@@ -31,6 +32,24 @@ export function useBrdrState() {
     useState<Geometry | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  function withUpdatedInputGeometry(
+    body: BrdrRequestBody,
+    geometry: Geometry
+  ): BrdrRequestBody {
+    const next = structuredClone(body);
+    if (next.featurecollection.features.length === 0) {
+      next.featurecollection.features.push({
+        type: "Feature",
+        id: "1",
+        properties: {},
+        geometry,
+      });
+    } else {
+      next.featurecollection.features[0].geometry = geometry;
+    }
+    return next;
+  }
 
   function applyResponse(nextResponse: BrdrResponse) {
     const orderedSteps = Object.keys(nextResponse.series)
@@ -45,6 +64,7 @@ export function useBrdrState() {
     setResponse(nextResponse);
     setSteps(orderedSteps);
     setValues(orderedSteps.map((k) => nextResponse.diffs[k] ?? 0));
+    setDiffMetric(nextResponse.diff_metric ?? "area");
     setPredictionByStep(nextResponse.predictions ?? {});
     setPredictionScoreByStep(nextResponse.prediction_scores ?? {});
 
@@ -84,25 +104,19 @@ export function useBrdrState() {
   }, []);
 
   function updateInputGeometry(geometry: Geometry) {
-    setRequestBody((prev) => {
-      const next = structuredClone(prev);
-      if (next.featurecollection.features.length === 0) {
-        next.featurecollection.features.push({
-          type: "Feature",
-          id: "1",
-          properties: {},
-          geometry,
-        });
-      } else {
-        next.featurecollection.features[0].geometry = geometry;
-      }
-      return next;
-    });
+    setRequestBody((prev) => withUpdatedInputGeometry(prev, geometry));
   }
 
   function updateRequestParam(
-    key: "crs" | "grb_type" | "full_reference_strategy",
-    value: string
+    key:
+      | "crs"
+      | "grb_type"
+      | "full_reference_strategy"
+      | "od_strategy"
+      | "snap_strategy"
+      | "max_relevant_distance"
+      | "processor",
+    value: string | number
   ) {
     setRequestBody((prev) => {
       const next = structuredClone(prev);
@@ -111,15 +125,28 @@ export function useBrdrState() {
           crs: "EPSG:31370",
           grb_type: "GRB - ADP - administratief perceel",
           full_reference_strategy: "prefer_full_reference",
+          od_strategy: "SNAP_ALL_SIDE",
+          snap_strategy: "PREFER_VERTICES",
+          max_relevant_distance: 6.0,
+          processor: "AlignerGeometryProcessor",
         };
       }
-      next.params[key] = value;
+      if (key === "max_relevant_distance") {
+        next.params.max_relevant_distance = Number(value);
+      } else {
+        next.params[key] = String(value);
+      }
       return next;
     });
   }
 
   async function calculateForCurrentGeometry() {
     await runCalculation(requestBody);
+  }
+
+  async function calculateForInputGeometry(geometry: Geometry) {
+    const nextRequestBody = withUpdatedInputGeometry(requestBody, geometry);
+    await runCalculation(nextRequestBody);
   }
 
   function applyCurrentStepToInputGeometry() {
@@ -163,6 +190,7 @@ export function useBrdrState() {
     stepKey,
     stepIndex,
     predictionByStep,
+    diffMetric,
     currentStepPredictionScore: predictionScoreByStep[stepKey] ?? 0,
     currentStepIsPrediction: predictionByStep[stepKey] ?? false,
     loading,
@@ -172,6 +200,7 @@ export function useBrdrState() {
     inputGeometry: requestBody.featurecollection.features[0]?.geometry ?? null,
     updateInputGeometry,
     calculateForCurrentGeometry,
+    calculateForInputGeometry,
     applyCurrentStepToInputGeometry,
     resetAppliedInputGeometry,
     hasAppliedInputGeometry: inputGeometryBeforeApply !== null,

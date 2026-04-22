@@ -8,7 +8,13 @@ from brdr.be.grb.enums import GRBType
 from brdr.be.grb.loader import GRBActualLoader
 from brdr.configs import ProcessorConfig, AlignerConfig
 from brdr.enums import OpenDomainStrategy, FullReferenceStrategy, AlignerResultType
-from brdr.processor import AlignerGeometryProcessor
+from brdr.processor import (
+    AlignerGeometryProcessor,
+    DieussaertGeometryProcessor,
+    NetworkGeometryProcessor,
+    SnapGeometryProcessor,
+    TopologyProcessor,
+)
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -78,6 +84,7 @@ def _extract_distance_data(
         key = _format_distance_key(relevant_distance)
         distance_data[key] = {
             "geometry": feature.get("geometry"),
+            "properties": properties,
             "diff_area": properties.get("brdr_diff_area"),
             "evaluation": properties.get("brdr_evaluation"),
             "prediction_score": properties.get("brdr_prediction_score"),
@@ -92,12 +99,29 @@ def _empty_geometry_like(geometry: dict[str, Any]) -> dict[str, Any]:
 
     base_point = [0.0, 0.0]
     try:
-        if geom_type == "MultiPolygon":
+        if geom_type == "Point":
+            base_point = coordinates
+        elif geom_type == "MultiPoint":
+            base_point = coordinates[0]
+        elif geom_type == "LineString":
+            base_point = coordinates[0]
+        elif geom_type == "MultiLineString":
+            base_point = coordinates[0][0]
+        elif geom_type == "MultiPolygon":
             base_point = coordinates[0][0][0]
         else:
             base_point = coordinates[0][0]
     except (IndexError, TypeError):
         pass
+
+    if geom_type == "Point":
+        return {"type": "Point", "coordinates": base_point}
+    if geom_type == "MultiPoint":
+        return {"type": "MultiPoint", "coordinates": [base_point]}
+    if geom_type == "LineString":
+        return {"type": "LineString", "coordinates": [base_point, base_point]}
+    if geom_type == "MultiLineString":
+        return {"type": "MultiLineString", "coordinates": [[base_point, base_point]]}
 
     ring = [base_point, base_point, base_point, base_point]
     if geom_type == "MultiPolygon":
@@ -112,6 +136,70 @@ def _safe_geometry_area(geometry: Optional[dict[str, Any]]) -> float:
         return float(shape(geometry).area)
     except Exception:
         return 0.0
+
+
+def _safe_float(value: Any) -> Optional[float]:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _diff_metric_for_geometry(
+    geometry: Optional[dict[str, Any]],
+) -> Literal["area", "length", "count"]:
+    geom_type = (geometry or {}).get("type")
+    if geom_type in ("Polygon", "MultiPolygon"):
+        return "area"
+    if geom_type in ("LineString", "MultiLineString"):
+        return "length"
+    return "count"
+
+
+def _safe_geometry_measure(
+    geometry: Optional[dict[str, Any]],
+    metric: Literal["area", "length", "count"],
+) -> float:
+    if not geometry:
+        return 0.0
+    try:
+        geom = shape(geometry)
+        if metric == "area":
+            return float(geom.area)
+        if metric == "length":
+            return float(geom.length)
+        if geom.geom_type == "Point":
+            return 1.0
+        if geom.geom_type == "MultiPoint":
+            return float(len(getattr(geom, "geoms", [])))
+        return 0.0
+    except Exception:
+        return 0.0
+
+
+def _extract_diff_value_from_properties(
+    properties: dict[str, Any],
+    metric: Literal["area", "length", "count"],
+) -> Optional[float]:
+    metric_candidates = {
+        "area": ["brdr_diff_area"],
+        "length": ["brdr_diff_length", "brdr_diff_perimeter", "brdr_diff_area"],
+        "count": ["brdr_diff_count", "brdr_diff_points", "brdr_diff_point_count"],
+    }
+
+    for key in metric_candidates[metric]:
+        numeric = _safe_float(properties.get(key))
+        if numeric is not None:
+            return abs(numeric)
+
+    for key, value in properties.items():
+        if not key.startswith("brdr_diff_"):
+            continue
+        numeric = _safe_float(value)
+        if numeric is not None:
+            return abs(numeric)
+
+    return None
 
 
 def _is_prediction_step(evaluation: Any, prediction_score: Any) -> bool:
@@ -169,6 +257,9 @@ def build_viewer_response(
         raise ValueError(f"No results found for feature_id '{selected_feature_id}'")
 
     ordered_distances = sorted(result_by_distance.keys(), key=float)
+    diff_metric: Literal["area", "length", "count"] = _diff_metric_for_geometry(
+        result_by_distance[ordered_distances[0]].get("geometry")
+    )
     series = {}
     diffs = {}
     predictions = {}
@@ -189,20 +280,17 @@ def build_viewer_response(
             "result_diff_plus": diff_plus_geometry or fallback_geometry,
         }
 
-        diff_value = result_by_distance[distance_key].get("diff_area")
-        numeric_diff_value: Optional[float] = None
-        if diff_value is not None:
-            try:
-                numeric_diff_value = abs(float(diff_value))
-            except (TypeError, ValueError):
-                numeric_diff_value = None
+        numeric_diff_value = _extract_diff_value_from_properties(
+            result_by_distance[distance_key].get("properties", {}) or {},
+            diff_metric,
+        )
 
         if numeric_diff_value is not None and numeric_diff_value > 0:
             diffs[distance_key] = numeric_diff_value
         else:
             diffs[distance_key] = (
-                _safe_geometry_area(diff_min_geometry)
-                + _safe_geometry_area(diff_plus_geometry)
+                _safe_geometry_measure(diff_min_geometry, diff_metric)
+                + _safe_geometry_measure(diff_plus_geometry, diff_metric)
             )
         predictions[distance_key] = _is_prediction_step(
             result_by_distance[distance_key].get("evaluation"),
@@ -221,6 +309,7 @@ def build_viewer_response(
     return {
         "series": series,
         "diffs": diffs,
+        "diff_metric": diff_metric,
         "predictions": predictions,
         "prediction_scores": prediction_scores,
     }
@@ -232,12 +321,34 @@ def calculate_alignment_geojson(
 ) -> dict[str, Any]:
     params = request_body.params
 
-    relevant_distances = [
-        round(k, 2) for k in np.arange(0, 610, 10, dtype=int) / 100
-    ]
+    max_relevant_distance = (
+        params.max_relevant_distance
+        if params and params.max_relevant_distance
+        else 6.0
+    )
+    max_relevant_distance = min(float(max_relevant_distance), 25.0)
+    max_centimeters = max(int(round(max_relevant_distance * 100)), 1)
+    relevant_distances = [round(k / 100, 2) for k in range(0, max_centimeters + 1, 10)]
+    rounded_max_distance = round(float(max_relevant_distance), 2)
+    if relevant_distances[-1] != rounded_max_distance:
+        relevant_distances.append(rounded_max_distance)
     crs = params.crs if params and params.crs else "EPSG:31370"
     threshold_overlap_percentage = 50
-    od_strategy = OpenDomainStrategy.SNAP_ALL_SIDE
+    od_strategy = (
+        params.od_strategy
+        if params and params.od_strategy
+        else OpenDomainStrategy.SNAP_ALL_SIDE
+    )
+    snap_strategy = (
+        params.snap_strategy
+        if params and params.snap_strategy
+        else None
+    )
+    processor_name = (
+        params.processor
+        if params and params.processor
+        else "AlignerGeometryProcessor"
+    )
     area_limit = 100000
     grb_type = params.grb_type if params and params.grb_type else GRBType.ADP
     full_strategy = (
@@ -252,10 +363,20 @@ def calculate_alignment_geojson(
 
     processor_config = ProcessorConfig()
     processor_config.od_strategy = od_strategy
+    if snap_strategy is not None:
+        processor_config.snap_strategy = snap_strategy
     processor_config.threshold_overlap_percentage = threshold_overlap_percentage
     processor_config.area_limit = area_limit
 
-    processor = AlignerGeometryProcessor(config=processor_config)
+    processor_map = {
+        "AlignerGeometryProcessor": AlignerGeometryProcessor,
+        "DieussaertGeometryProcessor": DieussaertGeometryProcessor,
+        "NetworkGeometryProcessor": NetworkGeometryProcessor,
+        "SnapGeometryProcessor": SnapGeometryProcessor,
+        "TopologyProcessor": TopologyProcessor,
+    }
+    processor_class = processor_map.get(processor_name, AlignerGeometryProcessor)
+    processor = processor_class(config=processor_config)
     aligner_config = AlignerConfig()
     aligner = Aligner(
         crs=crs,

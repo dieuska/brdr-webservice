@@ -9,31 +9,25 @@ import "./BrdrChart.css";
 
 interface Props {
   values: number[];
+  diffMetric: "area" | "length" | "count";
   activeIndex: number;
   predictionFlags: boolean[];
 }
 
 const VIEWBOX_WIDTH = 150;
-const VIEWBOX_HEIGHT = 80;
+const VIEWBOX_HEIGHT = 48;
 const PADDING = 3;
 
 export function BrdrChart({
   values,
+  diffMetric,
   activeIndex,
   predictionFlags,
 }: Props) {
   const max = getMaxAbs(values);
 
-  const getX = createXScale(
-    values.length,
-    VIEWBOX_WIDTH,
-    PADDING
-  );
-  const getY = createYScale(
-    max,
-    VIEWBOX_HEIGHT,
-    PADDING
-  );
+  const getX = createXScale(values.length, VIEWBOX_WIDTH, PADDING);
+  const getY = createYScale(max, VIEWBOX_HEIGHT, PADDING);
 
   const linePoints = createLinePoints(values, getX, getY);
   const areaPoints = createAreaPoints(
@@ -47,16 +41,15 @@ export function BrdrChart({
   const activeValue = values[activeIndex];
   const activeX = getX(activeIndex);
   const activeY = getY(activeValue);
+  const diffUnit =
+    diffMetric === "area" ? "m2" : diffMetric === "length" ? "m" : "pts";
 
   return (
     <svg
       viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
       className="brdr-chart"
     >
-      <polygon
-        points={areaPoints}
-        fill="rgba(221,48,48,0.08)"
-      />
+      <polygon points={areaPoints} fill="rgba(221,48,48,0.08)" />
 
       <polyline
         points={linePoints}
@@ -87,10 +80,10 @@ export function BrdrChart({
         x={activeX}
         y={activeY - 6}
         textAnchor="middle"
-        fontSize={5}
+        fontSize={4}
         fill="#111827"
       >
-        {activeValue.toFixed(1)} m²
+        {activeValue.toFixed(1)} {diffUnit}
       </text>
     </svg>
   );

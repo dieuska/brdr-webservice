@@ -11,11 +11,11 @@
 
 .side-panel {
   width: 500px;
-  padding: 16px;
+  padding: 8px;
 
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 6px;
 
   background: #ffffff;
   border-left: 1px solid #e5e7eb;
@@ -23,20 +23,118 @@
 }
 
 .input-controls h3 {
-  margin: 0 0 8px;
-  font-size: 16px;
+  margin: 0 0 4px;
+  font-size: 14px;
 }
 
-.input-controls p {
-  margin: 0 0 12px;
-  font-size: 13px;
+.workflow-step-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  padding: 6px;
+  margin-bottom: 4px;
+}
+
+.workflow-step-title {
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.workflow-step-help {
+  margin: 0 0 4px;
+  font-size: 10px;
   color: #4b5563;
+}
+
+.settings-block {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #ffffff;
+  padding: 5px;
+  margin-bottom: 4px;
+}
+
+.settings-toggle {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  color: #111827;
+  border-radius: 6px;
+  padding: 5px 7px;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-toggle[aria-expanded="true"] {
+  margin-bottom: 4px;
+}
+
+.settings-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.settings-chip {
+  font-size: 9px;
+  color: #334155;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 2px 6px;
 }
 
 .input-controls-actions {
   display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.draw-type-picker {
+  display: flex;
+  gap: 5px;
+}
+
+.draw-type-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  border-radius: 6px;
+  padding: 5px 7px;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.draw-type-button[aria-pressed="true"] {
+  border-color: #1d4ed8;
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+.draw-type-icon {
+  width: 14px;
+  display: inline-flex;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.params-grid input,
+.params-grid select {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 10px;
+  background: #ffffff;
 }
 
 .input-controls-actions button {
@@ -54,32 +152,69 @@
   cursor: not-allowed;
 }
 
+.recalculate-row {
+  display: flex;
+}
+
+.recalculate-row button {
+  width: 100%;
+  border: 1px solid #1d4ed8;
+  background: #1d4ed8;
+  color: #fff;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.recalculate-row button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .params-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 5px;
 }
 
 .params-grid label {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 12px;
+  font-size: 10px;
   color: #374151;
-}
-
-.params-grid input,
-.params-grid select {
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  padding: 6px 8px;
-  font-size: 12px;
-  background: #ffffff;
 }
 
 .params-grid-full {
   grid-column: 1 / -1;
+}
+
+.primary-setting {
+  margin-bottom: 6px;
+  border: 1px solid #93c5fd;
+  background: #eff6ff;
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.primary-setting label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+.primary-setting select {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 5px 7px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #111827;
+  background: #ffffff;
 }
 
 .error-text {

@@ -1,8 +1,17 @@
-from typing import Optional, Dict, Any, Union, Self
+from typing import Optional, Dict, Any, Union, Self, Literal
 
 from brdr.be.grb.enums import GRBType
-from brdr.enums import FullReferenceStrategy
-from geojson_pydantic import Feature, FeatureCollection, MultiPolygon, Polygon
+from brdr.enums import FullReferenceStrategy, OpenDomainStrategy, SnapStrategy
+from geojson_pydantic import (
+    Feature,
+    FeatureCollection,
+    MultiLineString,
+    MultiPoint,
+    MultiPolygon,
+    LineString,
+    Point,
+    Polygon,
+)
 from pydantic import BaseModel, model_validator, field_validator
 
 
@@ -115,6 +124,18 @@ class RequestParams(BaseModel):
     crs: Optional[str] = "EPSG:31370"
     grb_type: Optional[GRBType] = GRBType.ADP
     full_reference_strategy: Optional[FullReferenceStrategy] = FullReferenceStrategy.PREFER_FULL_REFERENCE
+    od_strategy: Optional[OpenDomainStrategy] = OpenDomainStrategy.SNAP_ALL_SIDE
+    snap_strategy: Optional[SnapStrategy] = SnapStrategy.PREFER_VERTICES
+    max_relevant_distance: Optional[float] = 6.0
+    processor: Optional[
+        Literal[
+            "AlignerGeometryProcessor",
+            "DieussaertGeometryProcessor",
+            "NetworkGeometryProcessor",
+            "SnapGeometryProcessor",
+            "TopologyProcessor",
+        ]
+    ] = "AlignerGeometryProcessor"
 
     @field_validator("grb_type", mode="before")
     @classmethod
@@ -136,6 +157,60 @@ class RequestParams(BaseModel):
                 return legacy_to_enum[lowered]
         return value
 
+    @field_validator("od_strategy", mode="before")
+    @classmethod
+    def normalize_od_strategy(cls, value):
+        if value is None or isinstance(value, OpenDomainStrategy):
+            return value
+        if isinstance(value, str):
+            stripped = value.strip()
+            if stripped in OpenDomainStrategy.__members__:
+                parsed = OpenDomainStrategy[stripped]
+            else:
+                try:
+                    parsed = OpenDomainStrategy(stripped)
+                except ValueError:
+                    return value
+
+            allowed_od = {
+                OpenDomainStrategy.EXCLUDE,
+                OpenDomainStrategy.AS_IS,
+                OpenDomainStrategy.SNAP_INNER_SIDE,
+                OpenDomainStrategy.SNAP_ALL_SIDE,
+            }
+            if parsed not in allowed_od:
+                raise ValueError(
+                    "od_strategy must be one of: EXCLUDE, AS_IS, SNAP_INNER_SIDE, SNAP_ALL_SIDE"
+                )
+            return parsed
+        return value
+
+    @field_validator("snap_strategy", mode="before")
+    @classmethod
+    def normalize_snap_strategy(cls, value):
+        if value is None or isinstance(value, SnapStrategy):
+            return value
+        if isinstance(value, str):
+            stripped = value.strip()
+            if stripped in SnapStrategy.__members__:
+                return SnapStrategy[stripped]
+            lowered = stripped.lower()
+            for enum_value in SnapStrategy:
+                if enum_value.value == lowered:
+                    return enum_value
+        return value
+
+    @field_validator("max_relevant_distance")
+    @classmethod
+    def validate_max_relevant_distance(cls, value):
+        if value is None:
+            return value
+        if value <= 0:
+            raise ValueError("max_relevant_distance must be > 0")
+        if value > 25:
+            raise ValueError("max_relevant_distance must be <= 25")
+        return value
+
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -143,13 +218,27 @@ class RequestParams(BaseModel):
                     "crs": "EPSG:31370",
                     "grb_type": "Administratieve percelen",
                     "full_reference_strategy": "prefer_full_reference",
+                    "od_strategy": "SNAP_ALL_SIDE",
+                    "snap_strategy": "PREFER_VERTICES",
+                    "max_relevant_distance": 6.0,
+                    "processor": "AlignerGeometryProcessor",
                 }
             ]
         }
     }
 
 
-class RequestFeatureModel(Feature[Union[Polygon, MultiPolygon], RequestProperties]):
+GeometryModel = Union[
+    Point,
+    MultiPoint,
+    LineString,
+    MultiLineString,
+    Polygon,
+    MultiPolygon,
+]
+
+
+class RequestFeatureModel(Feature[GeometryModel, RequestProperties]):
     pass
 
 
@@ -236,7 +325,7 @@ class ResponseProperties(BaseModel):
     brdr_shape_index: float
 
 
-class ResponseFeatureModel(Feature[Union[Polygon, MultiPolygon], ResponseProperties]):
+class ResponseFeatureModel(Feature[GeometryModel, ResponseProperties]):
     pass
 
 
@@ -249,7 +338,7 @@ class ResponseBody(BaseModel):
     result_relevant_diff: FeatureCollection[ResponseFeatureModel]
 
 
-ViewerGeometry = Union[Polygon, MultiPolygon]
+ViewerGeometry = GeometryModel
 
 
 class ViewerStep(BaseModel):
@@ -261,5 +350,6 @@ class ViewerStep(BaseModel):
 class ViewerResponse(BaseModel):
     series: Dict[str, ViewerStep]
     diffs: Dict[str, float]
+    diff_metric: Literal["area", "length", "count"]
     predictions: Dict[str, bool]
     prediction_scores: Dict[str, float]

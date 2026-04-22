@@ -1,5 +1,4 @@
-import { BrdrChart } from "../chart/BrdrChart";
-import { BrdrSlider } from "../slider/BrdrSlider";
+import { DistanceTimeline } from "./DistanceTimeline";
 import "./Timeline.css";
 
 interface Props {
@@ -7,7 +6,6 @@ interface Props {
   stepKey: string;
   isPredictionStep: boolean;
   currentPredictionScore: number;
-  stepsCount: number;
   values: number[];
   predictionFlags: boolean[];
   predictionStepKeys: string[];
@@ -16,6 +14,10 @@ interface Props {
   onNextPrediction: () => void;
   hasPreviousPrediction: boolean;
   hasNextPrediction: boolean;
+  onApply: () => void;
+  onReset: () => void;
+  canApply: boolean;
+  canReset: boolean;
 }
 
 export function Timeline({
@@ -23,7 +25,6 @@ export function Timeline({
   stepKey,
   isPredictionStep,
   currentPredictionScore,
-  stepsCount,
   values,
   predictionFlags,
   predictionStepKeys,
@@ -32,15 +33,25 @@ export function Timeline({
   onNextPrediction,
   hasPreviousPrediction,
   hasNextPrediction,
+  onApply,
+  onReset,
+  canApply,
+  canReset,
 }: Props) {
   return (
     <div className="timeline">
       <div className="timeline-inner">
-        <BrdrChart
-          values={values}
-          activeIndex={stepIndex}
-          predictionFlags={predictionFlags}
-        />
+        <div className="workflow-title">Stap 3. Aanpassen op basis van predicties</div>
+        <div className="chart-section">
+          <div className="chart-frame">
+            <DistanceTimeline
+              values={values}
+              predictionFlags={predictionFlags}
+              activeIndex={stepIndex}
+              onStepChange={onStepChange}
+            />
+          </div>
+        </div>
 
         <div className="slider-wrapper">
           <div className="slider-labels">
@@ -56,12 +67,6 @@ export function Timeline({
             <span>Prediction score</span>
             <strong>{currentPredictionScore.toFixed(3)}</strong>
           </div>
-
-          <BrdrSlider
-            value={stepIndex}
-            max={stepsCount - 1}
-            onChange={onStepChange}
-          />
         </div>
         <div className="prediction-nav">
           <button
@@ -88,6 +93,14 @@ export function Timeline({
               ? predictionStepKeys.join(", ")
               : "none"}
           </span>
+        </div>
+        <div className="apply-actions">
+          <button type="button" onClick={onApply} disabled={!canApply}>
+            Aanpassen
+          </button>
+          <button type="button" onClick={onReset} disabled={!canReset}>
+            Reset
+          </button>
         </div>
       </div>
     </div>
