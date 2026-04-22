@@ -10,7 +10,7 @@ FROM python:3.12-slim
 
 WORKDIR /app
 RUN python -m pip install --upgrade pip
-RUN python -m pip install fastapi uvicorn brdr==0.15.6 shapely pydantic geojson_pydantic
+RUN python -m pip install fastapi uvicorn brdr==0.16.0 shapely pydantic geojson_pydantic
 
 COPY grb_webservice.py grb_webservice.py
 COPY grb_webservice_typings.py grb_webservice_typings.py
