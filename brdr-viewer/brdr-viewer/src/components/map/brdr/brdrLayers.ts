@@ -27,7 +27,14 @@ function createVectorLayer(
 }
 
 export function createBrdrLayers(step: BrdrStep) {
-  return [
+  return createBrdrLayersWithOptions(step, { showDiffLayers: true });
+}
+
+export function createBrdrLayersWithOptions(
+  step: BrdrStep,
+  options: { showDiffLayers: boolean }
+) {
+  const layers = [
     createVectorLayer(
       step.result,
       new Style({
@@ -35,6 +42,13 @@ export function createBrdrLayers(step: BrdrStep) {
         fill: new Fill({ color: "rgba(0,0,0,0.15)" }),
       })
     ),
+  ];
+
+  if (!options.showDiffLayers) {
+    return layers;
+  }
+
+  layers.push(
     createVectorLayer(
       step.result_diff_min,
       new Style({
@@ -46,6 +60,8 @@ export function createBrdrLayers(step: BrdrStep) {
       new Style({
         fill: new Fill({ color: "rgba(0,180,0,0.5)" }),
       })
-    ),
-  ];
+    )
+  );
+
+  return layers;
 }

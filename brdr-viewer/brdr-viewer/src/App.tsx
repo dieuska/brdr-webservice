@@ -58,11 +58,16 @@ function App() {
     inputGeometry,
     updateInputGeometry,
     calculateForCurrentGeometry,
+    applyCurrentStepToInputGeometry,
+    resetAppliedInputGeometry,
+    hasAppliedInputGeometry,
     setStepIndex,
   } = useBrdrState();
   const [drawRequestToken, setDrawRequestToken] = useState(0);
 
   const canRun = Boolean(inputGeometry) && !loading;
+  const canApplyStepGeometry = Boolean(currentStep) && !loading;
+  const canResetStepGeometry = hasAppliedInputGeometry && !loading;
   const predictionIndexes = steps
     .map((step, index) => ((predictionByStep[step] ?? false) ? index : -1))
     .filter((index) => index >= 0);
@@ -87,6 +92,7 @@ function App() {
       <div className="map-wrapper">
         <MapView
           step={currentStep}
+          showDiffLayers={!hasAppliedInputGeometry}
           inputGeometry={inputGeometry}
           onInputGeometryChange={updateInputGeometry}
           drawRequestToken={drawRequestToken}
@@ -113,6 +119,20 @@ function App() {
               disabled={!canRun}
             >
               {loading ? "Bezig..." : "Herbereken"}
+            </button>
+            <button
+              type="button"
+              onClick={applyCurrentStepToInputGeometry}
+              disabled={!canApplyStepGeometry}
+            >
+              Aanpassen
+            </button>
+            <button
+              type="button"
+              onClick={resetAppliedInputGeometry}
+              disabled={!canResetStepGeometry}
+            >
+              Reset
             </button>
           </div>
           <div className="params-grid">

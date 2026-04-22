@@ -27,6 +27,8 @@ export function useBrdrState() {
   const [stepIndex, setStepIndex] = useState(0);
   const [stepKey, setStepKey] = useState<string>("");
   const [currentStep, setCurrentStep] = useState<BrdrStep | null>(null);
+  const [inputGeometryBeforeApply, setInputGeometryBeforeApply] =
+    useState<Geometry | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,6 +69,7 @@ export function useBrdrState() {
     try {
       const nextResponse = await loadBrdrResponse(nextRequestBody);
       setRequestBody(nextRequestBody);
+      setInputGeometryBeforeApply(null);
       applyResponse(nextResponse);
     } catch (err) {
       setError(getErrorMessage(err));
@@ -119,6 +122,31 @@ export function useBrdrState() {
     await runCalculation(requestBody);
   }
 
+  function applyCurrentStepToInputGeometry() {
+    if (!currentStep) {
+      return;
+    }
+
+    if (!inputGeometryBeforeApply) {
+      const currentInputGeometry =
+        requestBody.featurecollection.features[0]?.geometry ?? null;
+      if (currentInputGeometry) {
+        setInputGeometryBeforeApply(structuredClone(currentInputGeometry));
+      }
+    }
+
+    updateInputGeometry(structuredClone(currentStep.result));
+  }
+
+  function resetAppliedInputGeometry() {
+    if (!inputGeometryBeforeApply) {
+      return;
+    }
+
+    updateInputGeometry(structuredClone(inputGeometryBeforeApply));
+    setInputGeometryBeforeApply(null);
+  }
+
   function setIndex(i: number) {
     if (!response || !steps[i]) {
       return;
@@ -144,6 +172,9 @@ export function useBrdrState() {
     inputGeometry: requestBody.featurecollection.features[0]?.geometry ?? null,
     updateInputGeometry,
     calculateForCurrentGeometry,
+    applyCurrentStepToInputGeometry,
+    resetAppliedInputGeometry,
+    hasAppliedInputGeometry: inputGeometryBeforeApply !== null,
     setStepIndex: setIndex,
   };
 }

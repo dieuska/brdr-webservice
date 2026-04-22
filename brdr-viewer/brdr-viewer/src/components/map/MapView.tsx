@@ -15,6 +15,7 @@ import "./MapView.css";
 
 interface Props {
   step: BrdrStep | null;
+  showDiffLayers: boolean;
   inputGeometry: Geometry | null;
   onInputGeometryChange: (geometry: Geometry) => void;
   drawRequestToken: number;
@@ -24,6 +25,7 @@ const INPUT_LAYER_KEY = "brdr-input";
 
 export default function MapView({
   step,
+  showDiffLayers,
   inputGeometry,
   onInputGeometryChange,
   drawRequestToken,
@@ -36,7 +38,7 @@ export default function MapView({
   const hasFittedInputRef = useRef(false);
   const format = useMemo(() => new GeoJSON(), []);
 
-  useBrdrLayers(map, step);
+  useBrdrLayers(map, step, showDiffLayers);
 
   useEffect(() => {
     if (!map || sourceRef.current) return;
