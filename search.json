@@ -28,41 +28,6 @@
     "text": "Components at a Glance\n\nBackend endpoint for full output: POST /actualiser\nBackend endpoint for viewer format: POST /actualiser/viewer\nFrontend map + timeline: OpenLayers + React app in brdr-viewer/brdr-viewer\n\nContinue with:\n\nArchitecture\nRun Locally\nAPI and Viewer"
   },
   {
-    "objectID": "architecture.html",
-    "href": "architecture.html",
-    "title": "Architecture",
-    "section": "",
-    "text": "The viewer sends a GeoJSON feature collection to the backend.\nThe backend loads GRB reference data and evaluates multiple distances.\nThe backend returns:\n\nfull BRDR output via /actualiser\nreduced viewer-oriented output via /actualiser/viewer\n\nThe viewer renders:\n\nresult geometry\nresult_diff_min (negative diff)\nresult_diff_plus (positive diff)\ndiffs chart values per distance step"
-  },
-  {
-    "objectID": "architecture.html#high-level-flow",
-    "href": "architecture.html#high-level-flow",
-    "title": "Architecture",
-    "section": "",
-    "text": "The viewer sends a GeoJSON feature collection to the backend.\nThe backend loads GRB reference data and evaluates multiple distances.\nThe backend returns:\n\nfull BRDR output via /actualiser\nreduced viewer-oriented output via /actualiser/viewer\n\nThe viewer renders:\n\nresult geometry\nresult_diff_min (negative diff)\nresult_diff_plus (positive diff)\ndiffs chart values per distance step"
-  },
-  {
-    "objectID": "architecture.html#backend",
-    "href": "architecture.html#backend",
-    "title": "Architecture",
-    "section": "Backend",
-    "text": "Backend\n\nFramework: FastAPI\nMain file: grb_webservice.py\nTypings/models: grb_webservice_typings.py\nBRDR dependency: brdr package\n\nImportant behavior:\n\nRequest validation on feature IDs (must be present and unique).\nCompatibility handling for GRB type labels across BRDR versions.\n503 when upstream GRB service is unavailable."
-  },
-  {
-    "objectID": "architecture.html#viewer",
-    "href": "architecture.html#viewer",
-    "title": "Architecture",
-    "section": "Viewer",
-    "text": "Viewer\n\nFramework: React + TypeScript + Vite\nMap library: OpenLayers\nPath: brdr-viewer/brdr-viewer\n\nCapabilities:\n\ndraw a new polygon\nedit polygon vertices\ntrigger recalculation\ninspect timeline steps and surface-diff chart"
-  },
-  {
-    "objectID": "architecture.html#runtime-modes",
-    "href": "architecture.html#runtime-modes",
-    "title": "Architecture",
-    "section": "Runtime Modes",
-    "text": "Runtime Modes\n\nNative: Python backend + Node viewer\nContainerized backend: Docker backend + Node viewer\nOne-command local startup: start-local.ps1 / start-local.cmd"
-  },
-  {
     "objectID": "api-viewer.html#post-actualiser",
     "href": "api-viewer.html#post-actualiser",
     "title": "API and Viewer",
@@ -96,6 +61,41 @@
     "title": "API and Viewer",
     "section": "Testing the API with curl",
     "text": "Testing the API with curl\nWith body.json in repository root:\ncurl -X POST \"http://127.0.0.1:80/actualiser/viewer?feature_id=2\" \\\n  -H \"accept: application/json\" \\\n  -H \"Content-Type: application/json\" \\\n  -d @body.json"
+  },
+  {
+    "objectID": "architecture.html",
+    "href": "architecture.html",
+    "title": "Architecture",
+    "section": "",
+    "text": "The viewer sends a GeoJSON feature collection to the backend.\nThe backend loads GRB reference data and evaluates multiple distances.\nThe backend returns:\n\nfull BRDR output via /actualiser\nreduced viewer-oriented output via /actualiser/viewer\n\nThe viewer renders:\n\nresult geometry\nresult_diff_min (negative diff)\nresult_diff_plus (positive diff)\ndiffs chart values per distance step"
+  },
+  {
+    "objectID": "architecture.html#high-level-flow",
+    "href": "architecture.html#high-level-flow",
+    "title": "Architecture",
+    "section": "",
+    "text": "The viewer sends a GeoJSON feature collection to the backend.\nThe backend loads GRB reference data and evaluates multiple distances.\nThe backend returns:\n\nfull BRDR output via /actualiser\nreduced viewer-oriented output via /actualiser/viewer\n\nThe viewer renders:\n\nresult geometry\nresult_diff_min (negative diff)\nresult_diff_plus (positive diff)\ndiffs chart values per distance step"
+  },
+  {
+    "objectID": "architecture.html#backend",
+    "href": "architecture.html#backend",
+    "title": "Architecture",
+    "section": "Backend",
+    "text": "Backend\n\nFramework: FastAPI\nMain file: grb_webservice.py\nTypings/models: grb_webservice_typings.py\nBRDR dependency: brdr package\n\nImportant behavior:\n\nRequest validation on feature IDs (must be present and unique).\nCompatibility handling for GRB type labels across BRDR versions.\n503 when upstream GRB service is unavailable."
+  },
+  {
+    "objectID": "architecture.html#viewer",
+    "href": "architecture.html#viewer",
+    "title": "Architecture",
+    "section": "Viewer",
+    "text": "Viewer\n\nFramework: React + TypeScript + Vite\nMap library: OpenLayers\nPath: brdr-viewer/brdr-viewer\n\nCapabilities:\n\ndraw a new polygon\nedit polygon vertices\ntrigger recalculation\ninspect timeline steps and surface-diff chart"
+  },
+  {
+    "objectID": "architecture.html#runtime-modes",
+    "href": "architecture.html#runtime-modes",
+    "title": "Architecture",
+    "section": "Runtime Modes",
+    "text": "Runtime Modes\n\nNative: Python backend + Node viewer\nContainerized backend: Docker backend + Node viewer\nOne-command local startup: start-local.ps1 / start-local.cmd"
   },
   {
     "objectID": "run-locally.html",
