@@ -37,10 +37,10 @@ Important behavior:
 
 Capabilities:
 
-- draw a new polygon
-- edit polygon vertices
-- trigger recalculation
-- inspect timeline steps and surface-diff chart
+- draw a new point/line/polygon
+- edit geometry vertices (where applicable)
+- auto-trigger recalculation after drawing/editing (manual recalc remains available)
+- inspect timeline steps, prediction markers, and geometry-aware diff chart
 
 ## Runtime Modes
 

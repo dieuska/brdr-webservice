@@ -68,6 +68,7 @@ export function Timeline({
             <strong>{currentPredictionScore.toFixed(3)}</strong>
           </div>
         </div>
+
         <div className="prediction-nav">
           <button
             type="button"
@@ -75,7 +76,7 @@ export function Timeline({
             disabled={!hasPreviousPrediction}
             aria-label="Go to previous prediction step"
           >
-            ← Previous prediction
+            {"<"} Previous prediction
           </button>
           <button
             type="button"
@@ -83,9 +84,10 @@ export function Timeline({
             disabled={!hasNextPrediction}
             aria-label="Go to next prediction step"
           >
-            Next prediction →
+            Next prediction {">"}
           </button>
         </div>
+
         <div className="prediction-steps">
           <span>Prediction steps:</span>
           <span>
@@ -94,6 +96,7 @@ export function Timeline({
               : "none"}
           </span>
         </div>
+
         <div className="apply-actions">
           <button type="button" onClick={onApply} disabled={!canApply}>
             Aanpassen
