@@ -5,15 +5,23 @@ import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON";
 import { bbox as bboxStrategy } from "ol/loadingstrategy";
 import { Circle as CircleStyle, Fill, Stroke, Style } from "ol/style";
+import {
+  DEFAULT_BRDR_CRS,
+  assertSupportedCrs,
+  type BrdrSupportedCrs,
+} from "../../alignment/contracts";
 
 const OGC_COLLECTIONS_BASE =
   "https://geo.api.vlaanderen.be/GRB/ogc/features/v1/collections";
 const OGC_OUTPUT_CRS_31370 = "http://www.opengis.net/def/crs/EPSG/0/31370";
+const OGC_OUTPUT_CRS_3812 = "http://www.opengis.net/def/crs/EPSG/0/3812";
 const OGC_OUTPUT_CRS_CRS84 = "http://www.opengis.net/def/crs/OGC/1.3/CRS84";
 const OGC_RESPONSE_FORMAT = "application/json";
 const OGC_FETCH_LIMIT = 5000;
+const OGC_REFERENCE_MIN_ZOOM = 16;
 
 export const GRB_REFERENCE_LAYER_KEY = "brdr-grb-reference-layer";
+export const GRB_REFERENCE_LAYER_LABEL_KEY = "brdr-grb-reference-layer-label";
 let collectionsPromise: Promise<string[]> | null = null;
 
 const SPECIAL_COLLECTION_BY_LABEL: Record<string, string> = {
@@ -39,24 +47,29 @@ const referenceStyle = new Style({
   }),
 });
 
-export function createOverlayLayers(grbTypeLabel?: string) {
-  const referenceLayer = new VectorLayer({
-    source: createReferenceSource(grbTypeLabel),
-    style: referenceStyle,
-  });
-  referenceLayer.set(GRB_REFERENCE_LAYER_KEY, true);
-  referenceLayer.setZIndex(10);
-  return [referenceLayer];
-}
-
-export function updateReferenceOverlayLayer(
-  grbTypeLabel: string,
-  layer: VectorLayer<VectorSource>
+export function createOverlayLayers(
+  grbTypeLabels?: string[],
+  crs: BrdrSupportedCrs = DEFAULT_BRDR_CRS
 ) {
-  layer.setSource(createReferenceSource(grbTypeLabel));
+  assertSupportedCrs(crs);
+  const labels = normalizeGrbTypeLabels(grbTypeLabels);
+  return labels.map((label) => {
+    const referenceLayer = new VectorLayer({
+      source: createReferenceSource(label, crs),
+      style: referenceStyle,
+      minZoom: OGC_REFERENCE_MIN_ZOOM,
+    });
+    referenceLayer.set(GRB_REFERENCE_LAYER_KEY, true);
+    referenceLayer.set(GRB_REFERENCE_LAYER_LABEL_KEY, label);
+    referenceLayer.setZIndex(10);
+    return referenceLayer;
+  });
 }
 
-function createReferenceSource(grbTypeLabel?: string) {
+function createReferenceSource(
+  grbTypeLabel?: string,
+  crs: BrdrSupportedCrs = DEFAULT_BRDR_CRS
+) {
   const format = new GeoJSON();
   const collectionCandidates = resolveCollectionCandidates(grbTypeLabel);
   const source = new VectorSource({
@@ -73,7 +86,7 @@ function createReferenceSource(grbTypeLabel?: string) {
 
       let loaded = false;
       for (const collection of mappedCandidates) {
-        const requests = buildItemsRequests(collection, extent);
+        const requests = buildItemsRequests(collection, extent, crs);
         for (const request of requests) {
           try {
             const response = await fetch(request.url);
@@ -83,10 +96,8 @@ function createReferenceSource(grbTypeLabel?: string) {
 
             const payload = await response.json();
             const features = format.readFeatures(payload, {
-              dataProjection: request.dataProjection as
-                | "EPSG:31370"
-                | "EPSG:4326",
-              featureProjection: "EPSG:31370",
+              dataProjection: request.dataProjection,
+              featureProjection: crs,
             });
             source.addFeatures(features);
             loaded = true;
@@ -108,17 +119,22 @@ function createReferenceSource(grbTypeLabel?: string) {
   return source;
 }
 
-function buildItemsRequests(collection: string, bbox31370: Extent) {
+function buildItemsRequests(
+  collection: string,
+  bbox31370: Extent,
+  crs: BrdrSupportedCrs
+) {
   const [minX, minY, maxX, maxY] = bbox31370;
-  const bbox4326 = transformExtent(bbox31370, "EPSG:31370", "EPSG:4326");
+  const bbox4326 = transformExtent(bbox31370, crs, "EPSG:4326");
   const [lonMin, latMin, lonMax, latMax] = bbox4326;
+  const crsUri = crs === "EPSG:3812" ? OGC_OUTPUT_CRS_3812 : OGC_OUTPUT_CRS_31370;
 
-  const params31370 = new URLSearchParams({
+  const paramsProjected = new URLSearchParams({
     f: OGC_RESPONSE_FORMAT,
     limit: String(OGC_FETCH_LIMIT),
     bbox: `${minX},${minY},${maxX},${maxY}`,
-    "bbox-crs": OGC_OUTPUT_CRS_31370,
-    crs: OGC_OUTPUT_CRS_31370,
+    "bbox-crs": crsUri,
+    crs: crsUri,
   });
 
   const paramsCrs84 = new URLSearchParams({
@@ -131,7 +147,7 @@ function buildItemsRequests(collection: string, bbox31370: Extent) {
 
   const base = `${OGC_COLLECTIONS_BASE}/${encodeURIComponent(collection)}/items`;
   return [
-    { url: `${base}?${params31370.toString()}`, dataProjection: "EPSG:31370" },
+    { url: `${base}?${paramsProjected.toString()}`, dataProjection: crs },
     { url: `${base}?${paramsCrs84.toString()}`, dataProjection: "EPSG:4326" },
   ];
 }
@@ -156,6 +172,19 @@ function resolveCollectionCandidates(grbTypeLabel?: string) {
       ...withCasingVariants(compactSegment),
       ...withCasingVariants(grbTypeLabel),
     ])
+  );
+}
+
+function normalizeGrbTypeLabels(grbTypeLabels?: string[]) {
+  if (!grbTypeLabels) {
+    return ["GRB - ADP - administratief perceel"];
+  }
+  if (grbTypeLabels.length === 0) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(grbTypeLabels.map((label) => label.trim()).filter(Boolean))
   );
 }
 

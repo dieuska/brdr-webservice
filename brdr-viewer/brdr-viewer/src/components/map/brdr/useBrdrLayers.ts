@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import Map from "ol/Map";
 import type { BrdrStep } from "../../../types/brdr";
+import type { BrdrSupportedCrs } from "../../alignment/contracts";
 import {
   createBrdrLayersWithOptions,
   BRDR_LAYER_KEY,
@@ -10,7 +11,8 @@ export function useBrdrLayers(
   map: Map | null,
   step: BrdrStep | null,
   showDiffLayers: boolean,
-  suspendLayers: boolean
+  suspendLayers: boolean,
+  crs: BrdrSupportedCrs
 ) {
   const hasZoomedRef = useRef(false);
 
@@ -26,7 +28,7 @@ export function useBrdrLayers(
       return;
     }
 
-    const layers = createBrdrLayersWithOptions(step, { showDiffLayers });
+    const layers = createBrdrLayersWithOptions(step, { showDiffLayers }, crs);
 
     layers.forEach((layer) => {
       layer.set(BRDR_LAYER_KEY, true);
@@ -46,5 +48,5 @@ export function useBrdrLayers(
       });
       hasZoomedRef.current = true;
     }
-  }, [map, step, showDiffLayers, suspendLayers]);
+  }, [crs, map, step, showDiffLayers, suspendLayers]);
 }
