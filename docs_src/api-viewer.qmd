@@ -35,10 +35,19 @@ Request body (shape):
   "params": {
     "crs": "EPSG:31370",
     "grb_type": "GRB - ADP - administratief perceel",
-    "full_reference_strategy": "prefer_full_reference"
+    "full_reference_strategy": "prefer_full_reference",
+    "od_strategy": "SNAP_ALL_SIDE",
+    "snap_strategy": "PREFER_VERTICES",
+    "max_relevant_distance": 6.0,
+    "processor": "AlignerGeometryProcessor"
   }
 }
 ```
+
+Notes:
+
+- `geometry.type` can be `Point`, `LineString`, `Polygon` and multi-variants.
+- `max_relevant_distance` is limited to `25`.
 
 ## `POST /actualiser/viewer`
 
@@ -56,6 +65,7 @@ Returns a viewer-oriented structure:
   "diffs": {
     "0.0": 0.0
   },
+  "diff_metric": "area",
   "predictions": {
     "0.0": false
   },

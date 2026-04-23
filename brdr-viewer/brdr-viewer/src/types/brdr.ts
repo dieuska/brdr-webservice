@@ -1,3 +1,23 @@
+export type PointGeometry = {
+  type: "Point";
+  coordinates: number[];
+};
+
+export type MultiPointGeometry = {
+  type: "MultiPoint";
+  coordinates: number[][];
+};
+
+export type LineStringGeometry = {
+  type: "LineString";
+  coordinates: number[][];
+};
+
+export type MultiLineStringGeometry = {
+  type: "MultiLineString";
+  coordinates: number[][][];
+};
+
 export type PolygonGeometry = {
   type: "Polygon";
   coordinates: number[][][];
@@ -8,7 +28,13 @@ export type MultiPolygonGeometry = {
   coordinates: number[][][][];
 };
 
-export type Geometry = PolygonGeometry | MultiPolygonGeometry;
+export type Geometry =
+  | PointGeometry
+  | MultiPointGeometry
+  | LineStringGeometry
+  | MultiLineStringGeometry
+  | PolygonGeometry
+  | MultiPolygonGeometry;
 
 export interface BrdrStep {
   result: Geometry;
@@ -19,6 +45,7 @@ export interface BrdrStep {
 export interface BrdrResponse {
   series: Record<string, BrdrStep>;
   diffs: Record<string, number>;
+  diff_metric?: "area" | "length" | "count";
   predictions: Record<string, boolean>;
   prediction_scores: Record<string, number>;
 }
@@ -39,5 +66,9 @@ export interface BrdrRequestBody {
     crs: string;
     grb_type: string;
     full_reference_strategy: string;
+    od_strategy?: string;
+    snap_strategy?: string;
+    max_relevant_distance?: number;
+    processor?: string;
   };
 }

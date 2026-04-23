@@ -2,26 +2,31 @@ import { useEffect, useRef } from "react";
 import Map from "ol/Map";
 import type { BrdrStep } from "../../../types/brdr";
 import {
-  createBrdrLayers,
+  createBrdrLayersWithOptions,
   BRDR_LAYER_KEY,
 } from "../brdr/brdrLayers";
 
 export function useBrdrLayers(
   map: Map | null,
-  step: BrdrStep | null
+  step: BrdrStep | null,
+  showDiffLayers: boolean,
+  suspendLayers: boolean
 ) {
   const hasZoomedRef = useRef(false);
 
   useEffect(() => {
-    if (!map || !step) return;
-
-    const layers = createBrdrLayers(step);
-
+    if (!map) return;
     map
       .getLayers()
       .getArray()
       .filter((l) => l.get(BRDR_LAYER_KEY))
       .forEach((l) => map.removeLayer(l));
+
+    if (!step || suspendLayers) {
+      return;
+    }
+
+    const layers = createBrdrLayersWithOptions(step, { showDiffLayers });
 
     layers.forEach((layer) => {
       layer.set(BRDR_LAYER_KEY, true);
@@ -41,5 +46,5 @@ export function useBrdrLayers(
       });
       hasZoomedRef.current = true;
     }
-  }, [map, step]);
+  }, [map, step, showDiffLayers, suspendLayers]);
 }
