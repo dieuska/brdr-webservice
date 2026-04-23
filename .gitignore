@@ -168,3 +168,8 @@ cython_debug/
 **/*.quarto_ipynb
 /docs_src/_site/
 /docs_src/.quarto/
+/az-acr-build-push.cmd
+/az-acr-build-push.ps1
+/az-acr-local-build-push.cmd
+/az-acr-local-build-push.ps1
+/dev.txt
