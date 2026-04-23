@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MapView, { type DrawGeometryType } from "../map/MapView";
 import type { Geometry } from "../../types/brdr";
 import type { BrdrSupportedCrs } from "../alignment/contracts";
@@ -68,6 +68,7 @@ export function DemoMapViewer({
     useState<ImportSourceCrs>("EPSG:3812");
   const [importFeedback, setImportFeedback] = useState<string | null>(null);
   const [selectionModeEnabled, setSelectionModeEnabled] = useState(false);
+  const [fitRequestToken, setFitRequestToken] = useState(0);
 
   const drawHint =
     drawGeometryType === "Point"
@@ -79,6 +80,11 @@ export function DemoMapViewer({
   const selectedIndex = selectedGeometryId
     ? geometries.findIndex((item) => item.id === selectedGeometryId)
     : -1;
+
+  useEffect(() => {
+    if (!selectedGeometryId || !selectedGeometry) return;
+    setFitRequestToken((token) => token + 1);
+  }, [selectedGeometry, selectedGeometryId]);
 
   function toggleReferenceLayer(layerName: string) {
     const next = activeReferenceLayers.includes(layerName)
@@ -278,6 +284,7 @@ export function DemoMapViewer({
         selectedGeometryId={selectedGeometryId}
         selectionEnabled={selectionModeEnabled}
         onSelectGeometryById={onSelectGeometry}
+        fitRequestToken={fitRequestToken}
         baseLayerVisibility={baseLayerVisibility}
         showReferenceLayer
         selectedGrbTypes={activeReferenceLayers}
@@ -291,6 +298,7 @@ export function DemoMapViewer({
         drawHint={drawHint}
         drawEnabled={!selectionModeEnabled}
         allowGeometryEditing={false}
+        inputGeometryStyle="yellow"
       />
     </div>
   );

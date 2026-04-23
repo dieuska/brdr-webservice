@@ -40,10 +40,12 @@ interface Props {
   selectedGeometryId?: string | null;
   selectionEnabled?: boolean;
   onSelectGeometryById?: (id: string) => void;
+  fitRequestToken?: number;
   drawRequestToken?: number;
   drawGeometryType?: DrawGeometryType;
   allowGeometryEditing?: boolean;
   drawEnabled?: boolean;
+  inputGeometryStyle?: "blue" | "yellow";
 }
 
 const INPUT_LAYER_KEY = "brdr-input";
@@ -67,10 +69,12 @@ export default function MapView({
   selectedGeometryId = null,
   selectionEnabled = false,
   onSelectGeometryById,
+  fitRequestToken,
   drawRequestToken = 0,
   drawGeometryType = "Polygon",
   allowGeometryEditing = true,
   drawEnabled = true,
+  inputGeometryStyle = "blue",
 }: Props) {
   assertSupportedCrs(crs);
   const divRef = useRef<HTMLDivElement>(null);
@@ -87,6 +91,7 @@ export default function MapView({
   const contextLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
   const selectionListenerRef = useRef<EventsKey | null>(null);
   const hasFittedInputRef = useRef(false);
+  const lastFitRequestTokenRef = useRef<number | null>(null);
   const onInputGeometryChangeRef = useRef(onInputGeometryChange);
   const format = useMemo(() => new GeoJSON(), []);
 
@@ -103,30 +108,28 @@ export default function MapView({
     const contextLayer = new VectorLayer({
       source: new VectorSource(),
       style: (feature) => {
-        const featureId = feature.get("geometryId");
-        const isSelected =
-          Boolean(selectedGeometryId) && featureId === selectedGeometryId;
+        const isSelected = Boolean(feature.get("isSelected"));
         return new Style({
           stroke: new Stroke({
-            color: isSelected ? "rgba(30,58,138,0.8)" : "rgba(71,85,105,0.78)",
-            width: isSelected ? 2 : 1.5,
+            color: isSelected ? "rgba(202,138,4,0.95)" : "rgba(30,64,175,0.9)",
+            width: isSelected ? 3 : 2.2,
           }),
           fill: new Fill({
             color: isSelected
-              ? "rgba(59,130,246,0.16)"
-              : "rgba(148,163,184,0.14)",
+              ? "rgba(250,204,21,0.26)"
+              : "rgba(59,130,246,0.2)",
           }),
           image: new CircleStyle({
-            radius: isSelected ? 6 : 5,
+            radius: isSelected ? 8 : 6,
             fill: new Fill({
-              color: isSelected ? "rgba(37,99,235,0.85)" : "rgba(71,85,105,0.8)",
+              color: isSelected ? "rgba(250,204,21,0.95)" : "rgba(37,99,235,0.9)",
             }),
             stroke: new Stroke({ color: "#ffffff", width: 1.2 }),
           }),
           text: new Text({
             text: String(feature.get("geometryLabel") ?? ""),
-            font: "700 12px sans-serif",
-            fill: new Fill({ color: "#0f172a" }),
+            font: isSelected ? "700 13px sans-serif" : "700 12px sans-serif",
+            fill: new Fill({ color: isSelected ? "#7c2d12" : "#0f172a" }),
             stroke: new Stroke({ color: "#ffffff", width: 3 }),
             overflow: true,
           }),
@@ -139,11 +142,21 @@ export default function MapView({
     const inputLayer = new VectorLayer({
       source,
       style: new Style({
-        stroke: new Stroke({ color: "#2563eb", width: 2 }),
-        fill: new Fill({ color: "rgba(37,99,235,0.1)" }),
+        stroke: new Stroke({
+          color: inputGeometryStyle === "yellow" ? "#ca8a04" : "#2563eb",
+          width: inputGeometryStyle === "yellow" ? 2.6 : 2,
+        }),
+        fill: new Fill({
+          color:
+            inputGeometryStyle === "yellow"
+              ? "rgba(250,204,21,0.22)"
+              : "rgba(37,99,235,0.12)",
+        }),
         image: new CircleStyle({
-          radius: 6,
-          fill: new Fill({ color: "#2563eb" }),
+          radius: inputGeometryStyle === "yellow" ? 7 : 6,
+          fill: new Fill({
+            color: inputGeometryStyle === "yellow" ? "#eab308" : "#2563eb",
+          }),
           stroke: new Stroke({ color: "#ffffff", width: 1.5 }),
         }),
       }),
@@ -195,7 +208,7 @@ export default function MapView({
       contextLayerRef.current = null;
       sourceRef.current = null;
     };
-  }, [allowGeometryEditing, crs, format, map]);
+  }, [allowGeometryEditing, crs, format, inputGeometryStyle, map]);
 
   useEffect(() => {
     if (!map || !sourceRef.current || !inputGeometry) return;
@@ -211,8 +224,11 @@ export default function MapView({
     sourceRef.current.addFeature(feature);
 
     const extent = sourceRef.current.getExtent();
+    const hasExplicitFitRequest =
+      typeof fitRequestToken === "number" &&
+      fitRequestToken !== lastFitRequestTokenRef.current;
     if (
-      !hasFittedInputRef.current &&
+      (hasExplicitFitRequest || !hasFittedInputRef.current) &&
       extent &&
       extent.every(Number.isFinite)
     ) {
@@ -220,6 +236,9 @@ export default function MapView({
         padding: [60, 60, 60, 60],
         maxZoom: 20,
       });
+      if (hasExplicitFitRequest) {
+        lastFitRequestTokenRef.current = fitRequestToken;
+      }
       const referenceLayers = map
         .getLayers()
         .getArray()
@@ -228,7 +247,7 @@ export default function MapView({
       referenceLayers.forEach((layer) => layer.getSource()?.refresh());
       hasFittedInputRef.current = true;
     }
-  }, [crs, format, inputGeometry, map]);
+  }, [crs, fitRequestToken, format, inputGeometry, map]);
 
   useEffect(() => {
     if (!contextLayerRef.current) return;
@@ -246,6 +265,7 @@ export default function MapView({
       ) as Feature<OlGeometry>;
       feature.set("geometryId", item.id);
       feature.set("geometryLabel", item.label ?? "");
+      feature.set("isSelected", item.id === selectedGeometryId);
       contextSource.addFeature(feature);
     });
     contextLayerRef.current.changed();

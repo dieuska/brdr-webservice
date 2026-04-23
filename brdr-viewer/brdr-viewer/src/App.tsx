@@ -1,5 +1,4 @@
-import { useMemo, useRef, useState } from "react";
-import { BrdrAlignmentViewer } from "./components/alignment/BrdrAlignmentViewer";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BRDR_CRS_3812 } from "./components/alignment/contracts";
 import {
   DemoMapViewer,
@@ -11,6 +10,7 @@ import "ol/ol.css";
 
 function App() {
   const demoCrs = BRDR_CRS_3812;
+  const alignmentMfeUrl = `${import.meta.env.BASE_URL}alignment-mfe.html`;
   const nextIdRef = useRef(3);
   const [geometries, setGeometries] = useState<DemoGeometryItem[]>([
     {
@@ -33,13 +33,16 @@ function App() {
     {
       id: "geom-1",
       geometry: {
-        type: "LineString",
-        coordinates: [
-          [674129.6, 679204.8],
-          [674141.4, 679211.9],
-          [674153.7, 679219.6],
-          [674166.1, 679227.4],
-        ],
+        type: "MultiLineString",
+        coordinates: [[
+          [673273.1596810865, 679548.1767614188],
+          [673301.0447058184, 679562.6421179984],
+          [673326.4897908862, 679572.5761580592],
+          [673358.0347251141, 679584.6015749747],
+          [673401.430794853, 679601.1583084093],
+          [673411.5391163183, 679605.1667807145],
+          [673411.5391163183, 679605.1667807145],
+        ]],
       },
     },
     {
@@ -55,6 +58,8 @@ function App() {
   );
   const [alignmentOpen, setAlignmentOpen] = useState(false);
   const [activeReferenceLayers, setActiveReferenceLayers] = useState<string[]>([]);
+  const alignmentFrameRef = useRef<HTMLIFrameElement | null>(null);
+  const alignmentReadyRef = useRef(false);
 
   const selectedGeometry = useMemo(
     () =>
@@ -63,6 +68,60 @@ function App() {
         : null,
     [geometries, selectedGeometryId]
   );
+
+  useEffect(() => {
+    function postGeometryToAlignmentFrame() {
+      if (!alignmentOpen || !selectedGeometry) return;
+      if (!alignmentReadyRef.current) return;
+      const frameWindow = alignmentFrameRef.current?.contentWindow;
+      if (!frameWindow) return;
+
+      frameWindow.postMessage(
+        {
+          type: "BRDR_ALIGNMENT_INIT",
+          payload: { crs: demoCrs, geometry: selectedGeometry },
+        },
+        window.location.origin
+      );
+    }
+
+    postGeometryToAlignmentFrame();
+  }, [alignmentOpen, demoCrs, selectedGeometry]);
+
+  useEffect(() => {
+    function onMessage(
+      event: MessageEvent<
+        | { type: "BRDR_ALIGNMENT_READY" }
+        | { type: "BRDR_ALIGNMENT_APPLY"; payload: { geometry: Geometry } }
+      >
+    ) {
+      if (event.origin !== window.location.origin) return;
+      const message = event.data;
+      if (!message || typeof message !== "object") return;
+
+      if (message.type === "BRDR_ALIGNMENT_READY") {
+        alignmentReadyRef.current = true;
+        if (alignmentOpen && selectedGeometry && alignmentFrameRef.current?.contentWindow) {
+          alignmentFrameRef.current.contentWindow.postMessage(
+            {
+              type: "BRDR_ALIGNMENT_INIT",
+              payload: { crs: demoCrs, geometry: selectedGeometry },
+            },
+            window.location.origin
+          );
+        }
+        return;
+      }
+
+      if (message.type === "BRDR_ALIGNMENT_APPLY") {
+        updateSelectedGeometry(message.payload.geometry);
+        setAlignmentOpen(false);
+      }
+    }
+
+    window.addEventListener("message", onMessage as EventListener);
+    return () => window.removeEventListener("message", onMessage as EventListener);
+  }, [alignmentOpen, demoCrs, selectedGeometry]);
 
   function createGeometryId() {
     const id = `geom-${nextIdRef.current}`;
@@ -113,6 +172,7 @@ function App() {
         onDeleteSelectedGeometry={handleDeleteSelectedGeometry}
         onStartAlignment={() => {
           if (!selectedGeometry) return;
+          alignmentReadyRef.current = false;
           setAlignmentOpen(true);
         }}
         activeReferenceLayers={activeReferenceLayers}
@@ -136,19 +196,20 @@ function App() {
               <button
                 type="button"
                 className="alignment-close-button"
-                onClick={() => setAlignmentOpen(false)}
+                onClick={() => {
+                  alignmentReadyRef.current = false;
+                  setAlignmentOpen(false);
+                }}
               >
                 Sluiten
               </button>
             </div>
             <div className="alignment-modal-body">
-              <BrdrAlignmentViewer
-                crs={demoCrs}
-                inputGeometry={selectedGeometry}
-                onApplyAlignedGeometry={(geometry) => {
-                  updateSelectedGeometry(geometry);
-                  setAlignmentOpen(false);
-                }}
+              <iframe
+                ref={alignmentFrameRef}
+                title="BRDR Alignment MFE"
+                className="alignment-mfe-frame"
+                src={alignmentMfeUrl}
               />
             </div>
           </div>

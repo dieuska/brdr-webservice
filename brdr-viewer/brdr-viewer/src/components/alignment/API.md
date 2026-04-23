@@ -1,13 +1,16 @@
-# BRDR Viewer Component API
+﻿# BRDR Alignment Viewer API
 
-## Public entrypoint
+Deze documentatie beschrijft de herbruikbare alignment-component en de iframe micro-frontend contracten.
 
-Gebruik `BrdrAlignmentViewer` als herbruikbare component.
+## 1) React component API
+
+Publieke entrypoint:
 
 ```tsx
 import {
   BrdrAlignmentViewer,
   BRDR_CRS_3812,
+  type BrdrSupportedCrs,
 } from "./components/alignment";
 
 <BrdrAlignmentViewer
@@ -17,23 +20,61 @@ import {
 />;
 ```
 
-## Props
-
-- `crs` (verplicht): `EPSG:31370` of `EPSG:3812` (aanbevolen).
-- `inputGeometry` (verplicht): `Geometry` die je in de aligner wil verwerken.
-- `onApplyAlignedGeometry?`: callback bij klik op `Aanpassen`; levert de gealigneerde geometrie terug.
+Props:
+- `crs` (verplicht): `EPSG:31370` of `EPSG:3812`.
+- `inputGeometry` (verplicht): GeoJSON `Geometry` in hetzelfde CRS als `crs`.
+- `onApplyAlignedGeometry?`: callback bij `Aanpassen`; levert gealigneerde geometrie terug.
 - `onLoadingChange?`: callback met `true/false` tijdens herberekening.
 - `onErrorChange?`: callback met foutboodschap of `null`.
 
-## Contract
+## 2) Iframe micro-frontend contract
 
-- Viewer verwacht GeoJSON geometrie in hetzelfde CRS als `crs`.
-- Deze viewer is enkel voor alignering en gebruikt een eigen kaart.
-- Bij `Aanpassen` wordt de geselecteerde gealigneerde geometrie via callback teruggegeven aan de host.
-- Tekenen/selecteren van geometrie gebeurt in de hostapp (bijvoorbeeld een aparte demo-kaart).
+In de demo wordt de aligner geladen via `alignment-mfe.html` in een iframe.
 
-## Lage-level bouwblokken
+### Host -> MFE
 
-- `MapView`: basiskaart, configureerbaar met/zonder tekeninteractie.
-- `BrdrAlignPanel`: BRDR settings + resultatenworkflow.
-- `useBrdrState({ crs, initialGeometry? })`: state en BRDR-oproepen.
+Berichttype: `BRDR_ALIGNMENT_INIT`
+
+```ts
+type InitMessage = {
+  type: "BRDR_ALIGNMENT_INIT";
+  payload: {
+    crs: "EPSG:31370" | "EPSG:3812";
+    geometry: Geometry;
+  };
+};
+```
+
+### MFE -> Host
+
+Berichttype: `BRDR_ALIGNMENT_READY`
+- gestuurd zodra MFE klaar is om input te ontvangen.
+
+Berichttype: `BRDR_ALIGNMENT_APPLY`
+
+```ts
+type ApplyMessage = {
+  type: "BRDR_ALIGNMENT_APPLY";
+  payload: { geometry: Geometry };
+};
+```
+
+Gedrag:
+- Host stuurt geselecteerde geometrie + CRS via `BRDR_ALIGNMENT_INIT`.
+- MFE toont aligneringsflow en berekent predictions.
+- Bij `Aanpassen` stuurt MFE de gekozen gealigneerde geometrie terug via `BRDR_ALIGNMENT_APPLY`.
+- Host vervangt de geselecteerde geometrie met de teruggestuurde geometrie.
+
+## 3) Integratieverwachtingen
+
+- Host is verantwoordelijk voor tekenen/selecteren/beheren van geometrieën.
+- Alignment viewer is verantwoordelijk voor BRDR-instellingen, herberekening en keuze van prediction.
+- Geometry moet geldig GeoJSON zijn (`Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon`).
+- Bij CRS-mismatch moet de host eerst reprojection uitvoeren.
+
+## 4) Lage-level bouwblokken
+
+- `BrdrAlignmentViewer`: complete aligneringscomponent.
+- `BrdrAlignPanel`: settings + resultatenworkflow.
+- `MapView`: kaartcomponent voor weergave van input/resultaat/lagen.
+- `useBrdrState({ crs, initialGeometry? })`: BRDR state + API calls.
