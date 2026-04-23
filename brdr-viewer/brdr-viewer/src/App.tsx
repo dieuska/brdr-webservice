@@ -1,362 +1,221 @@
-import { useState } from "react";
-import MapView from "./components/map/MapView";
-import type { DrawGeometryType } from "./components/map/MapView";
-import { Timeline } from "./components/timeline/Timeline";
-import { useBrdrState } from "./state/useBrdrState";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { BRDR_CRS_3812 } from "./components/alignment/contracts";
+import {
+  DemoMapViewer,
+  type DemoGeometryItem,
+} from "./components/demo/DemoMapViewer";
+import type { Geometry } from "./types/brdr";
 import "./App.css";
 import "ol/ol.css";
 
-const GRB_TYPE_OPTIONS = [
-  "GRB - ADP - administratief perceel",
-  "GRB - ANO - anomalie",
-  "GRB - Adres - adres",
-  "GRB - AdresLabel - adreslabel",
-  "GRB - GBA - gebouwaanhorigheid",
-  "GRB - GBG - gebouw aan de grond",
-  "GRB - GVL - gevellijn",
-  "GRB - GVP - gevelpunt",
-  "GRB - IngeschetstGebouw - ingeschetst gebouw",
-  "GRB - KNW - kunstwerk",
-  "GRB - LBZ - lokale bijhoudingszone",
-  "GRB - SBN - spoorbaan",
-  "GRB - SGBG - samengesteld gebouw",
-  "GRB - TRN - terrein",
-  "GRB - WBN - wegbaan",
-  "GRB - WGA - wegaanhorigheid",
-  "GRB - WGO - wegopdeling",
-  "GRB - WGR - gracht",
-  "GRB - WLAS - VHA-waterloopsegment",
-  "GRB - WLI - longitudinale weginrichting",
-  "GRB - WPI - puntvormige inrichting",
-  "GRB - WRI - putdeksel",
-  "GRB - WRL - spoorrail",
-  "GRB - WTI - transversale weginrichting",
-  "GRB - WTZ - watergang",
-  "GRB - Wegknoop - wegknoop",
-  "GRB - Wegsegment - wegsegment",
-];
-
-const FULL_REFERENCE_STRATEGY_OPTIONS = [
-  "prefer_full_reference",
-  "only_full_reference",
-  "no_full_reference",
-];
-
-const OPEN_DOMAIN_STRATEGY_OPTIONS = [
-  "EXCLUDE",
-  "AS_IS",
-  "SNAP_INNER_SIDE",
-  "SNAP_ALL_SIDE",
-];
-
-const SNAP_STRATEGY_OPTIONS = [
-  "ONLY_VERTICES",
-  "PREFER_VERTICES",
-  "PREFER_ENDS_AND_ANGLES",
-  "NO_PREFERENCE",
-];
-
-const PROCESSOR_OPTIONS = [
-  "AlignerGeometryProcessor",
-  "DieussaertGeometryProcessor",
-  "NetworkGeometryProcessor",
-  "SnapGeometryProcessor",
-  "TopologyProcessor",
-];
-
-const DRAW_TYPE_OPTIONS: Array<{
-  value: DrawGeometryType;
-  label: string;
-  icon: string;
-}> = [
-  { value: "Point", label: "Punt", icon: "●" },
-  { value: "LineString", label: "Lijn", icon: "／" },
-  { value: "Polygon", label: "Polygoon", icon: "▱" },
-];
-
 function App() {
-  const {
-    steps,
-    values,
-    currentStep,
-    stepKey,
-    stepIndex,
-    predictionByStep,
-    currentStepPredictionScore,
-    currentStepIsPrediction,
-    loading,
-    error,
-    requestParams,
-    updateRequestParam,
-    inputGeometry,
-    updateInputGeometry,
-    calculateForCurrentGeometry,
-    calculateForInputGeometry,
-    applyCurrentStepToInputGeometry,
-    resetAppliedInputGeometry,
-    hasAppliedInputGeometry,
-    setStepIndex,
-  } = useBrdrState();
-  const [drawRequestToken, setDrawRequestToken] = useState(0);
-  const [drawGeometryType, setDrawGeometryType] =
-    useState<DrawGeometryType>("Polygon");
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const demoCrs = BRDR_CRS_3812;
+  const alignmentMfeUrl = `${import.meta.env.BASE_URL}alignment-mfe.html`;
+  const nextIdRef = useRef(3);
+  const [geometries, setGeometries] = useState<DemoGeometryItem[]>([
+    {
+      id: "geom-0",
+      geometry: {
+        type: "Polygon",
+        coordinates: [[
+          [674109.9060417357, 679157.1345025133],
+          [674108.4632313423, 679157.3194291368],
+          [674067.2685345449, 679162.5997789158],
+          [674067.2641152102, 679162.762377074],
+          [674072.146275945, 679192.1411212096],
+          [674118.837324664, 679183.5345530929],
+          [674114.534713809, 679160.413227425],
+          [674109.9508475964, 679157.1662145937],
+          [674109.9060417357, 679157.1345025133],
+        ]],
+      },
+    },
+    {
+      id: "geom-1",
+      geometry: {
+        type: "MultiLineString",
+        coordinates: [[
+          [673273.1596810865, 679548.1767614188],
+          [673301.0447058184, 679562.6421179984],
+          [673326.4897908862, 679572.5761580592],
+          [673358.0347251141, 679584.6015749747],
+          [673401.430794853, 679601.1583084093],
+          [673411.5391163183, 679605.1667807145],
+          [673411.5391163183, 679605.1667807145],
+        ]],
+      },
+    },
+    {
+      id: "geom-2",
+      geometry: {
+        type: "Point",
+        coordinates: [674039.5, 679140.2],
+      },
+    },
+  ]);
+  const [selectedGeometryId, setSelectedGeometryId] = useState<string | null>(
+    "geom-0"
+  );
+  const [alignmentOpen, setAlignmentOpen] = useState(false);
+  const [activeReferenceLayers, setActiveReferenceLayers] = useState<string[]>([]);
+  const alignmentFrameRef = useRef<HTMLIFrameElement | null>(null);
+  const alignmentReadyRef = useRef(false);
 
-  const canRun = Boolean(inputGeometry) && !loading;
-  const canApplyStepGeometry = Boolean(currentStep) && !loading;
-  const canResetStepGeometry = hasAppliedInputGeometry && !loading;
-  const drawHint =
-    drawGeometryType === "Point"
-      ? "Punt: klik 1x op de kaart."
-      : drawGeometryType === "LineString"
-        ? "Lijn: klik meerdere punten, dubbelklik om te stoppen."
-        : "Polygoon: klik punten, dubbelklik om te sluiten.";
-  const predictionIndexes = steps
-    .map((step, index) => ((predictionByStep[step] ?? false) ? index : -1))
-    .filter((index) => index >= 0);
+  const selectedGeometry = useMemo(
+    () =>
+      selectedGeometryId
+        ? geometries.find((item) => item.id === selectedGeometryId)?.geometry ?? null
+        : null,
+    [geometries, selectedGeometryId]
+  );
 
-  const previousPredictionIndex = [...predictionIndexes]
-    .reverse()
-    .find((index) => index < stepIndex);
-  const nextPredictionIndex = predictionIndexes.find((index) => index > stepIndex);
+  useEffect(() => {
+    function postGeometryToAlignmentFrame() {
+      if (!alignmentOpen || !selectedGeometry) return;
+      if (!alignmentReadyRef.current) return;
+      const frameWindow = alignmentFrameRef.current?.contentWindow;
+      if (!frameWindow) return;
 
-  function goToPreviousPrediction() {
-    if (previousPredictionIndex === undefined) return;
-    setStepIndex(previousPredictionIndex);
+      frameWindow.postMessage(
+        {
+          type: "BRDR_ALIGNMENT_INIT",
+          payload: { crs: demoCrs, geometry: selectedGeometry },
+        },
+        window.location.origin
+      );
+    }
+
+    postGeometryToAlignmentFrame();
+  }, [alignmentOpen, demoCrs, selectedGeometry]);
+
+  useEffect(() => {
+    function onMessage(
+      event: MessageEvent<
+        | { type: "BRDR_ALIGNMENT_READY" }
+        | { type: "BRDR_ALIGNMENT_APPLY"; payload: { geometry: Geometry } }
+      >
+    ) {
+      if (event.origin !== window.location.origin) return;
+      const message = event.data;
+      if (!message || typeof message !== "object") return;
+
+      if (message.type === "BRDR_ALIGNMENT_READY") {
+        alignmentReadyRef.current = true;
+        if (alignmentOpen && selectedGeometry && alignmentFrameRef.current?.contentWindow) {
+          alignmentFrameRef.current.contentWindow.postMessage(
+            {
+              type: "BRDR_ALIGNMENT_INIT",
+              payload: { crs: demoCrs, geometry: selectedGeometry },
+            },
+            window.location.origin
+          );
+        }
+        return;
+      }
+
+      if (message.type === "BRDR_ALIGNMENT_APPLY") {
+        updateSelectedGeometry(message.payload.geometry);
+        setAlignmentOpen(false);
+      }
+    }
+
+    window.addEventListener("message", onMessage as EventListener);
+    return () => window.removeEventListener("message", onMessage as EventListener);
+  }, [alignmentOpen, demoCrs, selectedGeometry]);
+
+  function createGeometryId() {
+    const id = `geom-${nextIdRef.current}`;
+    nextIdRef.current += 1;
+    return id;
   }
 
-  function goToNextPrediction() {
-    if (nextPredictionIndex === undefined) return;
-    setStepIndex(nextPredictionIndex);
+  function addGeometry(geometry: Geometry) {
+    const id = createGeometryId();
+    setGeometries((prev) => [...prev, { id, geometry }]);
+    setSelectedGeometryId(id);
   }
 
-  async function handleInputGeometryChange(
-    geometry: Parameters<typeof updateInputGeometry>[0]
-  ) {
-    updateInputGeometry(geometry);
-    await calculateForInputGeometry(geometry);
+  function updateSelectedGeometry(geometry: Geometry) {
+    if (!selectedGeometryId) {
+      addGeometry(geometry);
+      return;
+    }
+
+    setGeometries((prev) =>
+      prev.map((item) =>
+        item.id === selectedGeometryId ? { ...item, geometry } : item
+      )
+    );
   }
 
-  async function handleRecalculate() {
-    await calculateForCurrentGeometry();
+  function handleDeleteSelectedGeometry() {
+    if (!selectedGeometryId) {
+      return;
+    }
+
+    setGeometries((prev) =>
+      prev.filter((item) => item.id !== selectedGeometryId)
+    );
+    setSelectedGeometryId(null);
+    setAlignmentOpen(false);
   }
 
   return (
-    <div className="app-layout">
-      <div className="map-wrapper">
-        <MapView
-          step={currentStep}
-          showDiffLayers={!hasAppliedInputGeometry}
-          suspendBrdrLayers={loading}
-          loading={loading}
-          inputGeometry={inputGeometry}
-          onInputGeometryChange={handleInputGeometryChange}
-          drawRequestToken={drawRequestToken}
-          drawGeometryType={drawGeometryType}
-          drawHint={drawHint}
-        />
-      </div>
+    <>
+      <DemoMapViewer
+        crs={demoCrs}
+        geometries={geometries}
+        selectedGeometryId={selectedGeometryId}
+        selectedGeometry={selectedGeometry}
+        onSelectGeometry={setSelectedGeometryId}
+        onGeometryDrawn={addGeometry}
+        onDeleteSelectedGeometry={handleDeleteSelectedGeometry}
+        onStartAlignment={() => {
+          if (!selectedGeometry) return;
+          alignmentReadyRef.current = false;
+          setAlignmentOpen(true);
+        }}
+        activeReferenceLayers={activeReferenceLayers}
+        onActiveReferenceLayersChange={setActiveReferenceLayers}
+        onImportGeometries={(newGeometries) => {
+          if (newGeometries.length === 0) return;
+          const nextItems = newGeometries.map((geometry) => ({
+            id: createGeometryId(),
+            geometry,
+          }));
+          setGeometries((prev) => [...prev, ...nextItems]);
+          setSelectedGeometryId(nextItems[nextItems.length - 1].id);
+        }}
+      />
 
-      <aside className="side-panel">
-        <div className="input-controls">
-          <h3>Workflow</h3>
-          <div className="workflow-step-card">
-            <div className="workflow-step-title">Stap 1. Intekenen</div>
-            <p className="workflow-step-help">
-              Klik op Punt, Lijn of Polygoon en teken direct op de kaart.
-            </p>
-            <div className="input-controls-actions">
-              <div className="draw-type-picker" aria-label="Tekentype">
-                {DRAW_TYPE_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className="draw-type-button"
-                    aria-pressed={drawGeometryType === option.value}
-                    onClick={() => {
-                      setDrawGeometryType(option.value);
-                      setDrawRequestToken((v) => v + 1);
-                    }}
-                    title={option.label}
-                  >
-                    <span className="draw-type-icon" aria-hidden="true">
-                      {option.icon}
-                    </span>
-                    <span>{option.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="workflow-step-card">
-            <div className="workflow-step-title">Stap 2. Herberekenen</div>
-            <div className="primary-setting">
-              <label>
-                Kies GRB-referentielaag
-                <select
-                  value={requestParams?.grb_type ?? "GRB - ADP - administratief perceel"}
-                  onChange={(event) =>
-                    updateRequestParam("grb_type", event.target.value)
-                  }
-                >
-                  {GRB_TYPE_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <p className="workflow-step-help">
-              Bereken de predicties voor de huidige geometrie en toon ze in de
-              grafiek.
-            </p>
-            <div className="settings-block">
+      {alignmentOpen && selectedGeometry && (
+        <div className="alignment-modal-backdrop">
+          <div className="alignment-modal">
+            <div className="alignment-modal-header">
+              <strong>BRDR alignering (EPSG:3812)</strong>
               <button
                 type="button"
-                className="settings-toggle"
-                aria-expanded={settingsOpen}
-                onClick={() => setSettingsOpen((v) => !v)}
+                className="alignment-close-button"
+                onClick={() => {
+                  alignmentReadyRef.current = false;
+                  setAlignmentOpen(false);
+                }}
               >
-                {settingsOpen ? "Settings verbergen" : "Settings tonen"}
+                Sluiten
               </button>
-              <div className="settings-summary">
-                <span className="settings-chip">
-                  OD: {requestParams?.od_strategy ?? "SNAP_ALL_SIDE"}
-                </span>
-                <span className="settings-chip">
-                  Snap: {requestParams?.snap_strategy ?? "PREFER_VERTICES"}
-                </span>
-                <span className="settings-chip">
-                  Max: {(requestParams?.max_relevant_distance ?? 6).toFixed(1)} m
-                </span>
-                <span className="settings-chip">
-                  Proc: {requestParams?.processor ?? "AlignerGeometryProcessor"}
-                </span>
-              </div>
-              {settingsOpen && (
-                <div className="params-grid">
-                  <label>
-                    Full reference strategy
-                    <select
-                      value={
-                        requestParams?.full_reference_strategy ??
-                        "prefer_full_reference"
-                      }
-                      onChange={(event) =>
-                        updateRequestParam(
-                          "full_reference_strategy",
-                          event.target.value
-                        )
-                      }
-                    >
-                      {FULL_REFERENCE_STRATEGY_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Open domain strategy
-                    <select
-                      value={requestParams?.od_strategy ?? "SNAP_ALL_SIDE"}
-                      onChange={(event) =>
-                        updateRequestParam("od_strategy", event.target.value)
-                      }
-                    >
-                      {OPEN_DOMAIN_STRATEGY_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Snap strategy
-                    <select
-                      value={requestParams?.snap_strategy ?? "PREFER_VERTICES"}
-                      onChange={(event) =>
-                        updateRequestParam("snap_strategy", event.target.value)
-                      }
-                    >
-                      {SNAP_STRATEGY_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Max relevante afstand (m)
-                    <input
-                      type="number"
-                      min={0.1}
-                      max={25}
-                      step={0.1}
-                      value={requestParams?.max_relevant_distance ?? 6}
-                      onChange={(event) =>
-                        updateRequestParam(
-                          "max_relevant_distance",
-                          Number(event.target.value)
-                        )
-                      }
-                    />
-                  </label>
-                  <label>
-                    Processor
-                    <select
-                      value={requestParams?.processor ?? "AlignerGeometryProcessor"}
-                      onChange={(event) =>
-                        updateRequestParam("processor", event.target.value)
-                      }
-                    >
-                      {PROCESSOR_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              )}
             </div>
-            <div className="recalculate-row">
-              <button
-                type="button"
-                onClick={() => void handleRecalculate()}
-                disabled={!canRun}
-              >
-                {loading ? "Bezig..." : "Herbereken"}
-              </button>
+            <div className="alignment-modal-body">
+              <iframe
+                ref={alignmentFrameRef}
+                title="BRDR Alignment MFE"
+                className="alignment-mfe-frame"
+                src={alignmentMfeUrl}
+              />
             </div>
           </div>
-          {error && <p className="error-text">{error}</p>}
         </div>
-
-        {currentStep && steps.length > 0 && (
-          <Timeline
-            stepIndex={stepIndex}
-            stepKey={stepKey}
-            isPredictionStep={currentStepIsPrediction}
-            currentPredictionScore={currentStepPredictionScore}
-            values={values}
-            predictionFlags={steps.map((k) => predictionByStep[k] ?? false)}
-            predictionStepKeys={steps.filter((k) => predictionByStep[k] ?? false)}
-            onPreviousPrediction={goToPreviousPrediction}
-            onNextPrediction={goToNextPrediction}
-            hasPreviousPrediction={previousPredictionIndex !== undefined}
-            hasNextPrediction={nextPredictionIndex !== undefined}
-            onApply={applyCurrentStepToInputGeometry}
-            onReset={resetAppliedInputGeometry}
-            canApply={canApplyStepGeometry}
-            canReset={canResetStepGeometry}
-            onStepChange={setStepIndex}
-          />
-        )}
-      </aside>
-    </div>
+      )}
+    </>
   );
 }
 

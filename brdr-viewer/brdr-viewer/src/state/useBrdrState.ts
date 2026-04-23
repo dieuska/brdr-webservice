@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { loadBrdrResponse } from "../data/brdrResponse";
 import { getDefaultRequestBody } from "../api/brdrApi";
+import {
+  type BrdrAlignmentParams,
+  type UseBrdrStateOptions,
+  assertSupportedCrs,
+} from "../components/alignment/contracts";
 import type {
   BrdrRequestBody,
   BrdrResponse,
@@ -15,10 +20,28 @@ function getErrorMessage(error: unknown): string {
   return "Onverwachte fout bij ophalen van BRDR-resultaat.";
 }
 
-export function useBrdrState() {
-  const [requestBody, setRequestBody] = useState<BrdrRequestBody>(() =>
-    structuredClone(getDefaultRequestBody())
-  );
+export function useBrdrState(options: UseBrdrStateOptions) {
+  const [requestBody, setRequestBody] = useState<BrdrRequestBody>(() => {
+    assertSupportedCrs(options.crs);
+    const next = structuredClone(getDefaultRequestBody());
+    const nextParams = next.params as BrdrAlignmentParams;
+    nextParams.crs = options.crs;
+
+    if (options.initialGeometry) {
+      if (next.featurecollection.features.length === 0) {
+        next.featurecollection.features.push({
+          type: "Feature",
+          id: "1",
+          properties: {},
+          geometry: options.initialGeometry,
+        });
+      } else {
+        next.featurecollection.features[0].geometry = options.initialGeometry;
+      }
+    }
+
+    return next;
+  });
   const [response, setResponse] = useState<BrdrResponse | null>(null);
   const [steps, setSteps] = useState<string[]>([]);
   const [values, setValues] = useState<number[]>([]);
@@ -122,7 +145,7 @@ export function useBrdrState() {
       const next = structuredClone(prev);
       if (!next.params) {
         next.params = {
-          crs: "EPSG:31370",
+          crs: options.crs,
           grb_type: "GRB - ADP - administratief perceel",
           full_reference_strategy: "prefer_full_reference",
           od_strategy: "SNAP_ALL_SIDE",

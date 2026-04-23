@@ -1,51 +1,56 @@
-# BRDR Viewer
+﻿# BRDR Viewer
 
-Een React + TypeScript applicatie voor het visualiseren van BRDR-stappen op een kaart (OpenLayers) met een tijdlijn en grafiek.
+React + TypeScript viewer (OpenLayers) voor demo en alignering met BRDR.
 
-De app toont:
-- een OpenLayers kaart met basislagen en BRDR-overlays
-- een zijpaneel met:
-  - een tijdlijn
-  - een slider om door stappen te navigeren
-  - een grafiek met oppervlaktes (diffs)
+## Overzicht
+- Demo-kaartviewer met meerdere geometrieën (punt, lijn, polygoon).
+- Selectie via lijst of via kaartklik.
+- Aparte BRDR-alignment micro-frontend in iframe (`alignment-mfe.html`).
+- Resultaat van `Aanpassen` wordt teruggestuurd en vervangt de geselecteerde geometrie in de demo.
+- Demo CRS staat standaard op `EPSG:3812`.
 
----
+## Workflow in de demo
+1. Teken of importeer geometrieën in de demo-kaart.
+2. Selecteer een geometrie.
+3. Open de BRDR aligner.
+4. Herbereken met gewenste settings.
+5. Kies een prediction en klik `Aanpassen`.
 
-## 🚀 Getting started (voor nieuwe developers)
+## GRB visualisatie
+- Basiskaarten:
+  - GRB grijs (standaard aan)
+  - GRB kleur (standaard uit)
+  - OSM (standaard uit)
+- OGC feature API overlays zijn dynamisch kiesbaar.
+- OGC overlays zijn standaard uit en worden pas zichtbaar vanaf detailzoom (`minZoom`).
+
+## Development
 
 ### Vereisten
-Zorg dat je dit geïnstalleerd hebt:
-- **Node.js** (>= 18 aanbevolen)
-- **npm** (wordt meegeleverd met Node)
+- Node.js (>= 20 aanbevolen)
+- npm
 
-Controleer:
+### Starten
 ```bash
-node -v
-npm -v
+npm install
+npm run dev
 ```
 
-#### Installeer dependencies:
-npm install
+Open: http://127.0.0.1:5173
 
-#### Start de development server:
-npm run dev
+### Build
+```bash
+npm run build
+```
 
-#### Open de app in je browser:
-http://localhost:5173
+De build bevat twee entries:
+- `index.html` (demo host)
+- `alignment-mfe.html` (alignment micro-frontend)
 
-
-
-## Input data
-De viewer laadt data via `POST /actualiser/viewer` van de webservice.
-
-- standaard backend URL: `http://127.0.0.1:80`
-- override via env var: `VITE_BRDR_API_BASE_URL`
-- request body staat in `src/data/request_body.json`
-
-### Dynamische geometrie
-- klik **Teken nieuwe geometrie** in de viewer en teken een polygon op de kaart
-- je kan bestaande vertices nadien verslepen (modify)
-- klik **Herbereken** om de webservice opnieuw te laten rekenen en de tijdlijn + kaart te updaten
+## Backend koppeling
+- Viewer gebruikt `POST /actualiser/viewer`.
+- Standaard backend: `http://127.0.0.1:80`
+- Override via `VITE_BRDR_API_BASE_URL`
 
 Voorbeeld:
 ```bash

@@ -168,3 +168,4 @@ cython_debug/
 **/*.quarto_ipynb
 /docs_src/_site/
 /docs_src/.quarto/
+/dev/
