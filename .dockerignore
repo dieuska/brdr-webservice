@@ -3,6 +3,9 @@
 .idea
 venv
 __pycache__
+pytest-cache-files-*
+.pytest_cache/
+
 *.pyc
 docs_src/.quarto
 docs_src/_site

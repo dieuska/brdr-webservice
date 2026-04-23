@@ -27,7 +27,7 @@ function createVectorLayer(
         { type: "Feature", geometry },
         {
           dataProjection: "EPSG:31370",
-          featureProjection: "EPSG:3857",
+          featureProjection: "EPSG:31370",
         }
       ),
     }),

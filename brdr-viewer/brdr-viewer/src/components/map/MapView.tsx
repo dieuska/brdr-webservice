@@ -17,6 +17,7 @@ export type DrawGeometryType = "Polygon" | "LineString" | "Point";
 
 interface Props {
   step: BrdrStep | null;
+  selectedGrbType?: string;
   showDiffLayers: boolean;
   suspendBrdrLayers: boolean;
   loading: boolean;
@@ -32,6 +33,7 @@ const INPUT_LAYER_Z_INDEX = 1000;
 
 export default function MapView({
   step,
+  selectedGrbType,
   showDiffLayers,
   suspendBrdrLayers,
   loading,
@@ -42,7 +44,7 @@ export default function MapView({
   drawGeometryType,
 }: Props) {
   const divRef = useRef<HTMLDivElement>(null);
-  const map = useOpenLayersMap(divRef);
+  const map = useOpenLayersMap(divRef, selectedGrbType);
   const sourceRef = useRef<VectorSource | null>(null);
   const currentTokenRef = useRef(-1);
   const drawRef = useRef<Draw | null>(null);
@@ -84,7 +86,7 @@ export default function MapView({
       if (!geometry) return;
       const nextGeometry = format.writeGeometryObject(geometry, {
         dataProjection: "EPSG:31370",
-        featureProjection: "EPSG:3857",
+        featureProjection: "EPSG:31370",
       }) as Geometry;
       onInputGeometryChangeRef.current(nextGeometry);
     });
@@ -112,7 +114,7 @@ export default function MapView({
       { type: "Feature", geometry: inputGeometry },
       {
         dataProjection: "EPSG:31370",
-        featureProjection: "EPSG:3857",
+        featureProjection: "EPSG:31370",
       }
     ) as Feature<OlGeometry>;
 
@@ -157,7 +159,7 @@ export default function MapView({
       if (geometry) {
         const nextGeometry = format.writeGeometryObject(geometry, {
           dataProjection: "EPSG:31370",
-          featureProjection: "EPSG:3857",
+          featureProjection: "EPSG:31370",
         }) as Geometry;
         onInputGeometryChangeRef.current(nextGeometry);
       }

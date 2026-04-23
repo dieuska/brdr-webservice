@@ -146,6 +146,7 @@ function App() {
       <div className="map-wrapper">
         <MapView
           step={currentStep}
+          selectedGrbType={requestParams?.grb_type}
           showDiffLayers={!hasAppliedInputGeometry}
           suspendBrdrLayers={loading}
           loading={loading}
@@ -189,7 +190,7 @@ function App() {
             </div>
           </div>
 
-          <div className="workflow-step-card">
+          <div className="workflow-step-card workflow-step-card-recalculate">
             <div className="workflow-step-title">Stap 2. Herberekenen</div>
             <div className="primary-setting">
               <label>
@@ -208,10 +209,6 @@ function App() {
                 </select>
               </label>
             </div>
-            <p className="workflow-step-help">
-              Bereken de predicties voor de huidige geometrie en toon ze in de
-              grafiek.
-            </p>
             <div className="settings-block">
               <button
                 type="button"
@@ -219,22 +216,19 @@ function App() {
                 aria-expanded={settingsOpen}
                 onClick={() => setSettingsOpen((v) => !v)}
               >
-                {settingsOpen ? "Settings verbergen" : "Settings tonen"}
+                {settingsOpen
+                  ? "Geavanceerde settings verbergen"
+                  : "Geavanceerde settings tonen"}
               </button>
-              <div className="settings-summary">
-                <span className="settings-chip">
-                  OD: {requestParams?.od_strategy ?? "SNAP_ALL_SIDE"}
-                </span>
-                <span className="settings-chip">
-                  Snap: {requestParams?.snap_strategy ?? "PREFER_VERTICES"}
-                </span>
-                <span className="settings-chip">
-                  Max: {(requestParams?.max_relevant_distance ?? 6).toFixed(1)} m
-                </span>
-                <span className="settings-chip">
-                  Proc: {requestParams?.processor ?? "AlignerGeometryProcessor"}
-                </span>
-              </div>
+              {!settingsOpen && (
+                <p className="settings-inline-summary">
+                  OD: {requestParams?.od_strategy ?? "SNAP_ALL_SIDE"} | Snap:{" "}
+                  {requestParams?.snap_strategy ?? "PREFER_VERTICES"} | Max:{" "}
+                  {(requestParams?.max_relevant_distance ?? 6).toFixed(1)} m |
+                  Processor:{" "}
+                  {requestParams?.processor ?? "AlignerGeometryProcessor"}
+                </p>
+              )}
               {settingsOpen && (
                 <div className="params-grid">
                   <label>
@@ -325,6 +319,7 @@ function App() {
             <div className="recalculate-row">
               <button
                 type="button"
+                className="recalculate-button"
                 onClick={() => void handleRecalculate()}
                 disabled={!canRun}
               >
