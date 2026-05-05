@@ -6,10 +6,8 @@ format: html
 ## High-Level Flow
 
 1. The viewer sends a GeoJSON feature collection to the backend.
-2. The backend loads GRB reference data and evaluates multiple distances.
-3. The backend returns:
-   - full BRDR output via `/actualiser`
-   - reduced viewer-oriented output via `/actualiser/viewer`
+2. The backend loads the configured reference data and evaluates multiple distances.
+3. The backend returns viewer-oriented BRDR output via `/aligner`.
 4. The viewer renders:
    - `result` geometry
    - `result_diff_min` (negative diff)
@@ -19,8 +17,8 @@ format: html
 ## Backend
 
 - Framework: **FastAPI**
-- Main file: `grb_webservice.py`
-- Typings/models: `grb_webservice_typings.py`
+- Main file: `brdr_webservice.py`
+- Typings/models: `brdr_webservice_typings.py`
 - BRDR dependency: `brdr` package
 
 Important behavior:
@@ -47,3 +45,6 @@ Capabilities:
 - **Native**: Python backend + Node viewer
 - **Containerized backend**: Docker backend + Node viewer
 - **One-command local startup**: `start-local.ps1` / `start-local.cmd`
+
+
+

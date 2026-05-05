@@ -4,6 +4,8 @@ import type { Geometry } from "../../types/brdr";
 import type { BrdrSupportedCrs } from "../alignment/contracts";
 import { GRB_REFERENCE_LAYER_OPTIONS } from "../../data/grbReferenceLayerOptions";
 import {
+  BASE_LAYER_BRK_LUCHTFOTO,
+  BASE_LAYER_BRK_PDOK,
   BASE_LAYER_GRB_COLOR,
   BASE_LAYER_GRB_GRAY,
   BASE_LAYER_OSM,
@@ -43,6 +45,7 @@ interface Props {
   activeReferenceLayers: string[];
   onActiveReferenceLayersChange: (layers: string[]) => void;
   onImportGeometries: (geometries: Geometry[]) => void;
+  showGrbReferenceControls?: boolean;
 }
 
 export function DemoMapViewer({
@@ -57,15 +60,26 @@ export function DemoMapViewer({
   activeReferenceLayers,
   onActiveReferenceLayersChange,
   onImportGeometries,
+  showGrbReferenceControls = true,
 }: Props) {
   const [drawRequestToken, setDrawRequestToken] = useState(0);
   const [drawGeometryType, setDrawGeometryType] =
     useState<DrawGeometryType>("Polygon");
   const [baseLayerVisibility, setBaseLayerVisibility] =
-    useState<BaseLayerVisibility>(DEFAULT_BASE_LAYER_VISIBILITY);
+    useState<BaseLayerVisibility>(
+      showGrbReferenceControls
+        ? DEFAULT_BASE_LAYER_VISIBILITY
+        : {
+            [BASE_LAYER_OSM]: false,
+            [BASE_LAYER_GRB_COLOR]: false,
+            [BASE_LAYER_GRB_GRAY]: false,
+            [BASE_LAYER_BRK_PDOK]: true,
+            [BASE_LAYER_BRK_LUCHTFOTO]: true,
+          }
+    );
   const [importText, setImportText] = useState("");
   const [importSourceCrs, setImportSourceCrs] =
-    useState<ImportSourceCrs>("EPSG:3812");
+    useState<ImportSourceCrs>(crs);
   const [importFeedback, setImportFeedback] = useState<string | null>(null);
   const [selectionModeEnabled, setSelectionModeEnabled] = useState(false);
   const [fitRequestToken, setFitRequestToken] = useState(0);
@@ -191,48 +205,76 @@ export function DemoMapViewer({
         <details className="demo-layer-picker">
           <summary>Achtergrondlagen</summary>
           <div className="demo-layer-picker-list">
-            <label className="demo-layer-checkbox">
-              <input
-                type="checkbox"
-                checked={baseLayerVisibility[BASE_LAYER_GRB_COLOR]}
-                onChange={() => toggleBaseLayer(BASE_LAYER_GRB_COLOR)}
-              />
-              <span>GRB basiskaart kleur</span>
-            </label>
-            <label className="demo-layer-checkbox">
-              <input
-                type="checkbox"
-                checked={baseLayerVisibility[BASE_LAYER_GRB_GRAY]}
-                onChange={() => toggleBaseLayer(BASE_LAYER_GRB_GRAY)}
-              />
-              <span>GRB basiskaart grijs</span>
-            </label>
-            <label className="demo-layer-checkbox">
-              <input
-                type="checkbox"
-                checked={baseLayerVisibility[BASE_LAYER_OSM]}
-                onChange={() => toggleBaseLayer(BASE_LAYER_OSM)}
-              />
-              <span>OSM</span>
-            </label>
+            {!showGrbReferenceControls && (
+              <label className="demo-layer-checkbox">
+                <input
+                  type="checkbox"
+                  checked={baseLayerVisibility[BASE_LAYER_BRK_PDOK]}
+                  onChange={() => toggleBaseLayer(BASE_LAYER_BRK_PDOK)}
+                />
+                <span>PDOK BRK percelen</span>
+              </label>
+            )}
+            {!showGrbReferenceControls && (
+              <label className="demo-layer-checkbox">
+                <input
+                  type="checkbox"
+                  checked={baseLayerVisibility[BASE_LAYER_BRK_LUCHTFOTO]}
+                  onChange={() => toggleBaseLayer(BASE_LAYER_BRK_LUCHTFOTO)}
+                />
+                <span>PDOK luchtfoto RGB</span>
+              </label>
+            )}
+            {showGrbReferenceControls && (
+              <label className="demo-layer-checkbox">
+                <input
+                  type="checkbox"
+                  checked={baseLayerVisibility[BASE_LAYER_GRB_COLOR]}
+                  onChange={() => toggleBaseLayer(BASE_LAYER_GRB_COLOR)}
+                />
+                <span>GRB basiskaart kleur</span>
+              </label>
+            )}
+            {showGrbReferenceControls && (
+              <label className="demo-layer-checkbox">
+                <input
+                  type="checkbox"
+                  checked={baseLayerVisibility[BASE_LAYER_GRB_GRAY]}
+                  onChange={() => toggleBaseLayer(BASE_LAYER_GRB_GRAY)}
+                />
+                <span>GRB basiskaart grijs</span>
+              </label>
+            )}
+            {showGrbReferenceControls && (
+              <label className="demo-layer-checkbox">
+                <input
+                  type="checkbox"
+                  checked={baseLayerVisibility[BASE_LAYER_OSM]}
+                  onChange={() => toggleBaseLayer(BASE_LAYER_OSM)}
+                />
+                <span>OSM</span>
+              </label>
+            )}
           </div>
         </details>
 
-        <details className="demo-layer-picker">
-          <summary>GRB OGC lagen</summary>
-          <div className="demo-layer-picker-list">
-            {GRB_REFERENCE_LAYER_OPTIONS.map((layerName) => (
-              <label key={layerName} className="demo-layer-checkbox">
-                <input
-                  type="checkbox"
-                  checked={activeReferenceLayers.includes(layerName)}
-                  onChange={() => toggleReferenceLayer(layerName)}
-                />
-                <span>{layerName}</span>
-              </label>
-            ))}
-          </div>
-        </details>
+        {showGrbReferenceControls && (
+          <details className="demo-layer-picker">
+            <summary>GRB OGC lagen</summary>
+            <div className="demo-layer-picker-list">
+              {GRB_REFERENCE_LAYER_OPTIONS.map((layerName) => (
+                <label key={layerName} className="demo-layer-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={activeReferenceLayers.includes(layerName)}
+                    onChange={() => toggleReferenceLayer(layerName)}
+                  />
+                  <span>{layerName}</span>
+                </label>
+              ))}
+            </div>
+          </details>
+        )}
 
         <details className="demo-layer-picker demo-import-panel">
           <summary>Plak WKT / GeoJSON</summary>
@@ -247,6 +289,7 @@ export function DemoMapViewer({
               >
                 <option value="EPSG:3812">EPSG:3812</option>
                 <option value="EPSG:31370">EPSG:31370</option>
+                <option value="EPSG:28992">EPSG:28992</option>
                 <option value="EPSG:4326">WGS84 (EPSG:4326)</option>
               </select>
             </label>

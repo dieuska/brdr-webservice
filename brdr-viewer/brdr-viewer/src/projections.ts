@@ -1,5 +1,6 @@
 import proj4 from "proj4";
 import { register } from "ol/proj/proj4";
+import { get as getProjection } from "ol/proj";
 
 proj4.defs(
   "EPSG:31370",
@@ -27,4 +28,24 @@ proj4.defs(
     "+ellps=GRS80 " +
     "+units=m +no_defs"
 );
+
+proj4.defs(
+  "EPSG:28992",
+  "+proj=sterea " +
+    "+lat_0=52.15616055555555 " +
+    "+lon_0=5.38763888888889 " +
+    "+k=0.9999079 " +
+    "+x_0=155000 " +
+    "+y_0=463000 " +
+    "+ellps=bessel " +
+    "+towgs84=565.4171,50.3319,465.5524,1.9342,-1.6677,9.1019,4.0725 " +
+    "+units=m +no_defs"
+);
 register(proj4);
+
+const rdNew = getProjection("EPSG:28992");
+if (rdNew) {
+  // RD New bounds in meters (EPSG registry) + matching lon/lat world extent.
+  rdNew.setExtent([646.36, 308975.28, 284347.56, 636456.31]);
+  rdNew.setWorldExtent([3.2, 50.75, 7.22, 53.7]);
+}

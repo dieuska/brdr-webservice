@@ -2,12 +2,103 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>brdr-viewer</title>
+    <title>brdr-aligner frontend</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+      .wrap {
+        max-width: 860px;
+        margin: 36px auto;
+        padding: 0 16px;
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: 28px;
+      }
+      p {
+        margin: 0 0 20px;
+        color: #334155;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 12px;
+      }
+      a.card {
+        display: block;
+        padding: 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        background: #fff;
+        color: #0f172a;
+        text-decoration: none;
+      }
+      a.card:hover {
+        border-color: #1d4ed8;
+        box-shadow: 0 2px 10px rgba(29, 78, 216, 0.12);
+      }
+      .title {
+        font-weight: 700;
+      }
+      .sub {
+        margin-top: 4px;
+        font-size: 13px;
+        color: #475569;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <main class="wrap">
+      <h1>brdr-aligner frontend</h1>
+      <p>Kies een viewer of open backend API/documentatie.</p>
+      <h2>Frontend viewers</h2>
+      <div class="grid">
+        <a class="card" href="/grb-viewer">
+          <div class="title">GRB Viewer</div>
+          <div class="sub">Vlaamse data via GRBType</div>
+        </a>
+        <a class="card" href="/brk-viewer">
+          <div class="title">BRK Viewer</div>
+          <div class="sub">Nederlandse percelen via WFS</div>
+        </a>
+      </div>
+      <h2 style="margin-top: 22px;">Backend (brdr-aligner)</h2>
+      <div class="grid">
+        <a class="card" id="backend-overview-link" href="/">
+          <div class="title">Backend overzicht</div>
+          <div class="sub">Service links en status</div>
+        </a>
+        <a class="card" id="backend-api-link" href="/aligner">
+          <div class="title">Webservice</div>
+          <div class="sub">POST /aligner</div>
+        </a>
+        <a class="card" id="backend-docs-link" href="/docs">
+          <div class="title">Swagger Docs</div>
+          <div class="sub">OpenAPI documentatie</div>
+        </a>
+      </div>
+    </main>
+    <script>
+      (function () {
+        var isFrontendDev = window.location.port === "5173";
+        var backendBase = isFrontendDev
+          ? "http://127.0.0.1:80"
+          : window.location.origin;
+
+        var overview = document.getElementById("backend-overview-link");
+        var api = document.getElementById("backend-api-link");
+        var docs = document.getElementById("backend-docs-link");
+
+        if (overview) overview.setAttribute("href", backendBase + "/");
+        if (api) api.setAttribute("href", backendBase + "/aligner");
+        if (docs) docs.setAttribute("href", backendBase + "/docs");
+      })();
+    </script>
   </body>
 </html>
+

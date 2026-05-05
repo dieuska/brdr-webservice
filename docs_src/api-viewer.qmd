@@ -5,14 +5,14 @@ format: html
 
 ## API Endpoints
 
-## `POST /actualiser`
+## `POST /aligner`
 
-Returns the detailed BRDR output as GeoJSON feature collections.
+Returns the viewer-oriented BRDR output structure.
 
 Query parameter:
 
-- `result_mode=predictions` (default): evaluated predictions output
-- `result_mode=all`: full process steps output
+- `feature_id` (optional): required when request contains multiple features
+- `result_mode=all` (default) or `result_mode=predictions`
 
 Request body (shape):
 
@@ -34,7 +34,14 @@ Request body (shape):
   },
   "params": {
     "crs": "EPSG:31370",
+    "reference_loader": "grb",
     "grb_type": "GRB - ADP - administratief perceel",
+    "reference_url": null,
+    "reference_id_property": null,
+    "reference_typename": null,
+    "reference_collection": null,
+    "reference_partition": 1000,
+    "reference_limit": 10000,
     "full_reference_strategy": "prefer_full_reference",
     "od_strategy": "SNAP_ALL_SIDE",
     "snap_strategy": "PREFER_VERTICES",
@@ -48,10 +55,10 @@ Notes:
 
 - `geometry.type` can be `Point`, `LineString`, `Polygon` and multi-variants.
 - `max_relevant_distance` is limited to `25`.
-
-## `POST /actualiser/viewer`
-
-Returns a viewer-oriented structure:
+- `reference_loader`:
+  - `grb`: uses `grb_type`
+  - `wfs`: requires `reference_url`, `reference_id_property`, `reference_typename`
+  - `ogc_feature_api`: requires `reference_url`, `reference_id_property`, `reference_collection`
 
 ```json
 {
@@ -75,11 +82,6 @@ Returns a viewer-oriented structure:
 }
 ```
 
-Optional query parameter:
-
-- `feature_id` when request contains multiple features
-- `result_mode=all` (default) or `result_mode=predictions`
-
 ## Status Codes
 
 - `200`: Success
@@ -87,12 +89,19 @@ Optional query parameter:
 - `503`: Upstream GRB service unavailable
 - `500`: Unexpected internal error
 
+## `GET /aligner`
+
+Returns a helper payload for end users with:
+- endpoint usage note
+- docs link
+- sample query/body
+
 ## Viewer Integration
 
 The viewer:
 
 1. keeps an input geometry in local state
-2. sends that geometry to `/actualiser/viewer`
+2. sends that geometry to `/aligner`
 3. updates timeline and map layers from returned `series` and `diffs`
 4. highlights prediction steps and can jump to previous/next prediction quickly
 
@@ -102,13 +111,23 @@ Main frontend files:
 - `src/state/useBrdrState.ts`
 - `src/components/map/MapView.tsx`
 
+Viewer routes:
+
+- `/` overview page
+- `/grb-viewer` GRB demo viewer
+- `/brk-viewer` BRK/WFS demo viewer
+- `/viewer` redirects to `/grb-viewer`
+
 ## Testing the API with curl
 
 With `body.json` in repository root:
 
 ```bash
-curl -X POST "http://127.0.0.1:80/actualiser/viewer?feature_id=2" \
+curl -X POST "http://127.0.0.1:80/aligner?feature_id=2" \
   -H "accept: application/json" \
   -H "Content-Type: application/json" \
   -d @body.json
 ```
+
+
+

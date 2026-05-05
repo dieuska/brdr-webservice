@@ -26,6 +26,9 @@ export function useBrdrState(options: UseBrdrStateOptions) {
     const next = structuredClone(getDefaultRequestBody());
     const nextParams = next.params as BrdrAlignmentParams;
     nextParams.crs = options.crs;
+    if (options.initialRequestParams) {
+      Object.assign(nextParams, options.initialRequestParams);
+    }
 
     if (options.initialGeometry) {
       if (next.featurecollection.features.length === 0) {
@@ -146,11 +149,19 @@ export function useBrdrState(options: UseBrdrStateOptions) {
       if (!next.params) {
         next.params = {
           crs: options.crs,
+          reference_loader: "grb",
           grb_type: "GRB - ADP - administratief perceel",
+          reference_url: "",
+          reference_id_property: "",
+          reference_typename: "",
+          reference_collection: "",
+          reference_partition: 1000,
+          reference_limit: 10000,
           full_reference_strategy: "prefer_full_reference",
           od_strategy: "SNAP_ALL_SIDE",
           snap_strategy: "PREFER_VERTICES",
-          max_relevant_distance: 6.0,
+          max_relevant_distance: 10.0,
+          relevant_distance_step: 0.2,
           processor: "AlignerGeometryProcessor",
         };
       }

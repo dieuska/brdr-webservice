@@ -17,18 +17,24 @@ from brdr.processor import (
 )
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from shapely.geometry import shape
 
 from brdr.aligner import Aligner
 
-from brdr.loader import DictLoader
-from grb_webservice_typings import ResponseBody, RequestBody, ViewerResponse
+from brdr.loader import DictLoader, WFSReferenceLoader, OGCFeatureAPIReferenceLoader
+from brdr_webservice_typings import ResponseBody, RequestBody, ViewerResponse
 
 port = 80
 host = "0.0.0.0"
 
-app = FastAPI()
+app = FastAPI(
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+)
 logger = logging.getLogger(__name__)
 app.add_middleware(
     CORSMiddleware,
@@ -53,10 +59,18 @@ for candidate in (frontend_dist_dir, local_viewer_dist_dir):
         break
 
 if viewer_static_dir:
-    app.mount("/viewer", StaticFiles(directory=viewer_static_dir, html=True), name="viewer")
     legacy_assets_dir = os.path.join(viewer_static_dir, "assets")
     if os.path.isdir(legacy_assets_dir):
         app.mount("/assets", StaticFiles(directory=legacy_assets_dir), name="viewer-assets")
+
+
+def _viewer_html_file(filename: str) -> str:
+    if not viewer_static_dir:
+        raise HTTPException(status_code=404, detail="Viewer assets not found")
+    path = os.path.join(viewer_static_dir, filename)
+    if not os.path.isfile(path):
+        raise HTTPException(status_code=404, detail=f"Missing viewer asset: {filename}")
+    return path
 
 
 def _format_distance_key(value: Any) -> str:
@@ -182,15 +196,32 @@ def _extract_diff_value_from_properties(
     metric: Literal["area", "length", "count"],
 ) -> Optional[float]:
     metric_candidates = {
-        "area": ["brdr_diff_area"],
-        "length": ["brdr_diff_length", "brdr_diff_perimeter", "brdr_diff_area"],
-        "count": ["brdr_diff_count", "brdr_diff_points", "brdr_diff_point_count"],
+        # Prefer BRDR internal index metrics first (used during evaluation/prediction),
+        # then fall back to legacy/public diff fields.
+        "area": [
+            "brdr_sym_diff_area_index",
+            "brdr_diff_area_index",
+            "brdr_diff_area",
+        ],
+        "length": [
+            "brdr_diff_length_index",
+            "brdr_diff_length",
+            "brdr_diff_perimeter",
+        ],
+        "count": [
+            "brdr_diff_count",
+            "brdr_diff_points",
+            "brdr_diff_point_count",
+        ],
     }
 
     for key in metric_candidates[metric]:
         numeric = _safe_float(properties.get(key))
         if numeric is not None:
             return abs(numeric)
+
+    if metric == "area":
+        return None
 
     for key, value in properties.items():
         if not key.startswith("brdr_diff_"):
@@ -285,13 +316,7 @@ def build_viewer_response(
             diff_metric,
         )
 
-        if numeric_diff_value is not None and numeric_diff_value > 0:
-            diffs[distance_key] = numeric_diff_value
-        else:
-            diffs[distance_key] = (
-                _safe_geometry_measure(diff_min_geometry, diff_metric)
-                + _safe_geometry_measure(diff_plus_geometry, diff_metric)
-            )
+        diffs[distance_key] = numeric_diff_value or 0.0
         predictions[distance_key] = _is_prediction_step(
             result_by_distance[distance_key].get("evaluation"),
             result_by_distance[distance_key].get("prediction_score"),
@@ -324,11 +349,21 @@ def calculate_alignment_geojson(
     max_relevant_distance = (
         params.max_relevant_distance
         if params and params.max_relevant_distance
-        else 6.0
+        else 10.0
+    )
+    relevant_distance_step = (
+        params.relevant_distance_step
+        if params and params.relevant_distance_step
+        else 0.2
     )
     max_relevant_distance = min(float(max_relevant_distance), 25.0)
+    relevant_distance_step = max(float(relevant_distance_step), 0.01)
     max_centimeters = max(int(round(max_relevant_distance * 100)), 1)
-    relevant_distances = [round(k / 100, 2) for k in range(0, max_centimeters + 1, 10)]
+    step_centimeters = max(int(round(relevant_distance_step * 100)), 1)
+    relevant_distances = [
+        round(k / 100, 2)
+        for k in range(0, max_centimeters + 1, step_centimeters)
+    ]
     rounded_max_distance = round(float(max_relevant_distance), 2)
     if relevant_distances[-1] != rounded_max_distance:
         relevant_distances.append(rounded_max_distance)
@@ -351,6 +386,17 @@ def calculate_alignment_geojson(
     )
     area_limit = 100000
     grb_type = params.grb_type if params and params.grb_type else GRBType.ADP
+    reference_loader = params.reference_loader if params and params.reference_loader else "grb"
+    reference_partition = (
+        params.reference_partition
+        if params and params.reference_partition
+        else 1000
+    )
+    reference_limit = (
+        params.reference_limit
+        if params and params.reference_limit
+        else 10000
+    )
     full_strategy = (
         params.full_reference_strategy
         if params and params.full_reference_strategy
@@ -385,9 +431,32 @@ def calculate_alignment_geojson(
     )
 
     aligner.load_thematic_data(DictLoader(data_dict=data_dict))
-    aligner.load_reference_data(
-        GRBActualLoader(grb_type=grb_type, partition=1000, aligner=aligner)
-    )
+    if reference_loader == "wfs":
+        aligner.load_reference_data(
+            WFSReferenceLoader(
+                url=params.reference_url,
+                id_property=params.reference_id_property,
+                typename=params.reference_typename,
+                aligner=aligner,
+                partition=reference_partition,
+                limit=reference_limit,
+            )
+        )
+    elif reference_loader == "ogc_feature_api":
+        aligner.load_reference_data(
+            OGCFeatureAPIReferenceLoader(
+                url=params.reference_url,
+                id_property=params.reference_id_property,
+                collection=params.reference_collection,
+                aligner=aligner,
+                partition=reference_partition,
+                limit=reference_limit,
+            )
+        )
+    else:
+        aligner.load_reference_data(
+            GRBActualLoader(grb_type=grb_type, partition=1000, aligner=aligner)
+        )
 
     aligner_result = aligner.evaluate(
         relevant_distances=relevant_distances,
@@ -409,39 +478,8 @@ def _result_type_from_mode(
     return AlignerResultType.EVALUATED_PREDICTIONS
 
 
-@app.post("/actualiser")
-def actualiser(
-    request_body: RequestBody,
-    result_mode: Literal["all", "predictions"] = Query(
-        default="predictions",
-        description="all = full process steps, predictions = evaluated prediction output",
-    ),
-):
-    """
-    Returns GRB-actualised predictions (+ score) for a set of features
-
-    - **featurecollection**: a geojson featurecollection with the features to align
-    - **params**: optional: CRS, full_reference_strategy
-    """
-    try:
-        return calculate_alignment_geojson(
-            request_body,
-            result_type=_result_type_from_mode(result_mode),
-        )
-    except HTTPException:
-        raise
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except requests.exceptions.RequestException as exc:
-        logger.exception("Upstream GRB service unavailable")
-        raise HTTPException(status_code=503, detail="Upstream GRB service unavailable") from exc
-    except Exception:
-        logger.exception("Unexpected error while processing /actualiser")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@app.post("/actualiser/viewer", response_model=ViewerResponse)
-def actualiser_viewer(
+@app.post("/aligner", response_model=ViewerResponse)
+def aligner_endpoint(
     request_body: RequestBody,
     feature_id: Optional[str] = Query(
         default=None,
@@ -452,6 +490,12 @@ def actualiser_viewer(
         description="all = full process steps, predictions = evaluated prediction output",
     ),
 ):
+    """
+    Returns viewer-oriented BRDR alignment output for a set of features.
+
+    - **featurecollection**: a geojson featurecollection with the features to align
+    - **params**: optional: CRS, reference loader params, and alignment settings
+    """
     try:
         process_results = calculate_alignment_geojson(
             request_body,
@@ -462,18 +506,65 @@ def actualiser_viewer(
         raise
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except requests.exceptions.RequestException as exc:
+        logger.exception("Upstream GRB service unavailable")
+        raise HTTPException(status_code=503, detail="Upstream GRB service unavailable") from exc
+    except Exception:
+        logger.exception("Unexpected error while processing /aligner")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get("/aligner")
+def aligner_help():
+    return {
+        "message": "Use POST /aligner for BRDR alignment.",
+        "docs": "/docs",
+        "example_query": "/aligner?feature_id=2&result_mode=all",
+        "example_body": {
+            "featurecollection": {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "id": "2",
+                        "properties": {},
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]],
+                        },
+                    }
+                ],
+            },
+            "params": {
+                "crs": "EPSG:31370",
+                "reference_loader": "grb",
+                "grb_type": "GRB - ADP - administratief perceel",
+                "max_relevant_distance": 10.0,
+                "relevant_distance_step": 0.2,
+            },
+        },
+    }
 
 
 @app.get("/")
 def home():
-    return (
-        "Welcome to GRB-actualiser webservice!.You can actualise on '/actualiser'."
-        "Docs can be found at '/docs'. Viewer (if bundled) is available at '/viewer'."
-    )
+    if viewer_static_dir:
+        return FileResponse(_viewer_html_file("index.html"))
+    return {
+        "name": "brdr-aligner webservice",
+        "links": [
+            {"label": "grb viewer", "href": "/grb-viewer"},
+            {"label": "brk viewer (wfs example)", "href": "/brk-viewer"},
+            {"label": "aligner api", "href": "/aligner"},
+            {"label": "swagger docs", "href": "/docs"},
+            {"label": "redoc", "href": "/redoc"},
+            {"label": "openapi", "href": "/openapi.json"},
+        ],
+    }
 
 
 if not viewer_static_dir:
-    @app.get("/viewer")
+    @app.get("/grb-viewer")
     def viewer_unavailable():
         return {
             "detail": (
@@ -483,6 +574,44 @@ if not viewer_static_dir:
             )
         }
 
+    @app.get("/brk-viewer")
+    def viewer_brk_unavailable():
+        return {
+            "detail": (
+                "Viewer assets not found. Run the frontend dev server on "
+                "http://127.0.0.1:5173 or build the viewer (`npm run build` in "
+                "`brdr-viewer/brdr-viewer`) or use the Docker image that bundles the viewer."
+            )
+        }
+else:
+    @app.get("/grb-viewer")
+    def grb_viewer():
+        return FileResponse(_viewer_html_file("grb-viewer.html"))
+
+    @app.get("/brk-viewer")
+    def brk_viewer():
+        return FileResponse(_viewer_html_file("brk-viewer.html"))
+
+    @app.get("/alignment-mfe.html")
+    def alignment_mfe():
+        return FileResponse(_viewer_html_file("alignment-mfe.html"))
+
+    @app.get("/alignment-mfe-wfs.html")
+    def alignment_mfe_wfs():
+        return FileResponse(_viewer_html_file("alignment-mfe-wfs.html"))
+
+
+@app.get("/viewer")
+def viewer_redirect_root():
+    return RedirectResponse(url="/grb-viewer", status_code=307)
+
+
+@app.get("/viewer/{path:path}")
+def viewer_redirect_path(path: str):
+    return RedirectResponse(url="/grb-viewer", status_code=307)
+
+
+
 
 def start_server():
     uvicorn.run(app, host=host, port=port)
@@ -491,3 +620,4 @@ def start_server():
 
 if __name__ == "__main__":
     start_server()
+

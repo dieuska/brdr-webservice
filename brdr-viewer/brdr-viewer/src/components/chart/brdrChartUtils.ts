@@ -2,6 +2,10 @@ export function getMaxAbs(values: number[]): number {
   return Math.max(...values.map((v) => Math.abs(v))) || 1;
 }
 
+function toVisualValue(value: number): number {
+  return Math.sqrt(Math.max(Math.abs(value), 0));
+}
+
 export function createXScale(
   count: number,
   width: number,
@@ -16,10 +20,11 @@ export function createYScale(
   height: number,
   padding: number
 ) {
+  const visualMax = toVisualValue(max || 1);
   return (v: number) =>
     height -
     padding -
-    (Math.abs(v) / max) * (height - padding * 2);
+    (toVisualValue(v) / visualMax) * (height - padding * 2);
 }
 
 export function createLinePoints(

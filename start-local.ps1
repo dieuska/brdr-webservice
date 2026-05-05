@@ -5,7 +5,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$backendPath = Join-Path $repoRoot "grb_webservice.py"
+$backendPath = Join-Path $repoRoot "brdr_webservice.py"
 $frontendPath = Join-Path $repoRoot "brdr-viewer\brdr-viewer"
 $venvPython = Join-Path $repoRoot "venv\Scripts\python.exe"
 
@@ -49,3 +49,4 @@ if (-not $NoBrowser) {
 
 Write-Host "Backend gestart op http://127.0.0.1:80"
 Write-Host "Viewer gestart op http://127.0.0.1:5173"
+

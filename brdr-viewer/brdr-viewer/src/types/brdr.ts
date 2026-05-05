@@ -64,11 +64,19 @@ export interface BrdrRequestBody {
   };
   params: {
     crs: string;
+    reference_loader?: "grb" | "wfs" | "ogc_feature_api";
     grb_type: string;
+    reference_url?: string;
+    reference_id_property?: string;
+    reference_typename?: string;
+    reference_collection?: string;
+    reference_partition?: number;
+    reference_limit?: number;
     full_reference_strategy: string;
     od_strategy?: string;
     snap_strategy?: string;
     max_relevant_distance?: number;
+    relevant_distance_step?: number;
     processor?: string;
   };
 }

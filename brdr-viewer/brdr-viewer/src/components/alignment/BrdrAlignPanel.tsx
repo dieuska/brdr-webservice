@@ -30,7 +30,6 @@ const PROCESSOR_OPTIONS = [
   "SnapGeometryProcessor",
   "TopologyProcessor",
 ];
-
 interface Props {
   requestParams: BrdrRequestBody["params"] | undefined;
   settingsOpen: boolean;
@@ -96,26 +95,34 @@ export function BrdrAlignPanel({
   resetAppliedInputGeometry,
   setStepIndex,
 }: Props) {
+  const isWfsReference = requestParams?.reference_loader === "wfs";
+
   return (
     <>
       <div className="workflow-step-card workflow-step-card-recalculate">
         <div className="workflow-step-title">BRDR alignering</div>
         <div className="primary-setting">
-          <label>
-            Kies GRB-referentielaag
-            <select
-              value={requestParams?.grb_type ?? "GRB - ADP - administratief perceel"}
-              onChange={(event) =>
-                updateRequestParam("grb_type", event.target.value)
-              }
-            >
-              {GRB_REFERENCE_LAYER_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </label>
+          {!isWfsReference ? (
+            <label>
+              Kies GRB-referentielaag
+              <select
+                value={requestParams?.grb_type ?? "GRB - ADP - administratief perceel"}
+                onChange={(event) =>
+                  updateRequestParam("grb_type", event.target.value)
+                }
+              >
+                {GRB_REFERENCE_LAYER_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <p className="settings-inline-summary">
+              Referentiebron: WFS (PDOK BRK percelen)
+            </p>
+          )}
         </div>
         <div className="settings-block">
           <button
@@ -132,7 +139,7 @@ export function BrdrAlignPanel({
             <p className="settings-inline-summary">
               OD: {requestParams?.od_strategy ?? "SNAP_ALL_SIDE"} | Snap:{" "}
               {requestParams?.snap_strategy ?? "PREFER_VERTICES"} | Max:{" "}
-              {(requestParams?.max_relevant_distance ?? 6).toFixed(1)} m |
+              {(requestParams?.max_relevant_distance ?? 10).toFixed(1)} m |
               Processor: {requestParams?.processor ?? "AlignerGeometryProcessor"}
             </p>
           )}
@@ -196,7 +203,7 @@ export function BrdrAlignPanel({
                   min={0.1}
                   max={25}
                   step={0.1}
-                  value={requestParams?.max_relevant_distance ?? 6}
+                  value={requestParams?.max_relevant_distance ?? 10}
                   onChange={(event) =>
                     updateRequestParam(
                       "max_relevant_distance",

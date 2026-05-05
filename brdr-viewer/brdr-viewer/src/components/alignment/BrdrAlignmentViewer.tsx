@@ -3,11 +3,23 @@ import MapView from "../map/MapView";
 import type { Geometry } from "../../types/brdr";
 import { useBrdrState } from "../../state/useBrdrState";
 import { BrdrAlignPanel } from "./BrdrAlignPanel";
-import { assertSupportedCrs, type BrdrSupportedCrs } from "./contracts";
+import {
+  BASE_LAYER_BRK_LUCHTFOTO,
+  BASE_LAYER_BRK_PDOK,
+  BASE_LAYER_GRB_COLOR,
+  BASE_LAYER_GRB_GRAY,
+  BASE_LAYER_OSM,
+} from "../map/layers/baseLayers";
+import {
+  assertSupportedCrs,
+  type BrdrAlignmentParams,
+  type BrdrSupportedCrs,
+} from "./contracts";
 
 export interface BrdrAlignmentViewerProps {
   crs: BrdrSupportedCrs;
   inputGeometry: Geometry;
+  initialRequestParams?: Partial<BrdrAlignmentParams>;
   onApplyAlignedGeometry?: (geometry: Geometry) => void;
   onLoadingChange?: (loading: boolean) => void;
   onErrorChange?: (message: string | null) => void;
@@ -21,6 +33,7 @@ function geometrySignature(geometry: Geometry | null): string {
 export function BrdrAlignmentViewer({
   crs,
   inputGeometry: externalInputGeometry,
+  initialRequestParams,
   onApplyAlignedGeometry,
   onLoadingChange,
   onErrorChange,
@@ -51,6 +64,7 @@ export function BrdrAlignmentViewer({
   } = useBrdrState({
     crs,
     initialGeometry: externalInputGeometry,
+    initialRequestParams,
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const lastExternalGeometryRef = useRef<string>(
@@ -114,15 +128,31 @@ export function BrdrAlignmentViewer({
     onApplyAlignedGeometry?.(alignedGeometry);
   }
 
+  const showGrbOverlay =
+    !requestParams?.reference_loader || requestParams.reference_loader === "grb";
+  const baseLayerVisibility = showGrbOverlay
+    ? undefined
+    : {
+        [BASE_LAYER_OSM]: false,
+        [BASE_LAYER_GRB_COLOR]: false,
+        [BASE_LAYER_GRB_GRAY]: false,
+        [BASE_LAYER_BRK_LUCHTFOTO]: true,
+        [BASE_LAYER_BRK_PDOK]: true,
+      };
+
   return (
     <div className="app-layout">
       <div className="map-wrapper">
         <MapView
           crs={crs}
           step={currentStep}
+          showReferenceLayer={showGrbOverlay}
           selectedGrbTypes={
-            requestParams?.grb_type ? [requestParams.grb_type] : undefined
+            showGrbOverlay && requestParams?.grb_type
+              ? [requestParams.grb_type]
+              : undefined
           }
+          baseLayerVisibility={baseLayerVisibility}
           showDiffLayers={!hasAppliedInputGeometry}
           suspendBrdrLayers={loading}
           loading={loading}

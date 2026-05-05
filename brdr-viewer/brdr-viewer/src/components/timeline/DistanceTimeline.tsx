@@ -12,8 +12,9 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-function getMaxAbs(values: number[]): number {
-  return Math.max(...values.map((v) => Math.abs(v))) || 1;
+function toVisualValue(value: number): number {
+  // Compress outliers so small-but-meaningful differences remain visible.
+  return Math.sqrt(Math.max(Math.abs(value), 0));
 }
 
 export function DistanceTimeline({
@@ -27,7 +28,10 @@ export function DistanceTimeline({
 
   const count = values.length;
   const maxIndex = Math.max(count - 1, 0);
-  const maxAbs = getMaxAbs(values);
+  const visualValues = values.map(toVisualValue);
+  const maxVisual = Math.max(...visualValues, 0);
+  const minVisual = Math.min(...visualValues, 0);
+  const visualSpan = maxVisual - minVisual;
 
   const xPercent = useCallback(
     (index: number): number => (maxIndex === 0 ? 0 : (index / maxIndex) * 100),
@@ -38,9 +42,16 @@ export function DistanceTimeline({
     (value: number): number => {
       const top = 8;
       const bottom = 92;
-      return bottom - (Math.abs(value) / maxAbs) * (bottom - top);
+      if (visualSpan <= 0) {
+        return (top + bottom) / 2;
+      }
+      const paddedMin = Math.max(0, minVisual - visualSpan * 0.05);
+      const paddedMax = maxVisual + visualSpan * 0.05;
+      const normalized =
+        (toVisualValue(value) - paddedMin) / (paddedMax - paddedMin);
+      return bottom - clamp(normalized, 0, 1) * (bottom - top);
     },
-    [maxAbs]
+    [maxVisual, minVisual, visualSpan]
   );
 
   const linePoints = useMemo(
