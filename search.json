@@ -1,17 +1,38 @@
 [
   {
-    "objectID": "api-viewer.html#post-actualiser",
-    "href": "api-viewer.html#post-actualiser",
-    "title": "API and Viewer",
-    "section": "POST /actualiser",
-    "text": "POST /actualiser\nReturns the detailed BRDR output as GeoJSON feature collections.\nQuery parameter:\n\nresult_mode=predictions (default): evaluated predictions output\nresult_mode=all: full process steps output\n\nRequest body (shape):\n{\n  \"featurecollection\": {\n    \"type\": \"FeatureCollection\",\n    \"features\": [\n      {\n        \"type\": \"Feature\",\n        \"id\": \"2\",\n        \"properties\": {},\n        \"geometry\": {\n          \"type\": \"Polygon\",\n          \"coordinates\": [[[0,0],[1,0],[1,1],[0,1],[0,0]]]\n        }\n      }\n    ]\n  },\n  \"params\": {\n    \"crs\": \"EPSG:31370\",\n    \"grb_type\": \"GRB - ADP - administratief perceel\",\n    \"full_reference_strategy\": \"prefer_full_reference\",\n    \"od_strategy\": \"SNAP_ALL_SIDE\",\n    \"snap_strategy\": \"PREFER_VERTICES\",\n    \"max_relevant_distance\": 6.0,\n    \"processor\": \"AlignerGeometryProcessor\"\n  }\n}\nNotes:\n\ngeometry.type can be Point, LineString, Polygon and multi-variants.\nmax_relevant_distance is limited to 25."
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Overview",
+    "section": "",
+    "text": "This project provides a proof-of-concept stack to align user geometries against GRB reference data:\n\na FastAPI webservice (brdr_webservice.py)\na viewer (brdr-viewer) to draw/edit geometry and inspect BRDR steps\nDocker and local scripts for quick startup"
   },
   {
-    "objectID": "api-viewer.html#post-actualiserviewer",
-    "href": "api-viewer.html#post-actualiserviewer",
+    "objectID": "index.html#brdr-webservice-proof-of-concept",
+    "href": "index.html#brdr-webservice-proof-of-concept",
+    "title": "Overview",
+    "section": "",
+    "text": "This project provides a proof-of-concept stack to align user geometries against GRB reference data:\n\na FastAPI webservice (brdr_webservice.py)\na viewer (brdr-viewer) to draw/edit geometry and inspect BRDR steps\nDocker and local scripts for quick startup"
+  },
+  {
+    "objectID": "index.html#what-you-can-do",
+    "href": "index.html#what-you-can-do",
+    "title": "Overview",
+    "section": "What You Can Do",
+    "text": "What You Can Do\n\nStart backend and viewer locally.\nDraw or edit an input polygon in the viewer.\nTrigger BRDR alignment.\nInspect intermediate steps on the map and in the chart timeline."
+  },
+  {
+    "objectID": "index.html#components-at-a-glance",
+    "href": "index.html#components-at-a-glance",
+    "title": "Overview",
+    "section": "Components at a Glance",
+    "text": "Components at a Glance\n\nBackend endpoint: POST /aligner (viewer-oriented response)\nFrontend map + timeline: OpenLayers + React app in brdr-viewer/brdr-viewer\n\nContinue with:\n\nArchitecture\nRun Locally\nAPI and Viewer"
+  },
+  {
+    "objectID": "api-viewer.html#post-aligner",
+    "href": "api-viewer.html#post-aligner",
     "title": "API and Viewer",
-    "section": "POST /actualiser/viewer",
-    "text": "POST /actualiser/viewer\nReturns a viewer-oriented structure:\n{\n  \"series\": {\n    \"0.0\": {\n      \"result\": { \"type\": \"Polygon\", \"coordinates\": [] },\n      \"result_diff_min\": { \"type\": \"Polygon\", \"coordinates\": [] },\n      \"result_diff_plus\": { \"type\": \"Polygon\", \"coordinates\": [] }\n    }\n  },\n  \"diffs\": {\n    \"0.0\": 0.0\n  },\n  \"diff_metric\": \"area\",\n  \"predictions\": {\n    \"0.0\": false\n  },\n  \"prediction_scores\": {\n    \"0.0\": 0.0\n  }\n}\nOptional query parameter:\n\nfeature_id when request contains multiple features\nresult_mode=all (default) or result_mode=predictions"
+    "section": "POST /aligner",
+    "text": "POST /aligner\nReturns the viewer-oriented BRDR output structure.\nQuery parameter:\n\nfeature_id (optional): required when request contains multiple features\nresult_mode=all (default) or result_mode=predictions\n\nRequest body (shape):\n{\n  \"featurecollection\": {\n    \"type\": \"FeatureCollection\",\n    \"features\": [\n      {\n        \"type\": \"Feature\",\n        \"id\": \"2\",\n        \"properties\": {},\n        \"geometry\": {\n          \"type\": \"Polygon\",\n          \"coordinates\": [[[0,0],[1,0],[1,1],[0,1],[0,0]]]\n        }\n      }\n    ]\n  },\n  \"params\": {\n    \"crs\": \"EPSG:31370\",\n    \"reference_loader\": \"grb\",\n    \"grb_type\": \"GRB - ADP - administratief perceel\",\n    \"reference_url\": null,\n    \"reference_id_property\": null,\n    \"reference_typename\": null,\n    \"reference_collection\": null,\n    \"reference_partition\": 1000,\n    \"reference_limit\": 10000,\n    \"full_reference_strategy\": \"prefer_full_reference\",\n    \"od_strategy\": \"SNAP_ALL_SIDE\",\n    \"snap_strategy\": \"PREFER_VERTICES\",\n    \"max_relevant_distance\": 6.0,\n    \"processor\": \"AlignerGeometryProcessor\"\n  }\n}\nNotes:\n\ngeometry.type can be Point, LineString, Polygon and multi-variants.\nmax_relevant_distance is limited to 25.\nreference_loader:\n\ngrb: uses grb_type\nwfs: requires reference_url, reference_id_property, reference_typename\nogc_feature_api: requires reference_url, reference_id_property, reference_collection\n\n\n{\n  \"series\": {\n    \"0.0\": {\n      \"result\": { \"type\": \"Polygon\", \"coordinates\": [] },\n      \"result_diff_min\": { \"type\": \"Polygon\", \"coordinates\": [] },\n      \"result_diff_plus\": { \"type\": \"Polygon\", \"coordinates\": [] }\n    }\n  },\n  \"diffs\": {\n    \"0.0\": 0.0\n  },\n  \"diff_metric\": \"area\",\n  \"predictions\": {\n    \"0.0\": false\n  },\n  \"prediction_scores\": {\n    \"0.0\": 0.0\n  }\n}"
   },
   {
     "objectID": "api-viewer.html#status-codes",
@@ -21,18 +42,60 @@
     "text": "Status Codes\n\n200: Success\n400: Validation or request-shape issue\n503: Upstream GRB service unavailable\n500: Unexpected internal error"
   },
   {
+    "objectID": "api-viewer.html#get-aligner",
+    "href": "api-viewer.html#get-aligner",
+    "title": "API and Viewer",
+    "section": "GET /aligner",
+    "text": "GET /aligner\nReturns a helper payload for end users with: - endpoint usage note - docs link - sample query/body"
+  },
+  {
     "objectID": "api-viewer.html#viewer-integration",
     "href": "api-viewer.html#viewer-integration",
     "title": "API and Viewer",
     "section": "Viewer Integration",
-    "text": "Viewer Integration\nThe viewer:\n\nkeeps an input geometry in local state\nsends that geometry to /actualiser/viewer\nupdates timeline and map layers from returned series and diffs\nhighlights prediction steps and can jump to previous/next prediction quickly\n\nMain frontend files:\n\nsrc/api/brdrApi.ts\nsrc/state/useBrdrState.ts\nsrc/components/map/MapView.tsx"
+    "text": "Viewer Integration\nThe viewer:\n\nkeeps an input geometry in local state\nsends that geometry to /aligner\nupdates timeline and map layers from returned series and diffs\nhighlights prediction steps and can jump to previous/next prediction quickly\n\nMain frontend files:\n\nsrc/api/brdrApi.ts\nsrc/state/useBrdrState.ts\nsrc/components/map/MapView.tsx\n\nViewer routes:\n\n/ overview page\n/grb-viewer GRB demo viewer\n/brk-viewer BRK/WFS demo viewer\n/viewer redirects to /grb-viewer"
   },
   {
     "objectID": "api-viewer.html#testing-the-api-with-curl",
     "href": "api-viewer.html#testing-the-api-with-curl",
     "title": "API and Viewer",
     "section": "Testing the API with curl",
-    "text": "Testing the API with curl\nWith body.json in repository root:\ncurl -X POST \"http://127.0.0.1:80/actualiser/viewer?feature_id=2\" \\\n  -H \"accept: application/json\" \\\n  -H \"Content-Type: application/json\" \\\n  -d @body.json"
+    "text": "Testing the API with curl\nWith body.json in repository root:\ncurl -X POST \"http://127.0.0.1:80/aligner?feature_id=2\" \\\n  -H \"accept: application/json\" \\\n  -H \"Content-Type: application/json\" \\\n  -d @body.json"
+  },
+  {
+    "objectID": "architecture.html",
+    "href": "architecture.html",
+    "title": "Architecture",
+    "section": "",
+    "text": "The viewer sends a GeoJSON feature collection to the backend.\nThe backend loads the configured reference data and evaluates multiple distances.\nThe backend returns viewer-oriented BRDR output via /aligner.\nThe viewer renders:\n\nresult geometry\nresult_diff_min (negative diff)\nresult_diff_plus (positive diff)\ndiffs chart values per distance step"
+  },
+  {
+    "objectID": "architecture.html#high-level-flow",
+    "href": "architecture.html#high-level-flow",
+    "title": "Architecture",
+    "section": "",
+    "text": "The viewer sends a GeoJSON feature collection to the backend.\nThe backend loads the configured reference data and evaluates multiple distances.\nThe backend returns viewer-oriented BRDR output via /aligner.\nThe viewer renders:\n\nresult geometry\nresult_diff_min (negative diff)\nresult_diff_plus (positive diff)\ndiffs chart values per distance step"
+  },
+  {
+    "objectID": "architecture.html#backend",
+    "href": "architecture.html#backend",
+    "title": "Architecture",
+    "section": "Backend",
+    "text": "Backend\n\nFramework: FastAPI\nMain file: brdr_webservice.py\nTypings/models: brdr_webservice_typings.py\nBRDR dependency: brdr package\n\nImportant behavior:\n\nRequest validation on feature IDs (must be present and unique).\nCompatibility handling for GRB type labels across BRDR versions.\n503 when upstream GRB service is unavailable."
+  },
+  {
+    "objectID": "architecture.html#viewer",
+    "href": "architecture.html#viewer",
+    "title": "Architecture",
+    "section": "Viewer",
+    "text": "Viewer\n\nFramework: React + TypeScript + Vite\nMap library: OpenLayers\nPath: brdr-viewer/brdr-viewer\n\nCapabilities:\n\ndraw a new point/line/polygon\nedit geometry vertices (where applicable)\nauto-trigger recalculation after drawing/editing (manual recalc remains available)\ninspect timeline steps, prediction markers, and geometry-aware diff chart"
+  },
+  {
+    "objectID": "architecture.html#runtime-modes",
+    "href": "architecture.html#runtime-modes",
+    "title": "Architecture",
+    "section": "Runtime Modes",
+    "text": "Runtime Modes\n\nNative: Python backend + Node viewer\nContainerized backend: Docker backend + Node viewer\nOne-command local startup: start-local.ps1 / start-local.cmd"
   },
   {
     "objectID": "run-locally.html",
@@ -60,14 +123,14 @@
     "href": "run-locally.html#manual-start",
     "title": "Run Locally",
     "section": "Manual Start",
-    "text": "Manual Start\n\n1. Start backend\npython grb_webservice.py\n\n\n2. Start viewer\ncd brdr-viewer\\brdr-viewer\nnpm install\nnpm run dev -- --host 127.0.0.1 --port 5173\nOpen http://127.0.0.1:5173."
+    "text": "Manual Start\n\n1. Start backend\npython brdr_webservice.py\n\n\n2. Start viewer\ncd brdr-viewer\\brdr-viewer\nnpm install\nnpm run dev -- --host 127.0.0.1 --port 5173\nOpen http://127.0.0.1:5173."
   },
   {
     "objectID": "run-locally.html#docker-backend-option",
     "href": "run-locally.html#docker-backend-option",
     "title": "Run Locally",
     "section": "Docker Backend Option",
-    "text": "Docker Backend Option\nFrom repository root:\ndocker build -f Dockerfile . -t grb_webservice\ndocker run --rm -p 80:80 --name grb_webservice grb_webservice\nMake sure Docker Desktop / Docker Engine is running before executing these commands.\nThis image bundles both backend and viewer:\n\nAPI: http://127.0.0.1:80\nSwagger: http://127.0.0.1:80/docs\nViewer: http://127.0.0.1:80/viewer"
+    "text": "Docker Backend Option\nFrom repository root:\ndocker build -f Dockerfile . -t brdr-aligner\ndocker run --rm -p 80:80 --name brdr-aligner brdr-aligner\nMake sure Docker Desktop / Docker Engine is running before executing these commands.\nThis image bundles both backend and viewer:\n\nAPI: http://127.0.0.1:80\nSwagger: http://127.0.0.1:80/docs\nViewer: http://127.0.0.1:80/\nBRK Viewer (WFS): http://127.0.0.1:80/brk-viewer"
   },
   {
     "objectID": "run-locally.html#common-issues",
@@ -75,68 +138,5 @@
     "title": "Run Locally",
     "section": "Common Issues",
     "text": "Common Issues\n\nViewer shows fetch errors\n\nEnsure backend is running on http://127.0.0.1:80.\nCheck CORS origin (localhost:5173 / 127.0.0.1:5173).\nVerify outbound access from backend to GRB upstream services.\n\n\n\nEmpty or flat chart values\n\nTrigger recalculation after drawing or editing geometry.\nEnsure geometry is valid and has area."
-  },
-  {
-    "objectID": "architecture.html",
-    "href": "architecture.html",
-    "title": "Architecture",
-    "section": "",
-    "text": "The viewer sends a GeoJSON feature collection to the backend.\nThe backend loads GRB reference data and evaluates multiple distances.\nThe backend returns:\n\nfull BRDR output via /actualiser\nreduced viewer-oriented output via /actualiser/viewer\n\nThe viewer renders:\n\nresult geometry\nresult_diff_min (negative diff)\nresult_diff_plus (positive diff)\ndiffs chart values per distance step"
-  },
-  {
-    "objectID": "architecture.html#high-level-flow",
-    "href": "architecture.html#high-level-flow",
-    "title": "Architecture",
-    "section": "",
-    "text": "The viewer sends a GeoJSON feature collection to the backend.\nThe backend loads GRB reference data and evaluates multiple distances.\nThe backend returns:\n\nfull BRDR output via /actualiser\nreduced viewer-oriented output via /actualiser/viewer\n\nThe viewer renders:\n\nresult geometry\nresult_diff_min (negative diff)\nresult_diff_plus (positive diff)\ndiffs chart values per distance step"
-  },
-  {
-    "objectID": "architecture.html#backend",
-    "href": "architecture.html#backend",
-    "title": "Architecture",
-    "section": "Backend",
-    "text": "Backend\n\nFramework: FastAPI\nMain file: grb_webservice.py\nTypings/models: grb_webservice_typings.py\nBRDR dependency: brdr package\n\nImportant behavior:\n\nRequest validation on feature IDs (must be present and unique).\nCompatibility handling for GRB type labels across BRDR versions.\n503 when upstream GRB service is unavailable."
-  },
-  {
-    "objectID": "architecture.html#viewer",
-    "href": "architecture.html#viewer",
-    "title": "Architecture",
-    "section": "Viewer",
-    "text": "Viewer\n\nFramework: React + TypeScript + Vite\nMap library: OpenLayers\nPath: brdr-viewer/brdr-viewer\n\nCapabilities:\n\ndraw a new point/line/polygon\nedit geometry vertices (where applicable)\nauto-trigger recalculation after drawing/editing (manual recalc remains available)\ninspect timeline steps, prediction markers, and geometry-aware diff chart"
-  },
-  {
-    "objectID": "architecture.html#runtime-modes",
-    "href": "architecture.html#runtime-modes",
-    "title": "Architecture",
-    "section": "Runtime Modes",
-    "text": "Runtime Modes\n\nNative: Python backend + Node viewer\nContainerized backend: Docker backend + Node viewer\nOne-command local startup: start-local.ps1 / start-local.cmd"
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Overview",
-    "section": "",
-    "text": "This project provides a proof-of-concept stack to align user geometries against GRB reference data:\n\na FastAPI webservice (grb_webservice.py)\na viewer (brdr-viewer) to draw/edit geometry and inspect BRDR steps\nDocker and local scripts for quick startup"
-  },
-  {
-    "objectID": "index.html#brdr-webservice-proof-of-concept",
-    "href": "index.html#brdr-webservice-proof-of-concept",
-    "title": "Overview",
-    "section": "",
-    "text": "This project provides a proof-of-concept stack to align user geometries against GRB reference data:\n\na FastAPI webservice (grb_webservice.py)\na viewer (brdr-viewer) to draw/edit geometry and inspect BRDR steps\nDocker and local scripts for quick startup"
-  },
-  {
-    "objectID": "index.html#what-you-can-do",
-    "href": "index.html#what-you-can-do",
-    "title": "Overview",
-    "section": "What You Can Do",
-    "text": "What You Can Do\n\nStart backend and viewer locally.\nDraw or edit an input polygon in the viewer.\nTrigger BRDR alignment.\nInspect intermediate steps on the map and in the chart timeline."
-  },
-  {
-    "objectID": "index.html#components-at-a-glance",
-    "href": "index.html#components-at-a-glance",
-    "title": "Overview",
-    "section": "Components at a Glance",
-    "text": "Components at a Glance\n\nBackend endpoint for full output: POST /actualiser\nBackend endpoint for viewer format: POST /actualiser/viewer\nFrontend map + timeline: OpenLayers + React app in brdr-viewer/brdr-viewer\n\nContinue with:\n\nArchitecture\nRun Locally\nAPI and Viewer"
   }
 ]

@@ -42,7 +42,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-872663216cd7a7676973267d6168b1f4.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-244ce1b9ec229af56bb6f90d24b3371d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -145,12 +145,8 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="high-level-flow">High-Level Flow</h2>
 <ol type="1">
 <li>The viewer sends a GeoJSON feature collection to the backend.</li>
-<li>The backend loads GRB reference data and evaluates multiple distances.</li>
-<li>The backend returns:
-<ul>
-<li>full BRDR output via <code>/actualiser</code></li>
-<li>reduced viewer-oriented output via <code>/actualiser/viewer</code></li>
-</ul></li>
+<li>The backend loads the configured reference data and evaluates multiple distances.</li>
+<li>The backend returns viewer-oriented BRDR output via <code>/aligner</code>.</li>
 <li>The viewer renders:
 <ul>
 <li><code>result</code> geometry</li>
@@ -164,8 +160,8 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="backend">Backend</h2>
 <ul>
 <li>Framework: <strong>FastAPI</strong></li>
-<li>Main file: <code>grb_webservice.py</code></li>
-<li>Typings/models: <code>grb_webservice_typings.py</code></li>
+<li>Main file: <code>brdr_webservice.py</code></li>
+<li>Typings/models: <code>brdr_webservice_typings.py</code></li>
 <li>BRDR dependency: <code>brdr</code> package</li>
 </ul>
 <p>Important behavior:</p>

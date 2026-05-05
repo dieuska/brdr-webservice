@@ -42,7 +42,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-872663216cd7a7676973267d6168b1f4.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-244ce1b9ec229af56bb6f90d24b3371d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -145,7 +145,7 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="brdr-webservice-proof-of-concept">BRDR Webservice Proof of Concept</h2>
 <p>This project provides a proof-of-concept stack to align user geometries against GRB reference data:</p>
 <ul>
-<li>a <strong>FastAPI webservice</strong> (<code>grb_webservice.py</code>)</li>
+<li>a <strong>FastAPI webservice</strong> (<code>brdr_webservice.py</code>)</li>
 <li>a <strong>viewer</strong> (<code>brdr-viewer</code>) to draw/edit geometry and inspect BRDR steps</li>
 <li><strong>Docker and local scripts</strong> for quick startup</li>
 </ul>
@@ -162,8 +162,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="components-at-a-glance" class="level2">
 <h2 class="anchored" data-anchor-id="components-at-a-glance">Components at a Glance</h2>
 <ul>
-<li><strong>Backend endpoint for full output</strong>: <code>POST /actualiser</code></li>
-<li><strong>Backend endpoint for viewer format</strong>: <code>POST /actualiser/viewer</code></li>
+<li><strong>Backend endpoint</strong>: <code>POST /aligner</code> (viewer-oriented response)</li>
 <li><strong>Frontend map + timeline</strong>: OpenLayers + React app in <code>brdr-viewer/brdr-viewer</code></li>
 </ul>
 <p>Continue with:</p>
