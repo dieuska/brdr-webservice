@@ -122,11 +122,21 @@ class RequestProperties(BaseModel):
 
 class RequestParams(BaseModel):
     crs: Optional[str] = "EPSG:31370"
+    reference_loader: Optional[
+        Literal["grb", "wfs", "ogc_feature_api"]
+    ] = "grb"
     grb_type: Optional[GRBType] = GRBType.ADP
+    reference_url: Optional[str] = None
+    reference_id_property: Optional[str] = None
+    reference_typename: Optional[str] = None
+    reference_collection: Optional[str] = None
+    reference_partition: Optional[int] = 1000
+    reference_limit: Optional[int] = 10000
     full_reference_strategy: Optional[FullReferenceStrategy] = FullReferenceStrategy.PREFER_FULL_REFERENCE
     od_strategy: Optional[OpenDomainStrategy] = OpenDomainStrategy.SNAP_ALL_SIDE
     snap_strategy: Optional[SnapStrategy] = SnapStrategy.PREFER_VERTICES
-    max_relevant_distance: Optional[float] = 6.0
+    max_relevant_distance: Optional[float] = 10.0
+    relevant_distance_step: Optional[float] = 0.2
     processor: Optional[
         Literal[
             "AlignerGeometryProcessor",
@@ -211,6 +221,53 @@ class RequestParams(BaseModel):
             raise ValueError("max_relevant_distance must be <= 25")
         return value
 
+    @field_validator("relevant_distance_step")
+    @classmethod
+    def validate_relevant_distance_step(cls, value):
+        if value is None:
+            return value
+        if value <= 0:
+            raise ValueError("relevant_distance_step must be > 0")
+        if value > 5:
+            raise ValueError("relevant_distance_step must be <= 5")
+        return value
+
+    @field_validator("reference_partition")
+    @classmethod
+    def validate_reference_partition(cls, value):
+        if value is None:
+            return value
+        if value <= 0:
+            raise ValueError("reference_partition must be > 0")
+        return value
+
+    @field_validator("reference_limit")
+    @classmethod
+    def validate_reference_limit(cls, value):
+        if value is None:
+            return value
+        if value <= 0:
+            raise ValueError("reference_limit must be > 0")
+        return value
+
+    @model_validator(mode="after")
+    def validate_reference_loader_params(self) -> Self:
+        loader = self.reference_loader or "grb"
+        if loader == "grb":
+            return self
+
+        if not self.reference_url:
+            raise ValueError("reference_url is required when reference_loader is not 'grb'")
+        if not self.reference_id_property:
+            raise ValueError("reference_id_property is required when reference_loader is not 'grb'")
+
+        if loader == "wfs" and not self.reference_typename:
+            raise ValueError("reference_typename is required when reference_loader is 'wfs'")
+        if loader == "ogc_feature_api" and not self.reference_collection:
+            raise ValueError("reference_collection is required when reference_loader is 'ogc_feature_api'")
+
+        return self
+
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -220,7 +277,8 @@ class RequestParams(BaseModel):
                     "full_reference_strategy": "prefer_full_reference",
                     "od_strategy": "SNAP_ALL_SIDE",
                     "snap_strategy": "PREFER_VERTICES",
-                    "max_relevant_distance": 6.0,
+                    "max_relevant_distance": 10.0,
+                    "relevant_distance_step": 0.2,
                     "processor": "AlignerGeometryProcessor",
                 }
             ]

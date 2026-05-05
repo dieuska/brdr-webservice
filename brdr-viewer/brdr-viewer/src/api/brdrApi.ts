@@ -49,16 +49,40 @@ function cloneWithGrbType(
   grbType: string
 ): BrdrRequestBody {
   const next = structuredClone(payload);
-  next.params.grb_type = grbType;
+  if (next.params) {
+    next.params.grb_type = grbType;
+  }
+  return next;
+}
+
+function forceGrbReference(payload: BrdrRequestBody): BrdrRequestBody {
+  const next = structuredClone(payload);
+  if (!next.params) {
+    return next;
+  }
+  if (
+    next.params.reference_loader &&
+    next.params.reference_loader !== "grb"
+  ) {
+    return next;
+  }
+  next.params.reference_loader = "grb";
+  delete next.params.reference_url;
+  delete next.params.reference_id_property;
+  delete next.params.reference_typename;
+  delete next.params.reference_collection;
+  delete next.params.reference_partition;
+  delete next.params.reference_limit;
   return next;
 }
 
 async function postViewerRequest(
   payload: BrdrRequestBody
 ): Promise<Response> {
-  const featureId = getFeatureId(payload);
+  const sanitizedPayload = forceGrbReference(payload);
+  const featureId = getFeatureId(sanitizedPayload);
   const query = featureId ? `?feature_id=${encodeURIComponent(featureId)}` : "";
-  const url = `${API_BASE_URL}/actualiser/viewer${query}`;
+  const url = `${API_BASE_URL}/aligner${query}`;
 
   return fetch(url, {
     method: "POST",
@@ -66,7 +90,7 @@ async function postViewerRequest(
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(sanitizedPayload),
   });
 }
 
@@ -121,3 +145,4 @@ export async function fetchBrdrResponse(
   const responseData = (await response.json()) as BrdrResponse;
   return responseData;
 }
+

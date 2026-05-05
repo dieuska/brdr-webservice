@@ -5,9 +5,11 @@ React + TypeScript viewer (OpenLayers) voor demo en alignering met BRDR.
 ## Overzicht
 - Demo-kaartviewer met meerdere geometrieën (punt, lijn, polygoon).
 - Selectie via lijst of via kaartklik.
-- Aparte BRDR-alignment micro-frontend in iframe (`alignment-mfe.html`).
+- Aparte BRDR-alignment micro-frontend in iframe (`alignment-mfe.html` voor GRB, `alignment-mfe-wfs.html` voor BRK/WFS).
 - Resultaat van `Aanpassen` wordt teruggestuurd en vervangt de geselecteerde geometrie in de demo.
-- Demo CRS staat standaard op `EPSG:3812`.
+- Gescheiden viewers:
+  - `grb-viewer.html` met Vlaamse GRB-context (`EPSG:3812`)
+  - `brk-viewer.html` met Nederlandse BRK/WFS-context (`EPSG:28992`)
 
 ## Workflow in de demo
 1. Teken of importeer geometrieën in de demo-kaart.
@@ -23,6 +25,15 @@ React + TypeScript viewer (OpenLayers) voor demo en alignering met BRDR.
   - OSM (standaard uit)
 - OGC feature API overlays zijn dynamisch kiesbaar.
 - OGC overlays zijn standaard uit en worden pas zichtbaar vanaf detailzoom (`minZoom`).
+
+## BRK/WFS visualisatie
+- Basislagen:
+  - PDOK luchtfoto RGB (standaard aan)
+  - PDOK BRK percelen (standaard aan)
+- Referentielaag voor alignering via WFS:
+  - `https://service.pdok.nl/kadaster/kadastralekaart/wfs/v5_0`
+  - `typename=kadastralekaart:Perceel`
+  - `id_property=identificatieLokaalID`
 
 ## Development
 
@@ -43,12 +54,15 @@ Open: http://127.0.0.1:5173
 npm run build
 ```
 
-De build bevat twee entries:
-- `index.html` (demo host)
-- `alignment-mfe.html` (alignment micro-frontend)
+De build bevat vijf entries:
+- `index.html` (overzichtspagina)
+- `grb-viewer.html` (GRB host viewer)
+- `brk-viewer.html` (BRK/WFS host viewer)
+- `alignment-mfe.html` (GRB alignment micro-frontend)
+- `alignment-mfe-wfs.html` (BRK/WFS alignment micro-frontend)
 
 ## Backend koppeling
-- Viewer gebruikt `POST /actualiser/viewer`.
+- Viewer gebruikt `POST /aligner`.
 - Standaard backend: `http://127.0.0.1:80`
 - Override via `VITE_BRDR_API_BASE_URL`
 

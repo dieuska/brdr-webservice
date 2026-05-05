@@ -1,11 +1,11 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from grb_webservice import app, build_viewer_response
-from grb_webservice_typings import RequestBody
+from brdr_webservice import app, build_viewer_response, calculate_alignment_geojson
+from brdr_webservice_typings import RequestBody
 from brdr.be.grb.enums import GRBType
 from brdr.enums import AlignerResultType, OpenDomainStrategy
 
@@ -167,7 +167,7 @@ def make_actualiser_result_lines():
                     "geometry": make_linestring(0),
                     "properties": {
                         "brdr_relevant_distance": 0.0,
-                        "brdr_diff_area": 0.0,
+                        "brdr_diff_length": 5.0,
                         "brdr_id": "feat-1",
                     },
                 }
@@ -221,7 +221,19 @@ class ApiTests(unittest.TestCase):
     def test_home_endpoint_smoke(self):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
-        self.assertIn("/actualiser", response.json())
+        self.assertIn("brdr-aligner frontend", response.text)
+
+    def test_brdr_home_endpoint_smoke(self):
+        response = self.client.get("/viewer", follow_redirects=False)
+        self.assertEqual(response.status_code, 307)
+        self.assertEqual(response.headers.get("location"), "/grb-viewer")
+
+    def test_aligner_get_returns_help_instead_of_method_not_allowed(self):
+        response = self.client.get("/aligner")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn("Use POST /aligner", payload["message"])
+        self.assertEqual(payload["docs"], "/docs")
 
     def test_request_body_accepts_legacy_grb_type_label(self):
         body = make_request_body([make_feature("1")])
@@ -265,6 +277,40 @@ class ApiTests(unittest.TestCase):
         parsed = RequestBody.model_validate(body)
         self.assertEqual(parsed.params.processor, "AlignerGeometryProcessor")
 
+    def test_request_body_rejects_wfs_without_required_fields(self):
+        body = make_request_body([make_feature("1")])
+        body["params"]["reference_loader"] = "wfs"
+        with self.assertRaises(ValidationError):
+            RequestBody.model_validate(body)
+
+    def test_request_body_rejects_ogc_feature_api_without_required_fields(self):
+        body = make_request_body([make_feature("1")])
+        body["params"]["reference_loader"] = "ogc_feature_api"
+        with self.assertRaises(ValidationError):
+            RequestBody.model_validate(body)
+
+    def test_request_body_accepts_wfs_reference_params(self):
+        body = make_request_body([make_feature("1")])
+        body["params"] = {
+            "reference_loader": "wfs",
+            "reference_url": "https://example.test/geoserver/wfs",
+            "reference_id_property": "id",
+            "reference_typename": "ns:layer",
+        }
+        parsed = RequestBody.model_validate(body)
+        self.assertEqual(parsed.params.reference_loader, "wfs")
+
+    def test_request_body_accepts_ogc_feature_api_reference_params(self):
+        body = make_request_body([make_feature("1")])
+        body["params"] = {
+            "reference_loader": "ogc_feature_api",
+            "reference_url": "https://example.test/ogc/features/v1/collections",
+            "reference_id_property": "id",
+            "reference_collection": "my_collection",
+        }
+        parsed = RequestBody.model_validate(body)
+        self.assertEqual(parsed.params.reference_loader, "ogc_feature_api")
+
     def test_request_body_accepts_point_geometry(self):
         body = make_request_body([make_point_feature("1")])
         parsed = RequestBody.model_validate(body)
@@ -283,7 +329,7 @@ class ApiTests(unittest.TestCase):
 
         self.assertEqual(sorted(viewer["series"].keys()), ["0.0", "0.1"])
         self.assertEqual(viewer["diff_metric"], "area")
-        self.assertGreater(viewer["diffs"]["0.0"], 0.0)
+        self.assertEqual(viewer["diffs"]["0.0"], 0.0)
         self.assertEqual(viewer["diffs"]["0.1"], 12.5)
         self.assertEqual(viewer["series"]["0.0"]["result"]["type"], "Polygon")
         self.assertEqual(viewer["series"]["0.1"]["result_diff_plus"]["type"], "Polygon")
@@ -292,13 +338,13 @@ class ApiTests(unittest.TestCase):
         payload = make_actualiser_result_lines()
         viewer = build_viewer_response(payload, feature_id="feat-1")
         self.assertEqual(viewer["diff_metric"], "length")
-        self.assertGreater(viewer["diffs"]["0.0"], 0.0)
+        self.assertEqual(viewer["diffs"]["0.0"], 5.0)
 
-    def test_viewer_endpoint_uses_actualiser_output_shape(self):
+    def test_aligner_endpoint_uses_viewer_output_shape(self):
         payload = make_actualiser_result()
         request_body = make_request_body([make_feature("feat-1")])
-        with patch("grb_webservice.calculate_alignment_geojson", return_value=payload):
-            response = self.client.post("/actualiser/viewer", json=request_body)
+        with patch("brdr_webservice.calculate_alignment_geojson", return_value=payload):
+            response = self.client.post("/aligner", json=request_body)
         self.assertEqual(response.status_code, 200)
         parsed = response.json()
         self.assertIn("series", parsed)
@@ -306,19 +352,26 @@ class ApiTests(unittest.TestCase):
         self.assertIn("predictions", parsed)
         self.assertEqual(parsed["diffs"]["0.1"], 12.5)
 
-    def test_build_viewer_response_uses_geometry_area_when_diff_missing(self):
+    def test_build_viewer_response_uses_zero_area_when_diff_missing(self):
         payload = make_actualiser_result()
         for feature in payload["result"]["features"]:
             feature["properties"].pop("brdr_diff_area", None)
         viewer = build_viewer_response(payload, feature_id="feat-1")
-        self.assertGreater(viewer["diffs"]["0.0"], 0.0)
-        self.assertGreater(viewer["diffs"]["0.1"], 0.0)
+        self.assertEqual(viewer["diffs"]["0.0"], 0.0)
+        self.assertEqual(viewer["diffs"]["0.1"], 0.0)
 
-    def test_actualiser_result_mode_all_uses_processresults(self):
+    def test_build_viewer_response_prefers_brdr_internal_area_index(self):
+        payload = make_actualiser_result()
+        payload["result"]["features"][1]["properties"]["brdr_sym_diff_area_index"] = 3.25
+        payload["result"]["features"][1]["properties"]["brdr_diff_area"] = 12.5
+        viewer = build_viewer_response(payload, feature_id="feat-1")
+        self.assertEqual(viewer["diffs"]["0.1"], 3.25)
+
+    def test_aligner_result_mode_all_uses_processresults(self):
         payload = make_actualiser_result()
         request_body = make_request_body([make_feature("feat-1")])
-        with patch("grb_webservice.calculate_alignment_geojson", return_value=payload) as mocked:
-            response = self.client.post("/actualiser?result_mode=all", json=request_body)
+        with patch("brdr_webservice.calculate_alignment_geojson", return_value=payload) as mocked:
+            response = self.client.post("/aligner?result_mode=all", json=request_body)
         self.assertEqual(response.status_code, 200)
         mocked.assert_called_once()
         self.assertEqual(
@@ -326,12 +379,12 @@ class ApiTests(unittest.TestCase):
             AlignerResultType.PROCESSRESULTS,
         )
 
-    def test_actualiser_viewer_result_mode_predictions(self):
+    def test_aligner_result_mode_predictions(self):
         payload = make_actualiser_result()
         request_body = make_request_body([make_feature("feat-1")])
-        with patch("grb_webservice.calculate_alignment_geojson", return_value=payload) as mocked:
+        with patch("brdr_webservice.calculate_alignment_geojson", return_value=payload) as mocked:
             response = self.client.post(
-                "/actualiser/viewer?result_mode=predictions",
+                "/aligner?result_mode=predictions",
                 json=request_body,
             )
         self.assertEqual(response.status_code, 200)
@@ -341,6 +394,99 @@ class ApiTests(unittest.TestCase):
             AlignerResultType.EVALUATED_PREDICTIONS,
         )
 
+    def test_calculate_alignment_uses_grb_loader_by_default(self):
+        body = make_request_body([make_feature("feat-1")])
+        request_model = RequestBody.model_validate(body)
+        fake_aligner = MagicMock()
+        fake_result = MagicMock()
+        fake_result.get_results_as_geojson.return_value = {"status": "ok"}
+        fake_aligner.evaluate.return_value = fake_result
+
+        with (
+            patch("brdr_webservice.Aligner", return_value=fake_aligner),
+            patch("brdr_webservice.DictLoader", return_value=MagicMock()),
+            patch("brdr_webservice.GRBActualLoader", return_value="grb_loader") as grb_loader_mock,
+        ):
+            result = calculate_alignment_geojson(request_model)
+
+        self.assertEqual(result, {"status": "ok"})
+        grb_loader_mock.assert_called_once()
+        fake_aligner.load_reference_data.assert_called_once_with("grb_loader")
+
+    def test_calculate_alignment_uses_wfs_loader(self):
+        body = make_request_body([make_feature("feat-1")])
+        body["params"] = {
+            "reference_loader": "wfs",
+            "reference_url": "https://example.test/geoserver/wfs",
+            "reference_id_property": "id",
+            "reference_typename": "ns:layer",
+            "reference_partition": 777,
+            "reference_limit": 8888,
+        }
+        request_model = RequestBody.model_validate(body)
+        fake_aligner = MagicMock()
+        fake_result = MagicMock()
+        fake_result.get_results_as_geojson.return_value = {"status": "ok"}
+        fake_aligner.evaluate.return_value = fake_result
+
+        with (
+            patch("brdr_webservice.Aligner", return_value=fake_aligner),
+            patch("brdr_webservice.DictLoader", return_value=MagicMock()),
+            patch("brdr_webservice.WFSReferenceLoader", return_value="wfs_loader") as wfs_loader_mock,
+            patch("brdr_webservice.GRBActualLoader", return_value="grb_loader") as grb_loader_mock,
+        ):
+            result = calculate_alignment_geojson(request_model)
+
+        self.assertEqual(result, {"status": "ok"})
+        grb_loader_mock.assert_not_called()
+        wfs_loader_mock.assert_called_once_with(
+            url="https://example.test/geoserver/wfs",
+            id_property="id",
+            typename="ns:layer",
+            aligner=fake_aligner,
+            partition=777,
+            limit=8888,
+        )
+        fake_aligner.load_reference_data.assert_called_once_with("wfs_loader")
+
+    def test_calculate_alignment_uses_ogc_feature_api_loader(self):
+        body = make_request_body([make_feature("feat-1")])
+        body["params"] = {
+            "reference_loader": "ogc_feature_api",
+            "reference_url": "https://example.test/ogc/features/v1/collections",
+            "reference_id_property": "id",
+            "reference_collection": "my_collection",
+            "reference_partition": 555,
+            "reference_limit": 6666,
+        }
+        request_model = RequestBody.model_validate(body)
+        fake_aligner = MagicMock()
+        fake_result = MagicMock()
+        fake_result.get_results_as_geojson.return_value = {"status": "ok"}
+        fake_aligner.evaluate.return_value = fake_result
+
+        with (
+            patch("brdr_webservice.Aligner", return_value=fake_aligner),
+            patch("brdr_webservice.DictLoader", return_value=MagicMock()),
+            patch("brdr_webservice.OGCFeatureAPIReferenceLoader", return_value="ogc_loader") as ogc_loader_mock,
+            patch("brdr_webservice.GRBActualLoader", return_value="grb_loader") as grb_loader_mock,
+        ):
+            result = calculate_alignment_geojson(request_model)
+
+        self.assertEqual(result, {"status": "ok"})
+        grb_loader_mock.assert_not_called()
+        ogc_loader_mock.assert_called_once_with(
+            url="https://example.test/ogc/features/v1/collections",
+            id_property="id",
+            collection="my_collection",
+            aligner=fake_aligner,
+            partition=555,
+            limit=6666,
+        )
+        fake_aligner.load_reference_data.assert_called_once_with("ogc_loader")
+
 
 if __name__ == "__main__":
     unittest.main()
+
+

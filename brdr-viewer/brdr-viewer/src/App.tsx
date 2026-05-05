@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BRDR_CRS_3812 } from "./components/alignment/contracts";
+import {
+  BRDR_CRS_3812,
+  type BrdrSupportedCrs,
+} from "./components/alignment/contracts";
 import {
   DemoMapViewer,
   type DemoGeometryItem,
@@ -8,51 +11,64 @@ import type { Geometry } from "./types/brdr";
 import "./App.css";
 import "ol/ol.css";
 
-function App() {
-  const demoCrs = BRDR_CRS_3812;
-  const alignmentMfeUrl = `${import.meta.env.BASE_URL}alignment-mfe.html`;
+interface AppProps {
+  alignmentMfePath?: string;
+  demoCrs?: BrdrSupportedCrs;
+  initialGeometries?: DemoGeometryItem[];
+  showGrbReferenceControls?: boolean;
+}
+
+const DEFAULT_GRB_GEOMETRIES: DemoGeometryItem[] = [
+  {
+    id: "geom-0",
+    geometry: {
+      type: "Polygon",
+      coordinates: [[
+        [674109.9060417357, 679157.1345025133],
+        [674108.4632313423, 679157.3194291368],
+        [674067.2685345449, 679162.5997789158],
+        [674067.2641152102, 679162.762377074],
+        [674072.146275945, 679192.1411212096],
+        [674118.837324664, 679183.5345530929],
+        [674114.534713809, 679160.413227425],
+        [674109.9508475964, 679157.1662145937],
+        [674109.9060417357, 679157.1345025133],
+      ]],
+    },
+  },
+  {
+    id: "geom-1",
+    geometry: {
+      type: "MultiLineString",
+      coordinates: [[
+        [673273.1596810865, 679548.1767614188],
+        [673301.0447058184, 679562.6421179984],
+        [673326.4897908862, 679572.5761580592],
+        [673358.0347251141, 679584.6015749747],
+        [673401.430794853, 679601.1583084093],
+        [673411.5391163183, 679605.1667807145],
+        [673411.5391163183, 679605.1667807145],
+      ]],
+    },
+  },
+  {
+    id: "geom-2",
+    geometry: {
+      type: "Point",
+      coordinates: [674039.5, 679140.2],
+    },
+  },
+];
+
+function App({
+  alignmentMfePath = "alignment-mfe.html",
+  demoCrs = BRDR_CRS_3812,
+  initialGeometries = DEFAULT_GRB_GEOMETRIES,
+  showGrbReferenceControls = true,
+}: AppProps) {
+  const alignmentMfeUrl = `${import.meta.env.BASE_URL}${alignmentMfePath}`;
   const nextIdRef = useRef(3);
-  const [geometries, setGeometries] = useState<DemoGeometryItem[]>([
-    {
-      id: "geom-0",
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          [674109.9060417357, 679157.1345025133],
-          [674108.4632313423, 679157.3194291368],
-          [674067.2685345449, 679162.5997789158],
-          [674067.2641152102, 679162.762377074],
-          [674072.146275945, 679192.1411212096],
-          [674118.837324664, 679183.5345530929],
-          [674114.534713809, 679160.413227425],
-          [674109.9508475964, 679157.1662145937],
-          [674109.9060417357, 679157.1345025133],
-        ]],
-      },
-    },
-    {
-      id: "geom-1",
-      geometry: {
-        type: "MultiLineString",
-        coordinates: [[
-          [673273.1596810865, 679548.1767614188],
-          [673301.0447058184, 679562.6421179984],
-          [673326.4897908862, 679572.5761580592],
-          [673358.0347251141, 679584.6015749747],
-          [673401.430794853, 679601.1583084093],
-          [673411.5391163183, 679605.1667807145],
-          [673411.5391163183, 679605.1667807145],
-        ]],
-      },
-    },
-    {
-      id: "geom-2",
-      geometry: {
-        type: "Point",
-        coordinates: [674039.5, 679140.2],
-      },
-    },
-  ]);
+  const [geometries, setGeometries] = useState<DemoGeometryItem[]>(initialGeometries);
   const [selectedGeometryId, setSelectedGeometryId] = useState<string | null>(
     "geom-0"
   );
@@ -186,13 +202,14 @@ function App() {
           setGeometries((prev) => [...prev, ...nextItems]);
           setSelectedGeometryId(nextItems[nextItems.length - 1].id);
         }}
+        showGrbReferenceControls={showGrbReferenceControls}
       />
 
       {alignmentOpen && selectedGeometry && (
         <div className="alignment-modal-backdrop">
           <div className="alignment-modal">
             <div className="alignment-modal-header">
-              <strong>BRDR alignering (EPSG:3812)</strong>
+              <strong>{`BRDR alignering (${demoCrs})`}</strong>
               <button
                 type="button"
                 className="alignment-close-button"
