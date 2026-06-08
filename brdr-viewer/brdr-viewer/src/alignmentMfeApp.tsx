@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useState } from "react";
+import { StrictMode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BrdrAlignmentViewer } from "./components/alignment/BrdrAlignmentViewer";
 import { BrdrCompactAlignmentViewer } from "./components/alignment/BrdrCompactAlignmentViewer";
@@ -6,17 +6,14 @@ import type {
   BrdrAlignmentParams,
   BrdrSupportedCrs,
 } from "./components/alignment/contracts";
+import {
+  isAllowedOrigin,
+  isAlignmentInitMessage,
+  isOriginAllowedByConfig,
+  parseAllowedOriginsConfig,
+  type AlignmentApplyMessage,
+} from "./components/alignment/messageSecurity";
 import type { Geometry } from "./types/brdr";
-
-type InitMessage = {
-  type: "BRDR_ALIGNMENT_INIT" | "BRDR_ALIGNMENT_UPDATE_GEOMETRY";
-  payload: { crs: BrdrSupportedCrs; geometry: Geometry };
-};
-
-type ApplyMessage = {
-  type: "BRDR_ALIGNMENT_APPLY";
-  payload: { geometry: Geometry };
-};
 
 interface AlignmentMfeAppProps {
   initialRequestParams?: Partial<BrdrAlignmentParams>;
@@ -33,21 +30,42 @@ function AlignmentMfeApp({
 }: AlignmentMfeAppProps) {
   const [crs, setCrs] = useState<BrdrSupportedCrs | null>(null);
   const [geometry, setGeometry] = useState<Geometry | null>(null);
+  const [authorizationError, setAuthorizationError] = useState<string | null>(null);
+  const hostOriginRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const allowedOrigins = parseAllowedOriginsConfig(
+      import.meta.env.VITE_BRDR_ALLOWED_HOST_ORIGINS
+    );
+    const configuredHostOrigin = new URLSearchParams(window.location.search).get(
+      "hostOrigin"
+    );
+    const expectedHostOrigin = isAllowedOrigin(configuredHostOrigin)
+      ? configuredHostOrigin
+      : null;
+
+    if (
+      expectedHostOrigin &&
+      !isOriginAllowedByConfig(expectedHostOrigin, allowedOrigins)
+    ) {
+      setAuthorizationError(
+        `Embedding origin "${expectedHostOrigin}" is not allowed for this MFE.`
+      );
+      return;
+    }
+
     let hostOrigin: string | null = null;
 
-    function onMessage(event: MessageEvent<InitMessage>) {
+    function onMessage(event: MessageEvent<unknown>) {
+      if (event.source !== window.parent) return;
+      if (!isAlignmentInitMessage(event.data)) return;
+      if (expectedHostOrigin && event.origin !== expectedHostOrigin) return;
+      if (!isOriginAllowedByConfig(event.origin, allowedOrigins)) return;
+
       const message = event.data;
-      if (!message || typeof message !== "object") return;
-      if (
-        message.type !== "BRDR_ALIGNMENT_INIT" &&
-        message.type !== "BRDR_ALIGNMENT_UPDATE_GEOMETRY"
-      ) {
-        return;
-      }
       if (!hostOrigin) {
         hostOrigin = event.origin;
+        hostOriginRef.current = event.origin;
       }
       if (event.origin !== hostOrigin) return;
       setCrs(message.payload.crs);
@@ -57,13 +75,17 @@ function AlignmentMfeApp({
     window.addEventListener("message", onMessage as EventListener);
     window.parent.postMessage(
       { type: "BRDR_ALIGNMENT_READY" },
-      "*"
+      expectedHostOrigin ?? window.location.origin
     );
 
     return () => {
       window.removeEventListener("message", onMessage as EventListener);
     };
   }, []);
+
+  if (authorizationError) {
+    return <div className="alignment-mfe-waiting">{authorizationError}</div>;
+  }
 
   if (!crs || !geometry) {
     return <div className="alignment-mfe-waiting">Wachten op geometrie...</div>;
@@ -86,11 +108,12 @@ function AlignmentMfeApp({
         inputGeometry={geometry}
         initialRequestParams={initialRequestParams}
         onApplyAlignedGeometry={(nextGeometry) => {
-          const message: ApplyMessage = {
+          if (!hostOriginRef.current) return;
+          const message: AlignmentApplyMessage = {
             type: "BRDR_ALIGNMENT_APPLY",
             payload: { geometry: nextGeometry },
           };
-          window.parent.postMessage(message, "*");
+          window.parent.postMessage(message, hostOriginRef.current);
         }}
       />
     </div>

@@ -4,6 +4,10 @@ import {
   type BrdrSupportedCrs,
 } from "./components/alignment/contracts";
 import {
+  isAlignmentApplyMessage,
+  isAlignmentReadyMessage,
+} from "./components/alignment/messageSecurity";
+import {
   DemoMapViewer,
   type DemoGeometryItem,
 } from "./components/demo/DemoMapViewer";
@@ -86,11 +90,18 @@ function App({
   const alignmentFrameRef = useRef<HTMLIFrameElement | null>(null);
   const alignmentReadyRef = useRef(false);
   const alignmentOpen = Boolean(activeAlignmentMode);
-  const alignmentMfeUrl = activeAlignmentMode
-    ? `${import.meta.env.BASE_URL}${activeAlignmentMode.path}`
-    : null;
+  const alignmentMfeUrl = useMemo(() => {
+    if (!activeAlignmentMode) return null;
+
+    const url = new URL(
+      `${import.meta.env.BASE_URL}${activeAlignmentMode.path}`,
+      window.location.href
+    );
+    url.searchParams.set("hostOrigin", window.location.origin);
+    return url.toString();
+  }, [activeAlignmentMode]);
   const alignmentMfeOrigin = alignmentMfeUrl
-    ? new URL(alignmentMfeUrl, window.location.href).origin
+    ? new URL(alignmentMfeUrl).origin
     : null;
   const alignmentModes: AlignmentMode[] = [
     {
@@ -142,10 +153,10 @@ function App({
     ) {
       if (!alignmentMfeOrigin) return;
       if (event.origin !== alignmentMfeOrigin) return;
+      if (event.source !== alignmentFrameRef.current?.contentWindow) return;
       const message = event.data;
-      if (!message || typeof message !== "object") return;
 
-      if (message.type === "BRDR_ALIGNMENT_READY") {
+      if (isAlignmentReadyMessage(message)) {
         alignmentReadyRef.current = true;
         if (alignmentOpen && selectedGeometry && alignmentFrameRef.current?.contentWindow) {
           alignmentFrameRef.current.contentWindow.postMessage(
@@ -159,7 +170,7 @@ function App({
         return;
       }
 
-      if (message.type === "BRDR_ALIGNMENT_APPLY") {
+      if (isAlignmentApplyMessage(message)) {
         updateSelectedGeometry(message.payload.geometry);
         setActiveAlignmentMode(null);
       }
@@ -258,6 +269,8 @@ function App({
                 title="BRDR Alignment MFE"
                 className="alignment-mfe-frame"
                 src={alignmentMfeUrl}
+                sandbox="allow-scripts allow-same-origin"
+                referrerPolicy="strict-origin"
               />
             </div>
           </div>

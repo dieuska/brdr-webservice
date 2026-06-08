@@ -65,8 +65,18 @@ De build bevat vijf entries:
 - Viewer gebruikt `POST /aligner`.
 - Standaard backend: `http://127.0.0.1:80`
 - Override via `VITE_BRDR_API_BASE_URL`
+- Optionele MFE embed-allowlist via `VITE_BRDR_ALLOWED_HOST_ORIGINS`
 
 Voorbeeld:
 ```bash
 VITE_BRDR_API_BASE_URL=http://127.0.0.1:80 npm run dev
 ```
+
+Optionele embed security:
+```bash
+VITE_BRDR_ALLOWED_HOST_ORIGINS=https://app1.example.com,https://geo.example.com npm run build
+```
+
+Gedrag:
+- Als `VITE_BRDR_ALLOWED_HOST_ORIGINS` niet gezet is, wordt er niets geblokkeerd.
+- Als de variabele wel gezet is, accepteert de MFE alleen hosts uit die expliciete origin-lijst.
