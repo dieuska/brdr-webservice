@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.37">
+<meta name="generator" content="quarto-1.9.38">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -39,10 +39,10 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-244ce1b9ec229af56bb6f90d24b3371d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-b9c91b1e117c879de662b9ae260051b4.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -107,6 +107,10 @@ ul.task-list li input[type="checkbox"] {
     <a class="nav-link" href="./api-viewer.html"> 
 <span class="menu-text">API and Viewer</span></a>
   </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./mfe-integration.html"> 
+<span class="menu-text">MFE Integration</span></a>
+  </li>  
 </ul>
           </div> <!-- /navcollapse -->
             <div class="quarto-navbar-tools">
@@ -146,7 +150,8 @@ ul.task-list li input[type="checkbox"] {
 <p>This project provides a proof-of-concept stack to align user geometries against GRB reference data:</p>
 <ul>
 <li>a <strong>FastAPI webservice</strong> (<code>brdr_webservice.py</code>)</li>
-<li>a <strong>viewer</strong> (<code>brdr-viewer</code>) to draw/edit geometry and inspect BRDR steps</li>
+<li><strong>host viewers</strong> to draw/select geometries and launch BRDR alignment</li>
+<li>reusable <strong>BRDR alignment micro-frontends (MFE’s)</strong> for embedding in another host application</li>
 <li><strong>Docker and local scripts</strong> for quick startup</li>
 </ul>
 </section>
@@ -154,22 +159,34 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="what-you-can-do">What You Can Do</h2>
 <ol type="1">
 <li>Start backend and viewer locally.</li>
-<li>Draw or edit an input polygon in the viewer.</li>
-<li>Trigger BRDR alignment.</li>
-<li>Inspect intermediate steps on the map and in the chart timeline.</li>
+<li>Use a host viewer to draw, import, export, select, and align a geometry.</li>
+<li>Open a BRDR alignment MFE directly or embed it into another map application.</li>
+<li>Inspect BRDR steps, predictions, and resulting geometry.</li>
 </ol>
 </section>
 <section id="components-at-a-glance" class="level2">
 <h2 class="anchored" data-anchor-id="components-at-a-glance">Components at a Glance</h2>
 <ul>
 <li><strong>Backend endpoint</strong>: <code>POST /aligner</code> (viewer-oriented response)</li>
-<li><strong>Frontend map + timeline</strong>: OpenLayers + React app in <code>brdr-viewer/brdr-viewer</code></li>
+<li><strong>Host viewers</strong>:
+<ul>
+<li><code>/grb-viewer</code></li>
+<li><code>/brk-viewer</code></li>
+</ul></li>
+<li><strong>BRDR alignment MFE’s</strong>:
+<ul>
+<li><code>/alignment-mfe.html</code></li>
+<li><code>/alignment-mfe-simple.html</code></li>
+<li><code>/alignment-mfe-wfs.html</code></li>
+<li><code>/alignment-mfe-wfs-simple.html</code></li>
+</ul></li>
 </ul>
 <p>Continue with:</p>
 <ul>
 <li><a href="./architecture.html">Architecture</a></li>
 <li><a href="./run-locally.html">Run Locally</a></li>
 <li><a href="./api-viewer.html">API and Viewer</a></li>
+<li><a href="./mfe-integration.html">MFE Integration</a></li>
 </ul>
 
 
