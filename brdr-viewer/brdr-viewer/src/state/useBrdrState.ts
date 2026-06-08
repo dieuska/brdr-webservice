@@ -224,6 +224,7 @@ export function useBrdrState(options: UseBrdrStateOptions) {
     stepKey,
     stepIndex,
     predictionByStep,
+    predictionScoreByStep,
     diffMetric,
     currentStepPredictionScore: predictionScoreByStep[stepKey] ?? 0,
     currentStepIsPrediction: predictionByStep[stepKey] ?? false,

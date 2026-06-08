@@ -14,4 +14,6 @@ website:
         href: run-locally.qmd
       - text: API and Viewer
         href: api-viewer.qmd
+      - text: MFE Integration
+        href: mfe-integration.qmd
 

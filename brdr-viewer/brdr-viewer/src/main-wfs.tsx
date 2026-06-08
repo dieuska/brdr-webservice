@@ -73,6 +73,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App
       alignmentMfePath="alignment-mfe-wfs.html"
+      compactAlignmentMfePath="alignment-mfe-wfs-simple.html"
       demoCrs={BRDR_CRS_28992}
       initialGeometries={BRK_GEOMETRIES}
       showGrbReferenceControls={false}

@@ -1,6 +1,7 @@
 import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BrdrAlignmentViewer } from "./components/alignment/BrdrAlignmentViewer";
+import { BrdrCompactAlignmentViewer } from "./components/alignment/BrdrCompactAlignmentViewer";
 import type {
   BrdrAlignmentParams,
   BrdrSupportedCrs,
@@ -21,19 +22,22 @@ interface AlignmentMfeAppProps {
   initialRequestParams?: Partial<BrdrAlignmentParams>;
   headerTitle?: string;
   headerSubtitle?: string;
+  variant?: "full" | "compact";
 }
 
 function AlignmentMfeApp({
   initialRequestParams,
   headerTitle,
   headerSubtitle,
+  variant = "full",
 }: AlignmentMfeAppProps) {
   const [crs, setCrs] = useState<BrdrSupportedCrs | null>(null);
   const [geometry, setGeometry] = useState<Geometry | null>(null);
 
   useEffect(() => {
+    let hostOrigin: string | null = null;
+
     function onMessage(event: MessageEvent<InitMessage>) {
-      if (event.origin !== window.location.origin) return;
       const message = event.data;
       if (!message || typeof message !== "object") return;
       if (
@@ -42,6 +46,10 @@ function AlignmentMfeApp({
       ) {
         return;
       }
+      if (!hostOrigin) {
+        hostOrigin = event.origin;
+      }
+      if (event.origin !== hostOrigin) return;
       setCrs(message.payload.crs);
       setGeometry(message.payload.geometry);
     }
@@ -49,7 +57,7 @@ function AlignmentMfeApp({
     window.addEventListener("message", onMessage as EventListener);
     window.parent.postMessage(
       { type: "BRDR_ALIGNMENT_READY" },
-      window.location.origin
+      "*"
     );
 
     return () => {
@@ -61,6 +69,9 @@ function AlignmentMfeApp({
     return <div className="alignment-mfe-waiting">Wachten op geometrie...</div>;
   }
 
+  const ViewerComponent =
+    variant === "compact" ? BrdrCompactAlignmentViewer : BrdrAlignmentViewer;
+
   return (
     <div className="alignment-mfe-root">
       <div className="alignment-powered-by">Powered by BRDR</div>
@@ -70,7 +81,7 @@ function AlignmentMfeApp({
           {headerSubtitle && <span>{headerSubtitle}</span>}
         </div>
       )}
-      <BrdrAlignmentViewer
+      <ViewerComponent
         crs={crs}
         inputGeometry={geometry}
         initialRequestParams={initialRequestParams}
@@ -79,7 +90,7 @@ function AlignmentMfeApp({
             type: "BRDR_ALIGNMENT_APPLY",
             payload: { geometry: nextGeometry },
           };
-          window.parent.postMessage(message, window.location.origin);
+          window.parent.postMessage(message, "*");
         }}
       />
     </div>
@@ -89,7 +100,8 @@ function AlignmentMfeApp({
 export function mountAlignmentMfe(
   initialRequestParams?: Partial<BrdrAlignmentParams>,
   headerTitle?: string,
-  headerSubtitle?: string
+  headerSubtitle?: string,
+  variant: "full" | "compact" = "full"
 ) {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
@@ -97,6 +109,7 @@ export function mountAlignmentMfe(
         initialRequestParams={initialRequestParams}
         headerTitle={headerTitle}
         headerSubtitle={headerSubtitle}
+        variant={variant}
       />
     </StrictMode>
   );

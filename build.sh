@@ -1,3 +1,3 @@
 #!/bin/sh
 
-docker build -f Dockerfile . -t grb_webservice
+docker build -f Dockerfile . -t brdr-webservice

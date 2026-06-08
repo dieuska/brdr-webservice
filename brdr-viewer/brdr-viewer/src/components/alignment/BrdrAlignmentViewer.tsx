@@ -47,6 +47,7 @@ export function BrdrAlignmentViewer({
     stepKey,
     stepIndex,
     predictionByStep,
+    diffMetric,
     currentStepPredictionScore,
     currentStepIsPrediction,
     loading,
@@ -175,6 +176,7 @@ export function BrdrAlignmentViewer({
             steps={steps}
             values={values}
             predictionByStep={predictionByStep}
+            diffMetric={diffMetric}
             currentStep={currentStep}
             stepKey={stepKey}
             stepIndex={stepIndex}

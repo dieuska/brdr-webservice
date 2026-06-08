@@ -41,6 +41,8 @@ export default defineConfig(() => ({
         viewerWfs: resolve(__dirname, "brk-viewer.html"),
         alignmentMfe: resolve(__dirname, "alignment-mfe.html"),
         alignmentMfeWfs: resolve(__dirname, "alignment-mfe-wfs.html"),
+        alignmentMfeSimple: resolve(__dirname, "alignment-mfe-simple.html"),
+        alignmentMfeWfsSimple: resolve(__dirname, "alignment-mfe-wfs-simple.html"),
       },
     },
   },

@@ -5,6 +5,8 @@ import type { Geometry } from "../../types/brdr";
 import type { BrdrSupportedCrs } from "../alignment/contracts";
 
 export type ImportSourceCrs = BrdrSupportedCrs | "EPSG:4326";
+export type ExportTargetCrs = ImportSourceCrs;
+export type GeometryExportFormat = "wkt" | "geojson";
 
 const geoJsonFormat = new GeoJSON();
 const wktFormat = new WKT();
@@ -121,4 +123,29 @@ export function parsePastedGeometries(
   }
 
   return geometries;
+}
+
+export function serializeGeometry(
+  geometry: Geometry,
+  sourceCrs: BrdrSupportedCrs,
+  targetCrs: ExportTargetCrs,
+  format: GeometryExportFormat
+): string {
+  const olGeometry = geoJsonFormat.readGeometry(geometry, {
+    dataProjection: sourceCrs,
+    featureProjection: sourceCrs,
+  });
+
+  if (format === "wkt") {
+    return wktFormat.writeGeometry(olGeometry, {
+      dataProjection: targetCrs,
+      featureProjection: sourceCrs,
+    });
+  }
+
+  const exported = geoJsonFormat.writeGeometryObject(olGeometry, {
+    dataProjection: targetCrs,
+    featureProjection: sourceCrs,
+  });
+  return JSON.stringify(exported, null, 2);
 }

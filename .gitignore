@@ -169,3 +169,5 @@ cython_debug/
 /docs_src/_site/
 /docs_src/.quarto/
 /dev/
+az-acr-local-build-push.cmd
+az-acr-local-build-push.ps1

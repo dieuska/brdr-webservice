@@ -17,10 +17,51 @@ function createPointSymbol(fillColor: string) {
   });
 }
 
+function createPredictionResultStyles() {
+  return [
+    new Style({
+      stroke: new Stroke({
+        color: "rgba(255,255,255,0.92)",
+        width: 7,
+      }),
+      fill: new Fill({ color: "rgba(15,23,42,0.08)" }),
+      image: new CircleStyle({
+        radius: 8,
+        fill: new Fill({ color: "#0f172a" }),
+        stroke: new Stroke({ color: "rgba(255,255,255,0.95)", width: 3 }),
+      }),
+    }),
+    new Style({
+      stroke: new Stroke({
+        color: "#0f172a",
+        width: 3.2,
+      }),
+      fill: new Fill({ color: "rgba(15,23,42,0.12)" }),
+      image: new CircleStyle({
+        radius: 6,
+        fill: new Fill({ color: "#0f172a" }),
+        stroke: new Stroke({ color: "#f8fafc", width: 1.6 }),
+      }),
+    }),
+    new Style({
+      stroke: new Stroke({
+        color: "#14b8a6",
+        width: 1.4,
+        lineDash: [10, 6],
+      }),
+      image: new CircleStyle({
+        radius: 4,
+        fill: new Fill({ color: "#14b8a6" }),
+        stroke: new Stroke({ color: "#0f172a", width: 1 }),
+      }),
+    }),
+  ];
+}
+
 function createVectorLayer(
   geometry: Geometry,
   crs: BrdrSupportedCrs,
-  style: Style,
+  style: Style | Style[],
   zIndex: number
 ): VectorLayer<VectorSource> {
   return new VectorLayer({
@@ -51,11 +92,7 @@ export function createBrdrLayersWithOptions(
     createVectorLayer(
       step.result,
       crs,
-      new Style({
-        stroke: new Stroke({ color: "#000", width: 2 }),
-        fill: new Fill({ color: "rgba(0,0,0,0.15)" }),
-        image: createPointSymbol("#000000"),
-      }),
+      createPredictionResultStyles(),
       100
     ),
   ];

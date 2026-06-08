@@ -96,27 +96,39 @@ Returns a helper payload for end users with:
 - docs link
 - sample query/body
 
-## Viewer Integration
+## Frontend Routes
 
-The viewer:
+Host viewers:
+
+- `/grb-viewer`
+- `/brk-viewer`
+
+Reusable BRDR alignment MFE's:
+
+- `/alignment-mfe.html`
+- `/alignment-mfe-simple.html`
+- `/alignment-mfe-wfs.html`
+- `/alignment-mfe-wfs-simple.html`
+
+## Host Viewer Behaviour
+
+The demo host viewers:
 
 1. keeps an input geometry in local state
 2. sends that geometry to `/aligner`
 3. updates timeline and map layers from returned `series` and `diffs`
 4. highlights prediction steps and can jump to previous/next prediction quickly
+5. can replace the selected geometry with the aligned result
+6. can import and export WKT / GeoJSON in multiple CRS variants
 
 Main frontend files:
 
 - `src/api/brdrApi.ts`
 - `src/state/useBrdrState.ts`
 - `src/components/map/MapView.tsx`
+- `src/components/demo/DemoMapViewer.tsx`
 
-Viewer routes:
-
-- `/` overview page
-- `/grb-viewer` GRB demo viewer
-- `/brk-viewer` BRK/WFS demo viewer
-- `/viewer` redirects to `/grb-viewer`
+For embedding details of the reusable BRDR alignment MFE's, see [MFE Integration](mfe-integration.qmd).
 
 ## Testing the API with curl
 

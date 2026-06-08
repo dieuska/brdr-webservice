@@ -1,0 +1,148 @@
+---
+title: "MFE Integration"
+format: html
+---
+
+## Purpose
+
+The BRDR alignment UI is available as reusable micro-frontends (MFE's) so another application can embed the alignment flow without rebuilding the full demo host viewer.
+
+Available MFE routes:
+
+- `/alignment-mfe.html`: GRB full workflow
+- `/alignment-mfe-simple.html`: GRB compact workflow
+- `/alignment-mfe-wfs.html`: BRK/WFS full workflow
+- `/alignment-mfe-wfs-simple.html`: BRK/WFS compact workflow
+
+## Integration Model
+
+The current integration contract is based on an `iframe` plus `postMessage`.
+
+Flow:
+
+1. Host application loads the MFE in an `iframe`.
+2. MFE emits `BRDR_ALIGNMENT_READY`.
+3. Host sends the selected geometry and CRS using `BRDR_ALIGNMENT_INIT`.
+4. User works in the MFE and clicks `Aanpassen`.
+5. MFE emits `BRDR_ALIGNMENT_APPLY` with the aligned geometry.
+
+The same MFE can be embedded same-origin or cross-origin, provided the host validates `event.origin` correctly and avoids mixed-content situations.
+
+## Message Contract
+
+### Host -> MFE
+
+```ts
+{
+  type: "BRDR_ALIGNMENT_INIT",
+  payload: {
+    crs: "EPSG:31370" | "EPSG:3812" | "EPSG:28992",
+    geometry: GeoJSONGeometry
+  }
+}
+```
+
+Optional update while the MFE stays open:
+
+```ts
+{
+  type: "BRDR_ALIGNMENT_UPDATE_GEOMETRY",
+  payload: {
+    crs: "EPSG:31370" | "EPSG:3812" | "EPSG:28992",
+    geometry: GeoJSONGeometry
+  }
+}
+```
+
+Important:
+
+- send a GeoJSON **Geometry**, not a full `FeatureCollection`
+- the coordinates must match the CRS you pass in `payload.crs`
+- supported geometry types are `Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon`
+
+### MFE -> Host
+
+Ready event:
+
+```ts
+{ type: "BRDR_ALIGNMENT_READY" }
+```
+
+Apply event:
+
+```ts
+{
+  type: "BRDR_ALIGNMENT_APPLY",
+  payload: {
+    geometry: GeoJSONGeometry
+  }
+}
+```
+
+## Minimal Example
+
+```html
+<iframe
+  id="brdr-mfe"
+  src="https://example.com/alignment-mfe.html"
+  style="width:100%;height:800px;border:0"
+></iframe>
+
+<script>
+  const iframe = document.getElementById("brdr-mfe");
+  const mfeOrigin = "https://example.com";
+
+  const selectedGeometry = {
+    type: "Polygon",
+    coordinates: [[[674109.9, 679157.1], [674108.4, 679157.3], [674067.2, 679162.5], [674109.9, 679157.1]]]
+  };
+
+  window.addEventListener("message", (event) => {
+    if (event.origin !== mfeOrigin) return;
+    const msg = event.data;
+    if (!msg || typeof msg !== "object") return;
+
+    if (msg.type === "BRDR_ALIGNMENT_READY") {
+      iframe.contentWindow.postMessage(
+        {
+          type: "BRDR_ALIGNMENT_INIT",
+          payload: {
+            crs: "EPSG:3812",
+            geometry: selectedGeometry
+          }
+        },
+        mfeOrigin
+      );
+    }
+
+    if (msg.type === "BRDR_ALIGNMENT_APPLY") {
+      const alignedGeometry = msg.payload.geometry;
+      console.log("Aligned geometry", alignedGeometry);
+    }
+  });
+</script>
+```
+
+## Same-Origin and Cross-Origin Notes
+
+- Same-origin embedding works directly.
+- Cross-origin embedding is supported in the MFE handshake.
+- If the host runs on `https`, the MFE should also be served on `https`.
+- `https` host + `http` MFE will be blocked by browsers as mixed content.
+
+## Full vs Compact Variants
+
+Choose the route based on the host use case:
+
+- **full**: chart + step navigation + more context
+- **compact**: faster selection of predictions with a simplified side panel
+
+## Alternative to iframe
+
+The project also contains React components for direct integration into another React app, but the ready-to-use public contract today is the iframe-based MFE integration.
+
+Key files:
+
+- `src/alignmentMfeApp.tsx`
+- `src/components/alignment/BrdrAlignmentViewer.tsx`
+- `src/components/alignment/BrdrCompactAlignmentViewer.tsx`

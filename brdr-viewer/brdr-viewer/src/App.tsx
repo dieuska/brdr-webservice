@@ -13,9 +13,16 @@ import "ol/ol.css";
 
 interface AppProps {
   alignmentMfePath?: string;
+  compactAlignmentMfePath?: string;
   demoCrs?: BrdrSupportedCrs;
   initialGeometries?: DemoGeometryItem[];
   showGrbReferenceControls?: boolean;
+}
+
+interface AlignmentMode {
+  path: string;
+  label: string;
+  title: string;
 }
 
 const DEFAULT_GRB_GEOMETRIES: DemoGeometryItem[] = [
@@ -62,20 +69,41 @@ const DEFAULT_GRB_GEOMETRIES: DemoGeometryItem[] = [
 
 function App({
   alignmentMfePath = "alignment-mfe.html",
+  compactAlignmentMfePath = "alignment-mfe-simple.html",
   demoCrs = BRDR_CRS_3812,
   initialGeometries = DEFAULT_GRB_GEOMETRIES,
   showGrbReferenceControls = true,
 }: AppProps) {
-  const alignmentMfeUrl = `${import.meta.env.BASE_URL}${alignmentMfePath}`;
   const nextIdRef = useRef(3);
   const [geometries, setGeometries] = useState<DemoGeometryItem[]>(initialGeometries);
   const [selectedGeometryId, setSelectedGeometryId] = useState<string | null>(
     "geom-0"
   );
-  const [alignmentOpen, setAlignmentOpen] = useState(false);
+  const [activeAlignmentMode, setActiveAlignmentMode] = useState<AlignmentMode | null>(
+    null
+  );
   const [activeReferenceLayers, setActiveReferenceLayers] = useState<string[]>([]);
   const alignmentFrameRef = useRef<HTMLIFrameElement | null>(null);
   const alignmentReadyRef = useRef(false);
+  const alignmentOpen = Boolean(activeAlignmentMode);
+  const alignmentMfeUrl = activeAlignmentMode
+    ? `${import.meta.env.BASE_URL}${activeAlignmentMode.path}`
+    : null;
+  const alignmentMfeOrigin = alignmentMfeUrl
+    ? new URL(alignmentMfeUrl, window.location.href).origin
+    : null;
+  const alignmentModes: AlignmentMode[] = [
+    {
+      path: alignmentMfePath,
+      label: "BRDR alignering",
+      title: `BRDR alignering (${demoCrs})`,
+    },
+    {
+      path: compactAlignmentMfePath,
+      label: "BRDR alignering (compact)",
+      title: `Snelle BRDR alignering (${demoCrs})`,
+    },
+  ];
 
   const selectedGeometry = useMemo(
     () =>
@@ -89,6 +117,7 @@ function App({
     function postGeometryToAlignmentFrame() {
       if (!alignmentOpen || !selectedGeometry) return;
       if (!alignmentReadyRef.current) return;
+      if (!alignmentMfeOrigin) return;
       const frameWindow = alignmentFrameRef.current?.contentWindow;
       if (!frameWindow) return;
 
@@ -97,12 +126,12 @@ function App({
           type: "BRDR_ALIGNMENT_INIT",
           payload: { crs: demoCrs, geometry: selectedGeometry },
         },
-        window.location.origin
+        alignmentMfeOrigin
       );
     }
 
     postGeometryToAlignmentFrame();
-  }, [alignmentOpen, demoCrs, selectedGeometry]);
+  }, [alignmentMfeOrigin, alignmentOpen, demoCrs, selectedGeometry]);
 
   useEffect(() => {
     function onMessage(
@@ -111,7 +140,8 @@ function App({
         | { type: "BRDR_ALIGNMENT_APPLY"; payload: { geometry: Geometry } }
       >
     ) {
-      if (event.origin !== window.location.origin) return;
+      if (!alignmentMfeOrigin) return;
+      if (event.origin !== alignmentMfeOrigin) return;
       const message = event.data;
       if (!message || typeof message !== "object") return;
 
@@ -123,7 +153,7 @@ function App({
               type: "BRDR_ALIGNMENT_INIT",
               payload: { crs: demoCrs, geometry: selectedGeometry },
             },
-            window.location.origin
+            alignmentMfeOrigin
           );
         }
         return;
@@ -131,13 +161,13 @@ function App({
 
       if (message.type === "BRDR_ALIGNMENT_APPLY") {
         updateSelectedGeometry(message.payload.geometry);
-        setAlignmentOpen(false);
+        setActiveAlignmentMode(null);
       }
     }
 
     window.addEventListener("message", onMessage as EventListener);
     return () => window.removeEventListener("message", onMessage as EventListener);
-  }, [alignmentOpen, demoCrs, selectedGeometry]);
+  }, [alignmentMfeOrigin, alignmentOpen, demoCrs, selectedGeometry]);
 
   function createGeometryId() {
     const id = `geom-${nextIdRef.current}`;
@@ -173,7 +203,7 @@ function App({
       prev.filter((item) => item.id !== selectedGeometryId)
     );
     setSelectedGeometryId(null);
-    setAlignmentOpen(false);
+    setActiveAlignmentMode(null);
   }
 
   return (
@@ -186,10 +216,11 @@ function App({
         onSelectGeometry={setSelectedGeometryId}
         onGeometryDrawn={addGeometry}
         onDeleteSelectedGeometry={handleDeleteSelectedGeometry}
-        onStartAlignment={() => {
+        alignmentModes={alignmentModes}
+        onStartAlignment={(mode) => {
           if (!selectedGeometry) return;
           alignmentReadyRef.current = false;
-          setAlignmentOpen(true);
+          setActiveAlignmentMode(mode);
         }}
         activeReferenceLayers={activeReferenceLayers}
         onActiveReferenceLayersChange={setActiveReferenceLayers}
@@ -205,17 +236,17 @@ function App({
         showGrbReferenceControls={showGrbReferenceControls}
       />
 
-      {alignmentOpen && selectedGeometry && (
+      {alignmentOpen && selectedGeometry && activeAlignmentMode && alignmentMfeUrl && (
         <div className="alignment-modal-backdrop">
           <div className="alignment-modal">
             <div className="alignment-modal-header">
-              <strong>{`BRDR alignering (${demoCrs})`}</strong>
+              <strong>{activeAlignmentMode.title}</strong>
               <button
                 type="button"
                 className="alignment-close-button"
                 onClick={() => {
                   alignmentReadyRef.current = false;
-                  setAlignmentOpen(false);
+                  setActiveAlignmentMode(null);
                 }}
               >
                 Sluiten
