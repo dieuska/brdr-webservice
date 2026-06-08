@@ -5,3 +5,12 @@ body,
   height: 100%;
   margin: 0;
 }
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(110, 231, 183, 0.16), transparent 24%),
+    radial-gradient(circle at top right, rgba(125, 211, 252, 0.18), transparent 26%),
+    linear-gradient(180deg, #f7fbfa 0%, #edf5f3 100%);
+  color: #0f172a;
+  font-family: "Segoe UI", "Aptos", "Trebuchet MS", sans-serif;
+}

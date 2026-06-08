@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import MapView, { type DrawGeometryType } from "../map/MapView";
 import type { Geometry } from "../../types/brdr";
 import type { BrdrSupportedCrs } from "../alignment/contracts";
@@ -14,6 +14,9 @@ import {
 } from "../map/layers/baseLayers";
 import {
   parsePastedGeometries,
+  serializeGeometry,
+  type ExportTargetCrs,
+  type GeometryExportFormat,
   type ImportSourceCrs,
 } from "./geometryImport";
 import type { MapGeometryItem } from "../map/MapView";
@@ -33,6 +36,12 @@ export interface DemoGeometryItem {
   geometry: Geometry;
 }
 
+export interface DemoAlignmentMode {
+  path: string;
+  label: string;
+  title: string;
+}
+
 interface Props {
   crs: BrdrSupportedCrs;
   geometries: DemoGeometryItem[];
@@ -41,7 +50,8 @@ interface Props {
   onSelectGeometry: (id: string | null) => void;
   onGeometryDrawn: (geometry: Geometry) => void;
   onDeleteSelectedGeometry: () => void;
-  onStartAlignment: () => void;
+  alignmentModes: DemoAlignmentMode[];
+  onStartAlignment: (mode: DemoAlignmentMode) => void;
   activeReferenceLayers: string[];
   onActiveReferenceLayersChange: (layers: string[]) => void;
   onImportGeometries: (geometries: Geometry[]) => void;
@@ -56,6 +66,7 @@ export function DemoMapViewer({
   onSelectGeometry,
   onGeometryDrawn,
   onDeleteSelectedGeometry,
+  alignmentModes,
   onStartAlignment,
   activeReferenceLayers,
   onActiveReferenceLayersChange,
@@ -81,6 +92,11 @@ export function DemoMapViewer({
   const [importSourceCrs, setImportSourceCrs] =
     useState<ImportSourceCrs>(crs);
   const [importFeedback, setImportFeedback] = useState<string | null>(null);
+  const [exportTargetCrs, setExportTargetCrs] =
+    useState<ExportTargetCrs>(crs);
+  const [exportFormat, setExportFormat] =
+    useState<GeometryExportFormat>("wkt");
+  const [exportFeedback, setExportFeedback] = useState<string | null>(null);
   const [selectionModeEnabled, setSelectionModeEnabled] = useState(false);
   const [fitRequestToken, setFitRequestToken] = useState(0);
 
@@ -99,6 +115,24 @@ export function DemoMapViewer({
     if (!selectedGeometryId || !selectedGeometry) return;
     setFitRequestToken((token) => token + 1);
   }, [selectedGeometry, selectedGeometryId]);
+
+  useEffect(() => {
+    setImportSourceCrs(crs);
+    setExportTargetCrs(crs);
+  }, [crs]);
+
+  const exportText = useMemo(() => {
+    if (!selectedGeometry) {
+      return "";
+    }
+
+    return serializeGeometry(
+      selectedGeometry,
+      crs,
+      exportTargetCrs,
+      exportFormat
+    );
+  }, [crs, exportFormat, exportTargetCrs, selectedGeometry]);
 
   function toggleReferenceLayer(layerName: string) {
     const next = activeReferenceLayers.includes(layerName)
@@ -130,6 +164,20 @@ export function DemoMapViewer({
           ? error.message
           : "Kon de input niet parsen als WKT of GeoJSON.";
       setImportFeedback(message);
+    }
+  }
+
+  async function handleCopyExport() {
+    if (!exportText) {
+      setExportFeedback("Selecteer eerst een geometrie.");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(exportText);
+      setExportFeedback("Geometrie gekopieerd.");
+    } catch {
+      setExportFeedback("Kopiëren via klembord is niet gelukt.");
     }
   }
 
@@ -193,14 +241,17 @@ export function DemoMapViewer({
           Verwijder geselecteerde
         </button>
 
-        <button
-          type="button"
-          className="demo-align-button"
-          onClick={onStartAlignment}
-          disabled={!selectedGeometry}
-        >
-          Start BRDR alignering
-        </button>
+        {alignmentModes.map((mode) => (
+          <button
+            key={mode.path}
+            type="button"
+            className="demo-align-button"
+            onClick={() => onStartAlignment(mode)}
+            disabled={!selectedGeometry}
+          >
+            {mode.label}
+          </button>
+        ))}
 
         <details className="demo-layer-picker">
           <summary>Achtergrondlagen</summary>
@@ -312,6 +363,57 @@ export function DemoMapViewer({
             </button>
             {importFeedback && (
               <p className="demo-import-feedback">{importFeedback}</p>
+            )}
+          </div>
+        </details>
+
+        <details className="demo-layer-picker demo-import-panel">
+          <summary>Haal WKT / GeoJSON op</summary>
+          <div className="demo-layer-picker-list">
+            <label className="demo-geometry-select">
+              Formaat
+              <select
+                value={exportFormat}
+                onChange={(event) => {
+                  setExportFormat(event.target.value as GeometryExportFormat);
+                  setExportFeedback(null);
+                }}
+              >
+                <option value="wkt">WKT</option>
+                <option value="geojson">GeoJSON</option>
+              </select>
+            </label>
+            <label className="demo-geometry-select">
+              Doel-CRS
+              <select
+                value={exportTargetCrs}
+                onChange={(event) => {
+                  setExportTargetCrs(event.target.value as ExportTargetCrs);
+                  setExportFeedback(null);
+                }}
+              >
+                <option value="EPSG:3812">EPSG:3812</option>
+                <option value="EPSG:31370">EPSG:31370</option>
+                <option value="EPSG:28992">EPSG:28992</option>
+                <option value="EPSG:4326">WGS84 (EPSG:4326)</option>
+              </select>
+            </label>
+            <textarea
+              className="demo-import-textarea demo-export-textarea"
+              placeholder="Selecteer een geometrie om WKT of GeoJSON op te halen..."
+              value={exportText}
+              readOnly
+            />
+            <button
+              type="button"
+              className="demo-align-button"
+              onClick={() => void handleCopyExport()}
+              disabled={!selectedGeometry}
+            >
+              Kopieer geometrie
+            </button>
+            {exportFeedback && (
+              <p className="demo-import-feedback">{exportFeedback}</p>
             )}
           </div>
         </details>

@@ -30,6 +30,33 @@ const PROCESSOR_OPTIONS = [
   "SnapGeometryProcessor",
   "TopologyProcessor",
 ];
+const FULL_REFERENCE_STRATEGY_LABELS: Record<string, string> = {
+  prefer_full_reference: "Voorkeur voor volledige referentie",
+  only_full_reference: "Alleen volledige referentie",
+  no_full_reference: "Geen volledige referentie",
+};
+
+const OPEN_DOMAIN_STRATEGY_LABELS: Record<string, string> = {
+  EXCLUDE: "Open domein uitsluiten",
+  AS_IS: "Open domein behouden",
+  SNAP_INNER_SIDE: "Snappen aan binnenzijde",
+  SNAP_ALL_SIDE: "Snappen aan alle zijden",
+};
+
+const SNAP_STRATEGY_LABELS: Record<string, string> = {
+  ONLY_VERTICES: "Alleen hoekpunten",
+  PREFER_VERTICES: "Voorkeur voor hoekpunten",
+  PREFER_ENDS_AND_ANGLES: "Voorkeur voor uiteinden en hoeken",
+  NO_PREFERENCE: "Geen voorkeur",
+};
+
+const PROCESSOR_LABELS: Record<string, string> = {
+  AlignerGeometryProcessor: "Standaard",
+  DieussaertGeometryProcessor: "Dieussaert",
+  NetworkGeometryProcessor: "Netwerk",
+  SnapGeometryProcessor: "Snap",
+  TopologyProcessor: "Topologie",
+};
 interface Props {
   requestParams: BrdrRequestBody["params"] | undefined;
   settingsOpen: boolean;
@@ -40,6 +67,7 @@ interface Props {
   steps: string[];
   values: number[];
   predictionByStep: Record<string, boolean>;
+  diffMetric: "area" | "length" | "count";
   currentStep: BrdrStep | null;
   stepKey: string;
   stepIndex: number;
@@ -78,6 +106,7 @@ export function BrdrAlignPanel({
   steps,
   values,
   predictionByStep,
+  diffMetric,
   currentStep,
   stepKey,
   stepIndex,
@@ -96,11 +125,17 @@ export function BrdrAlignPanel({
   setStepIndex,
 }: Props) {
   const isWfsReference = requestParams?.reference_loader === "wfs";
+  const predictionCount = steps.filter((step) => predictionByStep[step] ?? false).length;
+  const metricLabel =
+    diffMetric === "area" ? "oppervlakte" : diffMetric === "length" ? "lengte" : "aantal";
 
   return (
     <>
       <div className="workflow-step-card workflow-step-card-recalculate">
-        <div className="workflow-step-title">BRDR alignering</div>
+        <div className="workflow-step-title">Stap 1. Instellingen en herberekening</div>
+        <p className="workflow-step-help">
+          Kies de referentie en herbereken de BRDR-resultaten voor de huidige geometrie.
+        </p>
         <div className="primary-setting">
           {!isWfsReference ? (
             <label>
@@ -137,16 +172,16 @@ export function BrdrAlignPanel({
           </button>
           {!settingsOpen && (
             <p className="settings-inline-summary">
-              OD: {requestParams?.od_strategy ?? "SNAP_ALL_SIDE"} | Snap:{" "}
-              {requestParams?.snap_strategy ?? "PREFER_VERTICES"} | Max:{" "}
+              Open domein: {OPEN_DOMAIN_STRATEGY_LABELS[requestParams?.od_strategy ?? "SNAP_ALL_SIDE"]} | Snap:{" "}
+              {SNAP_STRATEGY_LABELS[requestParams?.snap_strategy ?? "PREFER_VERTICES"]} | Max:{" "}
               {(requestParams?.max_relevant_distance ?? 10).toFixed(1)} m |
-              Processor: {requestParams?.processor ?? "AlignerGeometryProcessor"}
+              Processor: {PROCESSOR_LABELS[requestParams?.processor ?? "AlignerGeometryProcessor"]}
             </p>
           )}
           {settingsOpen && (
             <div className="params-grid">
               <label>
-                Full reference strategy
+                Volledige referentie
                 <select
                   value={
                     requestParams?.full_reference_strategy ??
@@ -161,13 +196,13 @@ export function BrdrAlignPanel({
                 >
                   {FULL_REFERENCE_STRATEGY_OPTIONS.map((option) => (
                     <option key={option} value={option}>
-                      {option}
+                      {FULL_REFERENCE_STRATEGY_LABELS[option]}
                     </option>
                   ))}
                 </select>
               </label>
               <label>
-                Open domain strategy
+                Open domein
                 <select
                   value={requestParams?.od_strategy ?? "SNAP_ALL_SIDE"}
                   onChange={(event) =>
@@ -176,13 +211,13 @@ export function BrdrAlignPanel({
                 >
                   {OPEN_DOMAIN_STRATEGY_OPTIONS.map((option) => (
                     <option key={option} value={option}>
-                      {option}
+                      {OPEN_DOMAIN_STRATEGY_LABELS[option]}
                     </option>
                   ))}
                 </select>
               </label>
               <label>
-                Snap strategy
+                Snap-strategie
                 <select
                   value={requestParams?.snap_strategy ?? "PREFER_VERTICES"}
                   onChange={(event) =>
@@ -191,7 +226,7 @@ export function BrdrAlignPanel({
                 >
                   {SNAP_STRATEGY_OPTIONS.map((option) => (
                     <option key={option} value={option}>
-                      {option}
+                      {SNAP_STRATEGY_LABELS[option]}
                     </option>
                   ))}
                 </select>
@@ -222,13 +257,20 @@ export function BrdrAlignPanel({
                 >
                   {PROCESSOR_OPTIONS.map((option) => (
                     <option key={option} value={option}>
-                      {option}
+                      {PROCESSOR_LABELS[option]}
                     </option>
                   ))}
                 </select>
               </label>
             </div>
           )}
+        </div>
+        <div className="alignment-status-row">
+          <span className="status-chip">{predictionCount} predictie(s)</span>
+          <span className="status-chip">metriek: {metricLabel}</span>
+          <span className="status-chip">
+            max afstand: {(requestParams?.max_relevant_distance ?? 10).toFixed(1)} m
+          </span>
         </div>
         <div className="recalculate-row">
           <button
@@ -237,7 +279,7 @@ export function BrdrAlignPanel({
             onClick={() => void handleRecalculate()}
             disabled={!canRun}
           >
-            {loading ? "Bezig..." : "Herbereken"}
+            {loading ? "Resultaten worden herberekend..." : "Herbereken resultaten"}
           </button>
         </div>
       </div>
@@ -248,6 +290,7 @@ export function BrdrAlignPanel({
         <Timeline
           stepIndex={stepIndex}
           stepKey={stepKey}
+          diffMetric={diffMetric}
           isPredictionStep={currentStepIsPrediction}
           currentPredictionScore={currentStepPredictionScore}
           values={values}

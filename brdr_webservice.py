@@ -555,6 +555,8 @@ def home():
         "links": [
             {"label": "grb viewer", "href": "/grb-viewer"},
             {"label": "brk viewer (wfs example)", "href": "/brk-viewer"},
+            {"label": "grb compact alignment mfe", "href": "/alignment-mfe-simple.html"},
+            {"label": "brk compact alignment mfe", "href": "/alignment-mfe-wfs-simple.html"},
             {"label": "aligner api", "href": "/aligner"},
             {"label": "swagger docs", "href": "/docs"},
             {"label": "redoc", "href": "/redoc"},
@@ -599,6 +601,14 @@ else:
     @app.get("/alignment-mfe-wfs.html")
     def alignment_mfe_wfs():
         return FileResponse(_viewer_html_file("alignment-mfe-wfs.html"))
+
+    @app.get("/alignment-mfe-simple.html")
+    def alignment_mfe_simple():
+        return FileResponse(_viewer_html_file("alignment-mfe-simple.html"))
+
+    @app.get("/alignment-mfe-wfs-simple.html")
+    def alignment_mfe_wfs_simple():
+        return FileResponse(_viewer_html_file("alignment-mfe-wfs-simple.html"))
 
 
 @app.get("/viewer")

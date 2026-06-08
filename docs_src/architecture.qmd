@@ -5,14 +5,15 @@ format: html
 
 ## High-Level Flow
 
-1. The viewer sends a GeoJSON feature collection to the backend.
+1. A host viewer or embedded MFE works with a GeoJSON input geometry.
 2. The backend loads the configured reference data and evaluates multiple distances.
 3. The backend returns viewer-oriented BRDR output via `/aligner`.
-4. The viewer renders:
+4. The BRDR alignment MFE renders:
    - `result` geometry
    - `result_diff_min` (negative diff)
    - `result_diff_plus` (positive diff)
    - `diffs` chart values per distance step
+5. In host-viewer mode, the selected geometry can be replaced with the aligned result.
 
 ## Backend
 
@@ -27,18 +28,47 @@ Important behavior:
 - Compatibility handling for GRB type labels across BRDR versions.
 - `503` when upstream GRB service is unavailable.
 
-## Viewer
+## Frontend Split
+
+The frontend is intentionally split into two roles.
+
+### 1. Host Viewers
 
 - Framework: **React + TypeScript + Vite**
 - Map library: **OpenLayers**
-- Path: `brdr-viewer/brdr-viewer`
+- Routes:
+  - `/grb-viewer`
+  - `/brk-viewer`
 
 Capabilities:
 
 - draw a new point/line/polygon
-- edit geometry vertices (where applicable)
-- auto-trigger recalculation after drawing/editing (manual recalc remains available)
-- inspect timeline steps, prediction markers, and geometry-aware diff chart
+- select a geometry from the map or list
+- import geometry as WKT / GeoJSON
+- export selected geometry as WKT / GeoJSON
+- open either the full or compact BRDR alignment MFE
+
+### 2. BRDR Alignment MFE's
+
+- Framework: **React + TypeScript + Vite**
+- Map library: **OpenLayers**
+- Routes:
+  - `/alignment-mfe.html`
+  - `/alignment-mfe-simple.html`
+  - `/alignment-mfe-wfs.html`
+  - `/alignment-mfe-wfs-simple.html`
+
+Capabilities:
+
+- receive geometry and CRS from a host via `postMessage`
+- calculate BRDR output through `/aligner`
+- inspect prediction steps and aligned result
+- return the selected aligned geometry back to the host
+
+Integration variants:
+
+- **full**: includes chart/timeline navigation
+- **compact**: optimized for faster prediction switching
 
 ## Runtime Modes
 

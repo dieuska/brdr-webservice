@@ -63,8 +63,13 @@ This image bundles both backend and viewer:
 
 - API: `http://127.0.0.1:80`
 - Swagger: `http://127.0.0.1:80/docs`
-- Viewer: `http://127.0.0.1:80/`
-- BRK Viewer (WFS): `http://127.0.0.1:80/brk-viewer`
+- Frontend landing page: `http://127.0.0.1:80/`
+- GRB host viewer: `http://127.0.0.1:80/grb-viewer`
+- BRK host viewer: `http://127.0.0.1:80/brk-viewer`
+- GRB alignment MFE: `http://127.0.0.1:80/alignment-mfe.html`
+- Compact GRB alignment MFE: `http://127.0.0.1:80/alignment-mfe-simple.html`
+- BRK/WFS alignment MFE: `http://127.0.0.1:80/alignment-mfe-wfs.html`
+- Compact BRK/WFS alignment MFE: `http://127.0.0.1:80/alignment-mfe-wfs-simple.html`
 
 ## Common Issues
 
