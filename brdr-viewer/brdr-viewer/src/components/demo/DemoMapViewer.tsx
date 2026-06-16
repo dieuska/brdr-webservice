@@ -110,6 +110,17 @@ export function DemoMapViewer({
   const selectedIndex = selectedGeometryId
     ? geometries.findIndex((item) => item.id === selectedGeometryId)
     : -1;
+  const hasSelection = selectedIndex >= 0 && Boolean(selectedGeometry);
+  const selectedLabel =
+    selectedIndex >= 0 ? `Geometrie ${selectedIndex + 1}` : "Geen selectie";
+  const workflowHint = hasSelection
+    ? "Kies hieronder een aligneringsmodus of pas de gekozen geometrie verder aan."
+    : selectionModeEnabled
+      ? "Klik op een bestaande geometrie in de kaart om die te selecteren."
+      : "Kies een tekentype en klik in de kaart, of importeer een geometrie.";
+  const selectionSummary = hasSelection
+    ? `${selectedLabel} is klaar om te aligneren.`
+    : "Selecteer of teken eerst een geometrie.";
 
   useEffect(() => {
     if (!selectedGeometryId || !selectedGeometry) return;
@@ -177,81 +188,124 @@ export function DemoMapViewer({
       await navigator.clipboard.writeText(exportText);
       setExportFeedback("Geometrie gekopieerd.");
     } catch {
-      setExportFeedback("Kopiëren via klembord is niet gelukt.");
+      setExportFeedback("Kopieren via klembord is niet gelukt.");
     }
   }
 
   return (
     <div className="demo-map-viewer">
+      <div className="demo-map-intro">
+        <div className="demo-map-intro-copy">
+          <p className="demo-map-eyebrow">Demo-kaart</p>
+          <h2>Snel starten met een geometrie op de kaart</h2>
+          <p>{workflowHint}</p>
+        </div>
+        <div className="demo-map-status" aria-label="Status van de demo-kaart">
+          <span className="demo-status-chip">
+            {geometries.length} geometrie{geometries.length === 1 ? "" : "en"}
+          </span>
+          <span className={`demo-status-chip${hasSelection ? " is-active" : ""}`}>
+            {selectedLabel}
+          </span>
+        </div>
+      </div>
+
       <div className="demo-map-toolbar">
-        <div className="draw-type-picker" aria-label="Tekentype">
-          {DRAW_TYPE_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className="draw-type-button"
-              aria-pressed={drawGeometryType === option.value}
-              onClick={() => {
-                setDrawGeometryType(option.value);
-                setDrawRequestToken((v) => v + 1);
-                setSelectionModeEnabled(false);
-              }}
-              title={option.label}
-            >
-              <span className="draw-type-icon" aria-hidden="true">
-                {option.icon}
-              </span>
-              <span>{option.label}</span>
-            </button>
-          ))}
+        <div className="demo-toolbar-section demo-toolbar-section-primary">
+          <div className="demo-toolbar-heading">
+            <strong>1. Kies of teken een geometrie</strong>
+            <span>{selectionSummary}</span>
+          </div>
+
+          <div className="draw-type-picker" aria-label="Tekentype">
+            {DRAW_TYPE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className="draw-type-button"
+                aria-pressed={drawGeometryType === option.value}
+                onClick={() => {
+                  setDrawGeometryType(option.value);
+                  setDrawRequestToken((v) => v + 1);
+                  setSelectionModeEnabled(false);
+                }}
+                title={option.label}
+              >
+                <span className="draw-type-icon" aria-hidden="true">
+                  {option.icon}
+                </span>
+                <span>{option.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        <label className="demo-geometry-select">
-          Geometrie
-          <select
-            value={selectedGeometryId ?? ""}
-            onChange={(event) =>
-              onSelectGeometry(event.target.value || null)
-            }
-          >
-            <option value="">Geen selectie</option>
-            {geometries.map((item, index) => (
-              <option key={item.id} value={item.id}>
-                Geometrie {index + 1}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="demo-toolbar-section">
+          <label className="demo-geometry-select">
+            Geometrie
+            <select
+              value={selectedGeometryId ?? ""}
+              onChange={(event) =>
+                onSelectGeometry(event.target.value || null)
+              }
+            >
+              <option value="">Geen selectie</option>
+              {geometries.map((item, index) => (
+                <option key={item.id} value={item.id}>
+                  Geometrie {index + 1}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <button
-          type="button"
-          className="demo-secondary-button"
-          aria-pressed={selectionModeEnabled}
-          onClick={() => setSelectionModeEnabled((prev) => !prev)}
-        >
-          {selectionModeEnabled ? "Selectie actief" : "Selecteer op kaart"}
-        </button>
-
-        <button
-          type="button"
-          className="demo-secondary-button"
-          onClick={onDeleteSelectedGeometry}
-          disabled={selectedIndex < 0}
-        >
-          Verwijder geselecteerde
-        </button>
-
-        {alignmentModes.map((mode) => (
           <button
-            key={mode.path}
             type="button"
-            className="demo-align-button"
-            onClick={() => onStartAlignment(mode)}
-            disabled={!selectedGeometry}
+            className="demo-secondary-button"
+            aria-pressed={selectionModeEnabled}
+            onClick={() => setSelectionModeEnabled((prev) => !prev)}
           >
-            {mode.label}
+            {selectionModeEnabled ? "Selectie actief" : "Selecteer op kaart"}
           </button>
-        ))}
+
+          <button
+            type="button"
+            className="demo-secondary-button"
+            onClick={() => setFitRequestToken((token) => token + 1)}
+            disabled={!hasSelection}
+          >
+            Zoom naar selectie
+          </button>
+
+          <button
+            type="button"
+            className="demo-secondary-button"
+            onClick={onDeleteSelectedGeometry}
+            disabled={!hasSelection}
+          >
+            Verwijder geselecteerde
+          </button>
+        </div>
+
+        <div className="demo-toolbar-section demo-toolbar-section-accent">
+          <div className="demo-toolbar-heading">
+            <strong>2. Start een alignering</strong>
+            <span>Kies de gewenste flow voor de geselecteerde geometrie.</span>
+          </div>
+
+          <div className="demo-align-actions">
+            {alignmentModes.map((mode) => (
+              <button
+                key={mode.path}
+                type="button"
+                className="demo-align-button"
+                onClick={() => onStartAlignment(mode)}
+                disabled={!selectedGeometry}
+              >
+                {mode.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <details className="demo-layer-picker">
           <summary>Achtergrondlagen</summary>
