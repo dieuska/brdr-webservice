@@ -66,20 +66,132 @@
   height: 100%;
 }
 
-.demo-map-toolbar {
+.demo-map-intro {
   position: absolute;
   top: 12px;
+  right: 12px;
+  z-index: 1600;
+  width: min(360px, calc(100% - 24px));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(240, 249, 255, 0.94));
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.16);
+  backdrop-filter: blur(14px);
+}
+
+.demo-map-intro-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.demo-map-eyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.demo-map-intro h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.1;
+  color: #0f172a;
+}
+
+.demo-map-intro p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.demo-map-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.demo-status-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid #bfdbfe;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1e3a8a;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.demo-status-chip.is-active {
+  border-color: #99f6e4;
+  background: rgba(240, 253, 250, 0.96);
+  color: #115e59;
+}
+
+.demo-map-toolbar {
+  position: absolute;
+  top: 170px;
   left: 12px;
   z-index: 1600;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 10px;
-  align-items: center;
-  padding: 8px 10px;
+  align-items: stretch;
+  width: min(420px, calc(100% - 396px));
+  min-width: 320px;
+  max-height: calc(100% - 182px);
+  overflow: auto;
+  padding: 12px;
   background: rgba(255, 255, 255, 0.94);
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(203, 213, 225, 0.95);
+  border-radius: 18px;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.16);
+  backdrop-filter: blur(14px);
+}
+
+.demo-toolbar-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.demo-toolbar-section-primary {
+  background: linear-gradient(180deg, rgba(239, 246, 255, 0.96), rgba(255, 255, 255, 0.92));
+}
+
+.demo-toolbar-section-accent {
+  background: linear-gradient(180deg, rgba(240, 253, 250, 0.96), rgba(255, 255, 255, 0.94));
+}
+
+.demo-toolbar-heading {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.demo-toolbar-heading strong {
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.demo-toolbar-heading span {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #475569;
 }
 
 .demo-align-button {
@@ -122,14 +234,17 @@
 
 .demo-geometry-select {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
   font-size: 12px;
   color: #111827;
   font-weight: 600;
+  flex: 1 1 180px;
 }
 
 .demo-geometry-select select {
+  width: 100%;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   padding: 7px 9px;
@@ -139,9 +254,9 @@
 
 .demo-layer-picker {
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border-radius: 12px;
   background: #ffffff;
-  padding: 4px 8px;
+  padding: 8px 10px;
 }
 
 .demo-layer-picker > summary {
@@ -192,6 +307,12 @@
   margin: 0;
   font-size: 11px;
   color: #1f2937;
+}
+
+.demo-align-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .map-wrapper {
@@ -351,6 +472,7 @@
 
 .draw-type-picker {
   display: flex;
+  flex-wrap: wrap;
   gap: 5px;
 }
 
@@ -698,6 +820,19 @@
     border-radius: 18px;
   }
 
+  .demo-map-intro {
+    position: static;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .demo-map-toolbar {
+    position: static;
+    width: 100%;
+    min-width: 0;
+    max-height: none;
+  }
+
   .side-panel,
   .compact-side-panel {
     width: auto;
@@ -742,5 +877,16 @@
   .demo-secondary-button,
   .recalculate-button {
     min-height: 44px;
+  }
+
+  .demo-toolbar-section {
+    align-items: stretch;
+  }
+
+  .demo-align-button,
+  .demo-secondary-button,
+  .draw-type-button {
+    width: 100%;
+    justify-content: center;
   }
 }
