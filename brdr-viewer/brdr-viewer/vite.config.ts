@@ -39,6 +39,7 @@ export default defineConfig(() => ({
         frontendHome: resolve(__dirname, "index.html"),
         grbViewer: resolve(__dirname, "grb-viewer.html"),
         viewerWfs: resolve(__dirname, "brk-viewer.html"),
+        geoLifecycleManager: resolve(__dirname, "geolifecyclemanager.html"),
         alignmentMfe: resolve(__dirname, "alignment-mfe.html"),
         alignmentMfeWfs: resolve(__dirname, "alignment-mfe-wfs.html"),
         alignmentMfeSimple: resolve(__dirname, "alignment-mfe-simple.html"),

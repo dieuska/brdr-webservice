@@ -411,3 +411,16 @@ class ViewerResponse(BaseModel):
     diff_metric: Literal["area", "length", "count"]
     predictions: Dict[str, bool]
     prediction_scores: Dict[str, float]
+    evaluations: Optional[Dict[str, Optional[str]]] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class AdpfCollectionSummary(BaseModel):
+    id: str
+    title: str
+    version_date: Optional[str] = None
+    year: Optional[int] = None
+
+
+class AdpfCollectionsResponse(BaseModel):
+    collections: list[AdpfCollectionSummary]

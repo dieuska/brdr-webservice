@@ -1,0 +1,272 @@
+{
+  "generated_at": "2026-06-16T18:14:59.756667",
+  "cycles": [
+    {
+      "cycle_id": "cycle_1_baseline",
+      "executed_at": "2026-06-16T18:14:59.662040",
+      "results": [
+        {
+          "cycle_id": "cycle_1_baseline",
+          "thematic_id": "obj_1",
+          "chosen_rd": 0.0,
+          "decision": "to_review",
+          "reason": "conservative_policy_triggered",
+          "evaluation": "to_check_no_prediction",
+          "prediction_score": -1.0,
+          "reference_od_area": 0.0,
+          "had_base_observation": false,
+          "has_actual_observation": true,
+          "base_observation_signature": {},
+          "actual_observation_signature": {
+            "full": false,
+            "measure_type": "area",
+            "reference_od_area": null,
+            "reference_feature_count": 1,
+            "full_reference_feature_count": 0
+          },
+          "observation_delta": {
+            "available": false,
+            "reason": "missing_base_or_actual_observation_signature"
+          },
+          "metadata_driven_management": {
+            "base_observation_loaded_from_metadata": false,
+            "actual_observation_computed_for_candidate": true,
+            "decision_used_observation_delta": false,
+            "used_metadata_fallback_path": false,
+            "auto_applied_by_geomanager": false,
+            "managed_geometry_changed": false
+          },
+          "geometry_base_wkt": "POLYGON ((172980 174380, 173140 174380, 173140 174520, 172980 174520, 172980 174380))",
+          "geometry_candidate_wkt": "POLYGON ((172980 174380, 173140 174380, 173140 174520, 172980 174520, 172980 174380))",
+          "geometry_managed_wkt": "POLYGON ((172980 174380, 173140 174380, 173140 174520, 172980 174520, 172980 174380))",
+          "geometry_result_diff_wkt": "GEOMETRYCOLLECTION EMPTY",
+          "geometry_result_diff_plus_wkt": "GEOMETRYCOLLECTION EMPTY",
+          "geometry_result_diff_min_wkt": "GEOMETRYCOLLECTION EMPTY"
+        },
+        {
+          "cycle_id": "cycle_1_baseline",
+          "thematic_id": "obj_2",
+          "chosen_rd": 0.0,
+          "decision": "to_review",
+          "reason": "conservative_policy_triggered",
+          "evaluation": "to_check_no_prediction",
+          "prediction_score": -1.0,
+          "reference_od_area": 0.0,
+          "had_base_observation": false,
+          "has_actual_observation": true,
+          "base_observation_signature": {},
+          "actual_observation_signature": {
+            "full": false,
+            "measure_type": "area",
+            "reference_od_area": null,
+            "reference_feature_count": 1,
+            "full_reference_feature_count": 0
+          },
+          "observation_delta": {
+            "available": false,
+            "reason": "missing_base_or_actual_observation_signature"
+          },
+          "metadata_driven_management": {
+            "base_observation_loaded_from_metadata": false,
+            "actual_observation_computed_for_candidate": true,
+            "decision_used_observation_delta": false,
+            "used_metadata_fallback_path": false,
+            "auto_applied_by_geomanager": false,
+            "managed_geometry_changed": false
+          },
+          "geometry_base_wkt": "POLYGON ((173220 174300, 173380 174300, 173390 174430, 173230 174438, 173220 174300))",
+          "geometry_candidate_wkt": "POLYGON ((173220 174300, 173380 174300, 173390 174430, 173230 174438, 173220 174300))",
+          "geometry_managed_wkt": "POLYGON ((173220 174300, 173380 174300, 173390 174430, 173230 174438, 173220 174300))",
+          "geometry_result_diff_wkt": "GEOMETRYCOLLECTION EMPTY",
+          "geometry_result_diff_plus_wkt": "GEOMETRYCOLLECTION EMPTY",
+          "geometry_result_diff_min_wkt": "GEOMETRYCOLLECTION EMPTY"
+        },
+        {
+          "cycle_id": "cycle_1_baseline",
+          "thematic_id": "obj_3",
+          "chosen_rd": 0.0,
+          "decision": "to_review",
+          "reason": "conservative_policy_triggered",
+          "evaluation": "to_check_no_prediction",
+          "prediction_score": -1.0,
+          "reference_od_area": 0.0,
+          "had_base_observation": false,
+          "has_actual_observation": true,
+          "base_observation_signature": {},
+          "actual_observation_signature": {
+            "full": false,
+            "measure_type": "area",
+            "reference_od_area": null,
+            "reference_feature_count": 1,
+            "full_reference_feature_count": 0
+          },
+          "observation_delta": {
+            "available": false,
+            "reason": "missing_base_or_actual_observation_signature"
+          },
+          "metadata_driven_management": {
+            "base_observation_loaded_from_metadata": false,
+            "actual_observation_computed_for_candidate": true,
+            "decision_used_observation_delta": false,
+            "used_metadata_fallback_path": false,
+            "auto_applied_by_geomanager": false,
+            "managed_geometry_changed": false
+          },
+          "geometry_base_wkt": "POLYGON ((173050 174180, 173200 174180, 173190 174270, 173042 174266, 173050 174180))",
+          "geometry_candidate_wkt": "POLYGON ((173050 174180, 173200 174180, 173190 174270, 173042 174266, 173050 174180))",
+          "geometry_managed_wkt": "POLYGON ((173050 174180, 173200 174180, 173190 174270, 173042 174266, 173050 174180))",
+          "geometry_result_diff_wkt": "GEOMETRYCOLLECTION EMPTY",
+          "geometry_result_diff_plus_wkt": "GEOMETRYCOLLECTION EMPTY",
+          "geometry_result_diff_min_wkt": "GEOMETRYCOLLECTION EMPTY"
+        }
+      ]
+    },
+    {
+      "cycle_id": "cycle_2_reference_update",
+      "executed_at": "2026-06-16T18:14:59.751596",
+      "results": [
+        {
+          "cycle_id": "cycle_2_reference_update",
+          "thematic_id": "obj_1",
+          "chosen_rd": 0.0,
+          "decision": "to_review",
+          "reason": "conservative_policy_triggered",
+          "evaluation": "to_check_no_prediction",
+          "prediction_score": -1.0,
+          "reference_od_area": 2751.99,
+          "had_base_observation": true,
+          "has_actual_observation": true,
+          "base_observation_signature": {
+            "full": false,
+            "measure_type": "area",
+            "reference_od_area": null,
+            "reference_feature_count": 1,
+            "full_reference_feature_count": 0
+          },
+          "actual_observation_signature": {
+            "full": false,
+            "measure_type": "area",
+            "reference_od_area": 2751.99,
+            "reference_feature_count": 1,
+            "full_reference_feature_count": 0
+          },
+          "observation_delta": {
+            "available": true,
+            "full_changed": false,
+            "reference_feature_count_delta": 0,
+            "full_reference_feature_count_delta": 0,
+            "reference_od_area_delta": null
+          },
+          "metadata_driven_management": {
+            "base_observation_loaded_from_metadata": true,
+            "actual_observation_computed_for_candidate": true,
+            "decision_used_observation_delta": true,
+            "used_metadata_fallback_path": false,
+            "auto_applied_by_geomanager": false,
+            "managed_geometry_changed": false
+          },
+          "geometry_base_wkt": "POLYGON ((172980 174380, 173140 174380, 173140 174520, 172980 174520, 172980 174380))",
+          "geometry_candidate_wkt": "POLYGON ((172980 174380, 173140 174380, 173140 174520, 172980 174520, 172980 174380))",
+          "geometry_managed_wkt": "POLYGON ((172980 174380, 173140 174380, 173140 174520, 172980 174520, 172980 174380))",
+          "geometry_result_diff_wkt": "GEOMETRYCOLLECTION EMPTY",
+          "geometry_result_diff_plus_wkt": "GEOMETRYCOLLECTION EMPTY",
+          "geometry_result_diff_min_wkt": "GEOMETRYCOLLECTION EMPTY"
+        },
+        {
+          "cycle_id": "cycle_2_reference_update",
+          "thematic_id": "obj_2",
+          "chosen_rd": 0.0,
+          "decision": "to_review",
+          "reason": "conservative_policy_triggered",
+          "evaluation": "to_check_no_prediction",
+          "prediction_score": -1.0,
+          "reference_od_area": 2108.85,
+          "had_base_observation": true,
+          "has_actual_observation": true,
+          "base_observation_signature": {
+            "full": false,
+            "measure_type": "area",
+            "reference_od_area": null,
+            "reference_feature_count": 1,
+            "full_reference_feature_count": 0
+          },
+          "actual_observation_signature": {
+            "full": false,
+            "measure_type": "area",
+            "reference_od_area": 2108.85,
+            "reference_feature_count": 1,
+            "full_reference_feature_count": 0
+          },
+          "observation_delta": {
+            "available": true,
+            "full_changed": false,
+            "reference_feature_count_delta": 0,
+            "full_reference_feature_count_delta": 0,
+            "reference_od_area_delta": null
+          },
+          "metadata_driven_management": {
+            "base_observation_loaded_from_metadata": true,
+            "actual_observation_computed_for_candidate": true,
+            "decision_used_observation_delta": true,
+            "used_metadata_fallback_path": false,
+            "auto_applied_by_geomanager": false,
+            "managed_geometry_changed": false
+          },
+          "geometry_base_wkt": "POLYGON ((173220 174300, 173380 174300, 173390 174430, 173230 174438, 173220 174300))",
+          "geometry_candidate_wkt": "POLYGON ((173220 174300, 173380 174300, 173390 174430, 173230 174438, 173220 174300))",
+          "geometry_managed_wkt": "POLYGON ((173220 174300, 173380 174300, 173390 174430, 173230 174438, 173220 174300))",
+          "geometry_result_diff_wkt": "GEOMETRYCOLLECTION EMPTY",
+          "geometry_result_diff_plus_wkt": "GEOMETRYCOLLECTION EMPTY",
+          "geometry_result_diff_min_wkt": "GEOMETRYCOLLECTION EMPTY"
+        },
+        {
+          "cycle_id": "cycle_2_reference_update",
+          "thematic_id": "obj_3",
+          "chosen_rd": 0.0,
+          "decision": "to_review",
+          "reason": "conservative_policy_triggered",
+          "evaluation": "to_check_no_prediction",
+          "prediction_score": -1.0,
+          "reference_od_area": 2110.75,
+          "had_base_observation": true,
+          "has_actual_observation": true,
+          "base_observation_signature": {
+            "full": false,
+            "measure_type": "area",
+            "reference_od_area": null,
+            "reference_feature_count": 1,
+            "full_reference_feature_count": 0
+          },
+          "actual_observation_signature": {
+            "full": false,
+            "measure_type": "area",
+            "reference_od_area": 2110.75,
+            "reference_feature_count": 1,
+            "full_reference_feature_count": 0
+          },
+          "observation_delta": {
+            "available": true,
+            "full_changed": false,
+            "reference_feature_count_delta": 0,
+            "full_reference_feature_count_delta": 0,
+            "reference_od_area_delta": null
+          },
+          "metadata_driven_management": {
+            "base_observation_loaded_from_metadata": true,
+            "actual_observation_computed_for_candidate": true,
+            "decision_used_observation_delta": true,
+            "used_metadata_fallback_path": false,
+            "auto_applied_by_geomanager": false,
+            "managed_geometry_changed": false
+          },
+          "geometry_base_wkt": "POLYGON ((173050 174180, 173200 174180, 173190 174270, 173042 174266, 173050 174180))",
+          "geometry_candidate_wkt": "POLYGON ((173050 174180, 173200 174180, 173190 174270, 173042 174266, 173050 174180))",
+          "geometry_managed_wkt": "POLYGON ((173050 174180, 173200 174180, 173190 174270, 173042 174266, 173050 174180))",
+          "geometry_result_diff_wkt": "GEOMETRYCOLLECTION EMPTY",
+          "geometry_result_diff_plus_wkt": "GEOMETRYCOLLECTION EMPTY",
+          "geometry_result_diff_min_wkt": "GEOMETRYCOLLECTION EMPTY"
+        }
+      ]
+    }
+  ]
+}

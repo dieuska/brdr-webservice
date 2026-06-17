@@ -1,8 +1,10 @@
 import numpy as np
-import uvicorn
 import logging
-import requests
 import os
+import json
+import re
+import requests
+import uvicorn
 from typing import Any, Optional, Literal
 from brdr.be.grb.enums import GRBType
 from brdr.be.grb.loader import GRBActualLoader
@@ -25,7 +27,13 @@ from shapely.geometry import shape
 from brdr.aligner import Aligner
 
 from brdr.loader import DictLoader, WFSReferenceLoader, OGCFeatureAPIReferenceLoader
-from brdr_webservice_typings import ResponseBody, RequestBody, ViewerResponse
+from brdr_webservice_typings import (
+    AdpfCollectionsResponse,
+    AdpfCollectionSummary,
+    ResponseBody,
+    RequestBody,
+    ViewerResponse,
+)
 
 port = 80
 host = "0.0.0.0"
@@ -36,6 +44,10 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 logger = logging.getLogger(__name__)
+ADPF_COLLECTIONS_URL = (
+    "https://geo.api.vlaanderen.be/Adpf/ogc/features/v1/collections"
+)
+ADPF_REFERENCE_ID_PROPERTY = "CAPAKEY"
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -244,8 +256,21 @@ def _is_prediction_step(evaluation: Any, prediction_score: Any) -> bool:
     return False
 
 
+def _parse_brdr_metadata(value: Any) -> Any:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return value
+    return value
+
+
 def build_viewer_response(
-    actualiser_result: dict[str, Any], feature_id: Optional[str] = None
+    actualiser_result: dict[str, Any],
+    feature_id: Optional[str] = None,
+    include_metadata: bool = False,
 ) -> dict[str, Any]:
     result_fc = actualiser_result.get("result", {}) or {}
     result_features = result_fc.get("features", [])
@@ -295,6 +320,8 @@ def build_viewer_response(
     diffs = {}
     predictions = {}
     prediction_scores = {}
+    evaluations = {}
+    metadata = {} if include_metadata else None
 
     for distance_key in ordered_distances:
         result_geometry = result_by_distance[distance_key]["geometry"]
@@ -321,6 +348,8 @@ def build_viewer_response(
             result_by_distance[distance_key].get("evaluation"),
             result_by_distance[distance_key].get("prediction_score"),
         )
+        evaluation = result_by_distance[distance_key].get("evaluation")
+        evaluations[distance_key] = str(evaluation) if evaluation is not None else None
         try:
             prediction_scores[distance_key] = float(
                 result_by_distance[distance_key].get("prediction_score") or 0.0
@@ -328,21 +357,33 @@ def build_viewer_response(
         except (TypeError, ValueError):
             prediction_scores[distance_key] = 0.0
 
+        if include_metadata:
+            metadata[distance_key] = _parse_brdr_metadata(
+                (result_by_distance[distance_key].get("properties") or {}).get(
+                    "brdr_metadata"
+                )
+            )
+
     if not series:
         raise ValueError(f"No geometries found for feature_id '{selected_feature_id}'")
 
-    return {
+    response = {
         "series": series,
         "diffs": diffs,
         "diff_metric": diff_metric,
         "predictions": predictions,
         "prediction_scores": prediction_scores,
+        "evaluations": evaluations,
     }
+    if include_metadata:
+        response["metadata"] = metadata
+    return response
 
 
 def calculate_alignment_geojson(
     request_body: RequestBody,
     result_type: AlignerResultType = AlignerResultType.EVALUATED_PREDICTIONS,
+    include_metadata: bool = False,
 ) -> dict[str, Any]:
     params = request_body.params
 
@@ -424,6 +465,9 @@ def calculate_alignment_geojson(
     processor_class = processor_map.get(processor_name, AlignerGeometryProcessor)
     processor = processor_class(config=processor_config)
     aligner_config = AlignerConfig()
+    if include_metadata:
+        aligner_config.log_metadata = True
+        aligner_config.add_observations = True
     aligner = Aligner(
         crs=crs,
         processor=processor,
@@ -445,7 +489,7 @@ def calculate_alignment_geojson(
     elif reference_loader == "ogc_feature_api":
         aligner.load_reference_data(
             OGCFeatureAPIReferenceLoader(
-                url=params.reference_url,
+                url=_normalize_ogc_feature_api_url(params.reference_url),
                 id_property=params.reference_id_property,
                 collection=params.reference_collection,
                 aligner=aligner,
@@ -478,7 +522,16 @@ def _result_type_from_mode(
     return AlignerResultType.EVALUATED_PREDICTIONS
 
 
-@app.post("/aligner", response_model=ViewerResponse)
+def _normalize_ogc_feature_api_url(url: Optional[str]) -> Optional[str]:
+    if not url:
+        return url
+    normalized = url.rstrip("/")
+    if normalized.endswith("/collections"):
+        return normalized[: -len("/collections")]
+    return normalized
+
+
+@app.post("/aligner", response_model=ViewerResponse, response_model_exclude_none=True)
 def aligner_endpoint(
     request_body: RequestBody,
     feature_id: Optional[str] = Query(
@@ -488,6 +541,10 @@ def aligner_endpoint(
     result_mode: Literal["all", "predictions"] = Query(
         default="all",
         description="all = full process steps, predictions = evaluated prediction output",
+    ),
+    include_metadata: bool = Query(
+        default=False,
+        description="Include BRDR metadata from the raw result in the viewer response",
     ),
 ):
     """
@@ -500,8 +557,13 @@ def aligner_endpoint(
         process_results = calculate_alignment_geojson(
             request_body,
             result_type=_result_type_from_mode(result_mode),
+            include_metadata=include_metadata,
         )
-        return build_viewer_response(process_results, feature_id=feature_id)
+        return build_viewer_response(
+            process_results,
+            feature_id=feature_id,
+            include_metadata=include_metadata,
+        )
     except HTTPException:
         raise
     except ValueError as exc:
@@ -546,6 +608,57 @@ def aligner_help():
     }
 
 
+@app.get("/adpf/collections", response_model=AdpfCollectionsResponse)
+def adpf_collections():
+    try:
+        response = requests.get(
+            ADPF_COLLECTIONS_URL,
+            params={"f": "application/json"},
+            timeout=30,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except requests.exceptions.RequestException as exc:
+        logger.exception("Upstream Adpf collections service unavailable")
+        raise HTTPException(
+            status_code=503,
+            detail="Upstream Adpf collections service unavailable",
+        ) from exc
+
+    raw_collections = payload.get("collections", []) if isinstance(payload, dict) else []
+    parsed: list[AdpfCollectionSummary] = []
+    for item in raw_collections:
+        if not isinstance(item, dict):
+            continue
+        collection_id = item.get("id")
+        if not isinstance(collection_id, str) or not collection_id:
+            continue
+
+        version_date = item.get("itemTypeDate") or item.get("updated") or item.get(
+            "versionDate"
+        )
+        year = None
+        for token in (collection_id, item.get("title")):
+            if not isinstance(token, str):
+                continue
+            match = re.search(r"(20\d{2}|19\d{2})", token)
+            if match:
+                year = int(match.group(1))
+                break
+
+        parsed.append(
+            AdpfCollectionSummary(
+                id=collection_id,
+                title=item.get("title") if isinstance(item.get("title"), str) else collection_id,
+                version_date=str(version_date) if version_date is not None else None,
+                year=year,
+            )
+        )
+
+    parsed.sort(key=lambda item: ((item.year or 0), item.id))
+    return {"collections": parsed}
+
+
 @app.get("/")
 def home():
     if viewer_static_dir:
@@ -555,9 +668,11 @@ def home():
         "links": [
             {"label": "grb viewer", "href": "/grb-viewer"},
             {"label": "brk viewer (wfs example)", "href": "/brk-viewer"},
+            {"label": "geolifecycle manager", "href": "/geolifecyclemanager"},
             {"label": "grb compact alignment mfe", "href": "/alignment-mfe-simple.html"},
             {"label": "brk compact alignment mfe", "href": "/alignment-mfe-wfs-simple.html"},
             {"label": "aligner api", "href": "/aligner"},
+            {"label": "adpf collections api", "href": "/adpf/collections"},
             {"label": "swagger docs", "href": "/docs"},
             {"label": "redoc", "href": "/redoc"},
             {"label": "openapi", "href": "/openapi.json"},
@@ -585,6 +700,16 @@ if not viewer_static_dir:
                 "`brdr-viewer/brdr-viewer`) or use the Docker image that bundles the viewer."
             )
         }
+
+    @app.get("/geolifecyclemanager")
+    def geolifecycle_unavailable():
+        return {
+            "detail": (
+                "Viewer assets not found. Run the frontend dev server on "
+                "http://127.0.0.1:5173 or build the viewer (`npm run build` in "
+                "`brdr-viewer/brdr-viewer`) or use the Docker image that bundles the viewer."
+            )
+        }
 else:
     @app.get("/grb-viewer")
     def grb_viewer():
@@ -593,6 +718,10 @@ else:
     @app.get("/brk-viewer")
     def brk_viewer():
         return FileResponse(_viewer_html_file("brk-viewer.html"))
+
+    @app.get("/geolifecyclemanager")
+    def geolifecycle_manager():
+        return FileResponse(_viewer_html_file("geolifecyclemanager.html"))
 
     @app.get("/alignment-mfe.html")
     def alignment_mfe():

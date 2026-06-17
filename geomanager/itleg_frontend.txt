@@ -1,0 +1,16 @@
+• Wat je nu ziet, is geen “live BRDR in de browser”, maar een visualisatie van de POC-lifecycle op basis van vooraf berekende backend-output plus een actuele
+  kaartachtergrond.
+
+  Concreet:
+
+  - De achtergrondkaart is GRB_BSK via de GRB WMS in EPSG:31370. Die dient alleen voor ruimtelijke context.
+  - De grijze parcel-laag zijn actuele Adpf-percelen uit de OGC Features API voor de huidige kaartuitsnede.
+  - De blauwe laag is de baseline managed geometry: de goedgekeurde versie uit cycle 1.
+  - De rode laag is de updated/candidate geometry: de voorgestelde geometrie uit cycle 2.
+  - De groene laag is de current lifecycle geometry: een interpolatie tussen blauw en rood op basis van de slider. Dat is vooral visueel, om “evolutie doorheen de
+    tijd” te tonen.
+
+  De geometrieën zelf komen uit de backend-artifact geomanager/frontend/data/mvp_runs.json, die door [mvp_lifecycle_demo.py](C:\Users\KarelDieussaert\OneDrive - Geo
+  Square\Documenten\GitHub\brdr\geomanager\mvp_lifecycle_demo.py:446) wordt aangemaakt en in de frontend wordt ingelezen in [app.js](C:
+  \Users\KarelDieussaert\OneDrive - Geo Square\Documenten\GitHub\brdr\geomanager\frontend\app.js:232). De frontend neemt dus de BRDR/metadata-beslissingen uit die
+  JSON over en toont ze op kaart.
