@@ -13,6 +13,7 @@ Query parameter:
 
 - `feature_id` (optional): required when request contains multiple features
 - `result_mode=all` (default) or `result_mode=predictions`
+- `include_metadata=true` (optional): also returns raw BRDR metadata in the response
 
 Request body (shape):
 
@@ -24,7 +25,12 @@ Request body (shape):
       {
         "type": "Feature",
         "id": "2",
-        "properties": {},
+        "properties": {
+          "metadata": {
+            "actuation": "created",
+            "observations": ["first"]
+          }
+        },
         "geometry": {
           "type": "Polygon",
           "coordinates": [[[0,0],[1,0],[1,1],[0,1],[0,0]]]
@@ -59,6 +65,14 @@ Notes:
   - `grb`: uses `grb_type`
   - `wfs`: requires `reference_url`, `reference_id_property`, `reference_typename`
   - `ogc_feature_api`: requires `reference_url`, `reference_id_property`, `reference_collection`
+- `properties` is optional. When present, it can be used to pass lifecycle metadata to BRDR.
+- The GeoLifecycleManager viewer sends this metadata by default for subsequent versions, but the request remains valid when `properties` is empty.
+- Supported metadata forms:
+  - nested `properties.metadata`
+  - flattened `properties.actuation`
+  - flattened `properties.observations`
+  - flattened `properties.reference_version`
+- Existing geometry-only requests remain valid. If `properties` is omitted or empty, the endpoint behaves as before.
 
 ```json
 {
@@ -78,6 +92,12 @@ Notes:
   },
   "prediction_scores": {
     "0.0": 0.0
+  },
+  "metadata": {
+    "0.0": {
+      "alignment_date": "2025-02-13",
+      "brdr_version": "0.8.1"
+    }
   }
 }
 ```

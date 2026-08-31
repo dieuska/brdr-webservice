@@ -33,6 +33,7 @@ export interface UseBrdrStateOptions {
   crs: BrdrSupportedCrs;
   initialGeometry?: Geometry | null;
   initialRequestParams?: Partial<BrdrAlignmentParams>;
+  skipInitialCalculation?: boolean;
 }
 
 export function assertSupportedCrs(crs: string): asserts crs is BrdrSupportedCrs {

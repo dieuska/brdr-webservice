@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef } from "react";
 import Feature from "ol/Feature";
+import Map from "ol/Map";
 import GeoJSON from "ol/format/GeoJSON";
 import type { Geometry as OlGeometry } from "ol/geom";
 import type { EventsKey } from "ol/events";
 import Draw from "ol/interaction/Draw";
+import { getLength } from "ol/sphere";
 import Modify from "ol/interaction/Modify";
 import Snap from "ol/interaction/Snap";
 import VectorLayer from "ol/layer/Vector";
@@ -11,6 +13,7 @@ import VectorSource from "ol/source/Vector";
 import { Circle as CircleStyle, Fill, Stroke, Style, Text } from "ol/style";
 import { useOpenLayersMap } from "../../hooks/useOpenLayersMap";
 import { useBrdrLayers } from "./brdr/useBrdrLayers";
+import { BRDR_LAYER_KEY, BRDR_LAYER_ROLE_KEY } from "./brdr/brdrLayers";
 import type { BrdrStep, Geometry } from "../../types/brdr";
 import { assertSupportedCrs, type BrdrSupportedCrs } from "../alignment/contracts";
 import type { BaseLayerVisibility } from "./layers/baseLayers";
@@ -46,12 +49,26 @@ interface Props {
   allowGeometryEditing?: boolean;
   drawEnabled?: boolean;
   inputGeometryStyle?: "blue" | "yellow";
+  initialCenterLonLat?: [number, number];
+  onMapReady?: (map: Map) => void;
+  layerVisibility?: MapLayerVisibility;
+  measureEnabled?: boolean;
 }
 
 const INPUT_LAYER_KEY = "brdr-input";
 const INPUT_LAYER_Z_INDEX = 1000;
 const CONTEXT_LAYER_KEY = "brdr-context";
 const CONTEXT_LAYER_Z_INDEX = 900;
+const MEASURE_LAYER_KEY = "brdr-measure";
+
+export interface MapLayerVisibility {
+  input?: boolean;
+  context?: boolean;
+  reference?: boolean;
+  brdrResult?: boolean;
+  brdrDiffMin?: boolean;
+  brdrDiffPlus?: boolean;
+}
 
 export default function MapView({
   crs,
@@ -75,6 +92,10 @@ export default function MapView({
   allowGeometryEditing = true,
   drawEnabled = true,
   inputGeometryStyle = "blue",
+  initialCenterLonLat,
+  onMapReady,
+  layerVisibility,
+  measureEnabled = false,
 }: Props) {
   assertSupportedCrs(crs);
   const divRef = useRef<HTMLDivElement>(null);
@@ -83,7 +104,8 @@ export default function MapView({
     selectedGrbTypes,
     crs,
     showReferenceLayer,
-    baseLayerVisibility
+    baseLayerVisibility,
+    initialCenterLonLat
   );
   const sourceRef = useRef<VectorSource | null>(null);
   const currentTokenRef = useRef(-1);
@@ -96,6 +118,61 @@ export default function MapView({
   const format = useMemo(() => new GeoJSON(), []);
 
   useBrdrLayers(map, step, showDiffLayers, suspendBrdrLayers, crs);
+
+  useEffect(() => {
+    if (!map) return;
+    map.getLayers().getArray().forEach((layer) => {
+      if (layer.get(INPUT_LAYER_KEY)) layer.setVisible(layerVisibility?.input ?? true);
+      if (layer.get(CONTEXT_LAYER_KEY)) layer.setVisible(layerVisibility?.context ?? true);
+      if (layer.get(GRB_REFERENCE_LAYER_KEY)) layer.setVisible(layerVisibility?.reference ?? true);
+      if (layer.get(BRDR_LAYER_KEY)) {
+        const role = layer.get(BRDR_LAYER_ROLE_KEY);
+        const visible = role === "result"
+          ? layerVisibility?.brdrResult ?? true
+          : role === "diff-min"
+            ? layerVisibility?.brdrDiffMin ?? true
+            : layerVisibility?.brdrDiffPlus ?? true;
+        layer.setVisible(visible);
+      }
+    });
+  }, [layerVisibility, map, step]);
+
+  useEffect(() => {
+    if (!map || !measureEnabled) return;
+    const source = new VectorSource();
+    const layer = new VectorLayer({
+      source,
+      style: (feature) => new Style({
+        stroke: new Stroke({ color: "#7c3aed", width: 3, lineDash: [8, 5] }),
+        text: new Text({
+          text: feature.get("measureLabel") ?? "",
+          font: "700 13px sans-serif",
+          fill: new Fill({ color: "#4c1d95" }),
+          stroke: new Stroke({ color: "#ffffff", width: 4 }),
+          offsetY: -12,
+        }),
+      }),
+    });
+    layer.set(MEASURE_LAYER_KEY, true);
+    layer.setZIndex(3000);
+    const draw = new Draw({ source, type: "LineString" });
+    draw.on("drawend", (event) => {
+      const geometry = event.feature.getGeometry();
+      if (!geometry || geometry.getType() !== "LineString") return;
+      const length = getLength(geometry as import("ol/geom").LineString, { projection: crs });
+      event.feature.set("measureLabel", length >= 1 ? `${length.toFixed(2)} m` : `${(length * 1000).toFixed(1)} mm`);
+    });
+    map.addLayer(layer);
+    map.addInteraction(draw);
+    return () => {
+      map.removeInteraction(draw);
+      map.removeLayer(layer);
+    };
+  }, [crs, map, measureEnabled]);
+
+  useEffect(() => {
+    if (map) onMapReady?.(map);
+  }, [map, onMapReady]);
 
   useEffect(() => {
     onInputGeometryChangeRef.current = onInputGeometryChange;

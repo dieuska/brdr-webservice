@@ -12,7 +12,7 @@
       <aside class="panel">
         <h1>GeoManager Visual Demo</h1>
         <p>
-          Simulates how managed polygons evolve over time when fiscal GRB parcel references change.
+          Volg één geometrie door de levensloop van de fiscale ADP-referentiepercelen met BRDR.
         </p>
 
         <div class="control-group">
@@ -39,11 +39,15 @@
           <button id="reloadParcels">Reload parcels for current map extent</button>
         </div>
 
+        <div class="control-group">
+          <button id="runLifecycle">Start BRDR lifecycle</button>
+        </div>
+
         <div class="legend">
           <div><span class="swatch parcel"></span> Fiscal GRB parcels (background)</div>
-          <div><span class="swatch base"></span> Baseline managed geometry</div>
-          <div><span class="swatch updated"></span> Updated managed geometry</div>
-          <div><span class="swatch current"></span> Current lifecycle geometry</div>
+          <div><span class="swatch base"></span> Vorige geometrie</div>
+          <div><span class="swatch updated"></span> Nieuwe BRDR-prediction</div>
+          <div><span class="swatch current"></span> Huidige lifecycle-geometrie</div>
         </div>
 
         <pre id="status">Initializing...</pre>

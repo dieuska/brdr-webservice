@@ -8,6 +8,7 @@ import type { BrdrSupportedCrs } from "../../alignment/contracts";
 
 const format = new GeoJSON();
 export const BRDR_LAYER_KEY = "brdr";
+export const BRDR_LAYER_ROLE_KEY = "brdr-layer-role";
 
 function createPointSymbol(fillColor: string) {
   return new CircleStyle({
@@ -96,6 +97,7 @@ export function createBrdrLayersWithOptions(
       100
     ),
   ];
+  layers[0].set(BRDR_LAYER_ROLE_KEY, "result");
 
   if (!options.showDiffLayers) {
     return layers;
@@ -123,6 +125,8 @@ export function createBrdrLayersWithOptions(
       120
     )
   );
+  layers[1].set(BRDR_LAYER_ROLE_KEY, "diff-min");
+  layers[2].set(BRDR_LAYER_ROLE_KEY, "diff-plus");
 
   return layers;
 }

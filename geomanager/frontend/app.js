@@ -1,7 +1,6 @@
 import OLMap from "https://esm.sh/ol@10.6.1/Map.js";
 import View from "https://esm.sh/ol@10.6.1/View.js";
 import GeoJSON from "https://esm.sh/ol@10.6.1/format/GeoJSON.js";
-import WKT from "https://esm.sh/ol@10.6.1/format/WKT.js";
 import TileLayer from "https://esm.sh/ol@10.6.1/layer/Tile.js";
 import VectorLayer from "https://esm.sh/ol@10.6.1/layer/Vector.js";
 import TileWMS from "https://esm.sh/ol@10.6.1/source/TileWMS.js";
@@ -24,6 +23,9 @@ const ADPF_ENDPOINT_CANDIDATES = [
   },
 ];
 const ADPF_DEFAULT_COLLECTION_ID = "Adpf";
+const BRDR_API_BASE = ["5173", "8080", "8765"].includes(window.location.port)
+  ? "http://127.0.0.1:80"
+  : window.location.origin;
 const FALLBACK_MANAGED_OBJECTS = [
   {
     id: "obj_1",
@@ -63,9 +65,13 @@ const progressEl = document.getElementById("progressLabel");
 const yearAEl = document.getElementById("yearA");
 const yearBEl = document.getElementById("yearB");
 const reloadBtn = document.getElementById("reloadParcels");
+const runLifecycleBtn = document.getElementById("runLifecycle");
 
 let activeCollectionsBase = ADPF_ENDPOINT_CANDIDATES[0].itemsBase;
 let managedObjects = FALLBACK_MANAGED_OBJECTS;
+let lifecycleFrames = [];
+let lifecycleCollections = [];
+let activeLifecycleParcelCollection = null;
 let backgroundLayer;
 
 function setStatus(msg, append = true) {
@@ -109,7 +115,139 @@ const currentLayer = new VectorLayer({ source: currentSource, style: currentStyl
 let map;
 
 const geojsonFormat = new GeoJSON();
-const wktFormat = new WKT();
+
+function geometryFeature(geometry, id = "lifecycle-object") {
+  return {
+    type: "Feature",
+    id,
+    properties: {},
+    geometry,
+  };
+}
+
+async function fetchBrdrPrediction(geometry, collectionId) {
+  const body = {
+    featurecollection: {
+      type: "FeatureCollection",
+      features: [geometryFeature({
+        type: "Polygon",
+        coordinates: [geometry],
+      })],
+    },
+    params: {
+      crs: "EPSG:31370",
+      reference_loader: "ogc_feature_api",
+      reference_url: "https://geo.api.vlaanderen.be/Adpf/ogc/features/v1/collections",
+      reference_id_property: "CAPAKEY",
+      reference_collection: collectionId,
+      reference_partition: 1000,
+      reference_limit: 10000,
+      grb_type: "GRB - ADP - administratief perceel",
+      full_reference_strategy: "prefer_full_reference",
+      od_strategy: "SNAP_ALL_SIDE",
+      snap_strategy: "PREFER_VERTICES",
+      max_relevant_distance: 10,
+      relevant_distance_step: 0.2,
+      processor: "AlignerGeometryProcessor",
+    },
+  };
+
+  const response = await fetch(`${BRDR_API_BASE}/aligner?result_mode=predictions&include_metadata=true`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`BRDR ${response.status}: ${detail.slice(0, 240)}`);
+  }
+  return response.json();
+}
+
+function orderedSeriesKeys(series) {
+  return Object.keys(series ?? {}).sort((a, b) => Number(a) - Number(b));
+}
+
+async function choosePrediction(collection, predictionKeys, response) {
+  if (predictionKeys.length <= 1) return predictionKeys[0];
+
+  const choices = predictionKeys.map((key, index) => {
+    const score = Number(response.prediction_scores?.[key] ?? 0).toFixed(2);
+    return `${index + 1}: ${key} m (score ${score})`;
+  });
+  const answer = window.prompt(
+    `BRDR vond meerdere predictions voor ${collection.year ?? collection.id}. Kies een resultaat:\n\n${choices.join("\n")}\n\nGeef het nummer, of Annuleren voor de beste score.`,
+    "1"
+  );
+  const selectedIndex = Number.parseInt(answer ?? "1", 10) - 1;
+  return predictionKeys[selectedIndex] ?? predictionKeys[0];
+}
+
+async function calculateLifecycle(collectionEntries) {
+  const initialGeometry = FALLBACK_MANAGED_OBJECTS[0].yearA;
+  let currentGeometry = initialGeometry;
+  const frames = [{
+    year: "Start",
+    collectionId: null,
+    geometry: initialGeometry,
+    previousGeometry: initialGeometry,
+    decision: "initial",
+    predictionCount: 0,
+    chosenDistance: null,
+  }];
+
+  for (const collection of collectionEntries) {
+    setStatus(`BRDR alignment voor ${collection.year ?? collection.id}...`);
+    const response = await fetchBrdrPrediction(currentGeometry, collection.id);
+    const seriesKeys = orderedSeriesKeys(response.series);
+    const predictionKeys = seriesKeys.filter((key) => response.predictions?.[key]);
+    const candidates = predictionKeys.length ? predictionKeys : seriesKeys;
+    if (!candidates.length) {
+      setStatus(`Geen BRDR-resultaat voor ${collection.year ?? collection.id}.`);
+      continue;
+    }
+
+    const chosenKey = await choosePrediction(collection, candidates, response);
+    const nextGeometry = response.series[chosenKey]?.result;
+    if (!nextGeometry || nextGeometry.type !== "Polygon") {
+      setStatus(`Resultaat voor ${collection.year ?? collection.id} is geen bruikbare Polygon.`);
+      continue;
+    }
+
+    currentGeometry = nextGeometry.coordinates[0];
+    frames.push({
+      year: collection.year ?? collection.id,
+      collectionId: collection.id,
+      geometry: currentGeometry,
+      previousGeometry: frames[frames.length - 1].geometry,
+      decision: predictionKeys.length ? "prediction" : "best_available_result",
+      predictionCount: predictionKeys.length,
+      chosenDistance: chosenKey,
+    });
+  }
+  return frames;
+}
+
+function renderLifecycleFrame(index) {
+  const frame = lifecycleFrames[index];
+  if (!frame) return;
+  managedObjects = [{
+    id: "lifecycle-object",
+    yearA: frame.previousGeometry,
+    yearB: frame.geometry,
+    decision: frame.decision,
+    reason: frame.chosenDistance ? `BRDR ${frame.chosenDistance} m` : "initial",
+  }];
+  renderManagedLayers(100);
+  updateProgressUI(index, lifecycleFrames.length);
+  setStatus(`Getoond: ${frame.year} · ${frame.predictionCount} prediction(s) · ${frame.decision}.`);
+  if (frame.collectionId && frame.collectionId !== activeLifecycleParcelCollection) {
+    activeLifecycleParcelCollection = frame.collectionId;
+    fetchParcelsForExtent(frame.collectionId).catch((err) => {
+      setStatus(`ADPF-laag voor ${frame.year} kon niet worden geladen (${err.message}).`);
+    });
+  }
+}
 
 function ensureProjection() {
   proj4.defs(
@@ -187,82 +325,6 @@ function interpolateCoords(a, b, t) {
     const q = b[i];
     return [pt[0] + (q[0] - pt[0]) * t, pt[1] + (q[1] - pt[1]) * t];
   });
-}
-
-function extractOuterRingFromWkt(wkt) {
-  const feature = wktFormat.readFeature(wkt, {
-    dataProjection: "EPSG:31370",
-    featureProjection: "EPSG:31370",
-  });
-  const geometry = feature.getGeometry();
-  if (!geometry || geometry.getType() !== "Polygon") {
-    return null;
-  }
-  return geometry.getCoordinates()[0];
-}
-
-function buildManagedObjectsFromRuns(payload) {
-  const cycles = Array.isArray(payload?.cycles) ? payload.cycles : [];
-  if (cycles.length < 2) {
-    return null;
-  }
-
-  const baselineResults = Array.isArray(cycles[0]?.results) ? cycles[0].results : [];
-  const updatedResults = Array.isArray(cycles[1]?.results) ? cycles[1].results : [];
-  if (!baselineResults.length || !updatedResults.length) {
-    return null;
-  }
-
-  const objects = new globalThis.Map();
-  for (const row of baselineResults) {
-    const coords = extractOuterRingFromWkt(row.geometry_managed_wkt);
-    if (!coords) continue;
-    objects.set(row.thematic_id, {
-      id: row.thematic_id,
-      yearA: coords,
-      yearB: coords,
-      decision: row.decision,
-      reason: row.reason,
-    });
-  }
-
-  for (const row of updatedResults) {
-    const existing = objects.get(row.thematic_id);
-    if (!existing) continue;
-    const coords =
-      extractOuterRingFromWkt(row.geometry_candidate_wkt) ??
-      extractOuterRingFromWkt(row.geometry_managed_wkt);
-    if (!coords) continue;
-    existing.yearB = coords;
-    existing.decision = row.decision;
-    existing.reason = row.reason;
-    existing.evaluation = row.evaluation;
-  }
-
-  return [...objects.values()].filter((item) => item.yearA && item.yearB);
-}
-
-async function loadLifecycleDemoData() {
-  try {
-    const response = await fetch("./data/mvp_runs.json", { cache: "no-store" });
-    if (!response.ok) {
-      throw new Error(`status ${response.status}`);
-    }
-    const payload = await response.json();
-    const objects = buildManagedObjectsFromRuns(payload);
-    if (!objects?.length) {
-      throw new Error("artifact does not contain at least two valid lifecycle cycles");
-    }
-    managedObjects = objects;
-    const autoAccepted = objects.filter((item) => item.decision === "auto_accept_candidate").length;
-    setStatus(`Loaded backend lifecycle artifact for ${objects.length} objects.`);
-    setStatus(`Cycle 2 auto-accepted objects: ${autoAccepted}.`);
-    return true;
-  } catch (err) {
-    managedObjects = FALLBACK_MANAGED_OBJECTS;
-    setStatus(`Lifecycle artifact unavailable (${err.message}). Using fallback geometries.`);
-    return false;
-  }
 }
 
 function renderManagedLayers(progress) {
@@ -435,14 +497,22 @@ async function refreshParcelsUsingProgress(progress) {
   await fetchParcelsForExtent(collection);
 }
 
-function updateProgressUI(value) {
-  progressEl.textContent = `${value}%`;
+function updateProgressUI(value, frameCount = 101) {
+  if (frameCount <= 1) {
+    progressEl.textContent = "0%";
+    return;
+  }
+  progressEl.textContent = `${Math.round((value / (frameCount - 1)) * 100)}%`;
 }
 
 sliderEl.addEventListener("input", async (event) => {
-  const progress = Number(event.target.value);
-  updateProgressUI(progress);
-  renderManagedLayers(progress);
+  const value = Number(event.target.value);
+  if (lifecycleFrames.length > 0) {
+    renderLifecycleFrame(value);
+    return;
+  }
+  updateProgressUI(value);
+  renderManagedLayers(value);
 });
 
 reloadBtn.addEventListener("click", async () => {
@@ -450,6 +520,31 @@ reloadBtn.addEventListener("click", async () => {
     await refreshParcelsUsingProgress(Number(sliderEl.value));
   } catch (err) {
     setStatus(`Reload failed: ${err.message}`);
+  }
+});
+
+runLifecycleBtn.addEventListener("click", async () => {
+  if (lifecycleCollections.length === 0 || runLifecycleBtn.disabled) return;
+  runLifecycleBtn.disabled = true;
+  lifecycleFrames = [];
+  sliderEl.disabled = true;
+  try {
+    lifecycleFrames = await calculateLifecycle(lifecycleCollections);
+    sliderEl.min = "0";
+    sliderEl.max = String(Math.max(lifecycleFrames.length - 1, 0));
+    sliderEl.value = "0";
+    sliderEl.disabled = lifecycleFrames.length <= 1;
+    renderLifecycleFrame(0);
+    setStatus(`Lifecycle klaar: ${lifecycleFrames.length - 1} ADPF-jaarstappen verwerkt.`);
+  } catch (err) {
+    lifecycleFrames = [];
+    sliderEl.min = "0";
+    sliderEl.max = "100";
+    sliderEl.value = "0";
+    sliderEl.disabled = false;
+    setStatus(`Lifecycle afgebroken (${err.message}).`);
+  } finally {
+    runLifecycleBtn.disabled = false;
   }
 });
 
@@ -475,8 +570,6 @@ async function init() {
     } catch (err) {
       setStatus(`GRB WMS background unavailable (${err.message}).`);
     }
-    await loadLifecycleDemoData();
-
     let collections = [];
     try {
       collections = await fetchCollections();
@@ -488,6 +581,8 @@ async function init() {
       setStatus(`Fallback collections loaded: ${collections.map((collection) => collection.id).join(", ")}`);
     }
     fillYearSelects(collections);
+    lifecycleCollections = collections;
+    managedObjects = [FALLBACK_MANAGED_OBJECTS[0]];
     renderManagedLayers(0);
     updateProgressUI(0);
     try {
@@ -495,7 +590,7 @@ async function init() {
     } catch (err) {
       setStatus(`Parcel background unavailable (${err.message}). Demo geometries remain visible.`);
     }
-    setStatus("Demo ready.");
+    setStatus("Klaar. Start de BRDR-lifecycle om de geometrie doorheen de ADPF-jaren te volgen.");
   } catch (err) {
     setStatus(`Initialization error: ${err.message}`);
   }

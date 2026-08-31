@@ -35,7 +35,7 @@ from brdr_webservice_typings import (
     ViewerResponse,
 )
 
-port = 80
+port = int(os.environ.get("BRDR_PORT", "80"))
 host = "0.0.0.0"
 
 app = FastAPI(
@@ -389,7 +389,7 @@ def calculate_alignment_geojson(
 
     max_relevant_distance = (
         params.max_relevant_distance
-        if params and params.max_relevant_distance
+        if params and params.max_relevant_distance is not None
         else 10.0
     )
     relevant_distance_step = (
@@ -445,8 +445,10 @@ def calculate_alignment_geojson(
     )
 
     data_dict = {}
+    data_dict_properties = {}
     for f in request_body.featurecollection.features:
         data_dict[f.id] = shape(f.geometry.model_dump())
+        data_dict_properties[f.id] = _normalize_request_properties(f.properties)
 
     processor_config = ProcessorConfig()
     processor_config.od_strategy = od_strategy
@@ -474,7 +476,9 @@ def calculate_alignment_geojson(
         config=aligner_config,
     )
 
-    aligner.load_thematic_data(DictLoader(data_dict=data_dict))
+    aligner.load_thematic_data(
+        DictLoader(data_dict=data_dict, data_dict_properties=data_dict_properties)
+    )
     if reference_loader == "wfs":
         aligner.load_reference_data(
             WFSReferenceLoader(
@@ -529,6 +533,36 @@ def _normalize_ogc_feature_api_url(url: Optional[str]) -> Optional[str]:
     if normalized.endswith("/collections"):
         return normalized[: -len("/collections")]
     return normalized
+
+
+def _normalize_request_properties(properties: Any) -> dict[str, Any]:
+    if properties is None:
+        return {}
+    if hasattr(properties, "model_dump"):
+        record = properties.model_dump(exclude_none=True)
+    elif isinstance(properties, dict):
+        record = {key: value for key, value in properties.items() if value is not None}
+    else:
+        return {}
+
+    metadata = record.get("metadata")
+    brdr_metadata = record.get("brdr_metadata")
+    merged_metadata: dict[str, Any] = {}
+    if isinstance(metadata, dict):
+        merged_metadata.update(metadata)
+    if isinstance(brdr_metadata, dict):
+        merged_metadata.update(brdr_metadata)
+
+    for key in ("actuation", "observations", "reference_version"):
+        value = record.get(key)
+        if value is not None:
+            merged_metadata.setdefault(key, value)
+
+    if merged_metadata:
+        record["metadata"] = merged_metadata
+        record["brdr_metadata"] = merged_metadata
+
+    return record
 
 
 @app.post("/aligner", response_model=ViewerResponse, response_model_exclude_none=True)

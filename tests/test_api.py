@@ -273,6 +273,12 @@ class ApiTests(unittest.TestCase):
         parsed = RequestBody.model_validate(body)
         self.assertEqual(parsed.params.max_relevant_distance, 8.5)
 
+    def test_request_body_accepts_zero_max_relevant_distance(self):
+        body = make_request_body([make_feature("1")])
+        body["params"]["max_relevant_distance"] = 0
+        parsed = RequestBody.model_validate(body)
+        self.assertEqual(parsed.params.max_relevant_distance, 0)
+
     def test_request_body_rejects_max_relevant_distance_above_25(self):
         body = make_request_body([make_feature("1")])
         body["params"]["max_relevant_distance"] = 25.1
@@ -284,6 +290,48 @@ class ApiTests(unittest.TestCase):
         body["params"]["processor"] = "AlignerGeometryProcessor"
         parsed = RequestBody.model_validate(body)
         self.assertEqual(parsed.params.processor, "AlignerGeometryProcessor")
+
+    def test_request_body_accepts_nested_feature_metadata(self):
+        body = make_request_body([make_feature("1")])
+        body["featurecollection"]["features"][0]["properties"] = {
+            "metadata": {
+                "actuation": "created",
+                "observations": ["first"],
+            }
+        }
+        parsed = RequestBody.model_validate(body)
+        self.assertEqual(parsed.featurecollection.features[0].properties.metadata["actuation"], "created")
+        self.assertEqual(parsed.featurecollection.features[0].properties.metadata["observations"], ["first"])
+
+    def test_request_body_accepts_flattened_feature_metadata(self):
+        body = make_request_body([make_feature("1")])
+        body["featurecollection"]["features"][0]["properties"] = {
+            "actuation": "updated",
+            "observations": ["second"],
+            "reference_version": "2019-07-25",
+        }
+        parsed = RequestBody.model_validate(body)
+        self.assertEqual(parsed.featurecollection.features[0].properties.actuation, "updated")
+        self.assertEqual(parsed.featurecollection.features[0].properties.observations, ["second"])
+        self.assertEqual(parsed.featurecollection.features[0].properties.reference_version, "2019-07-25")
+
+    def test_request_body_accepts_brdr_feature_metadata(self):
+        body = make_request_body([make_feature("1")])
+        body["featurecollection"]["features"][0]["properties"] = {
+            "brdr_metadata": {
+                "actuation": "created",
+                "observations": ["first"],
+            }
+        }
+        parsed = RequestBody.model_validate(body)
+        self.assertEqual(
+            parsed.featurecollection.features[0].properties.brdr_metadata["actuation"],
+            "created",
+        )
+        self.assertEqual(
+            parsed.featurecollection.features[0].properties.brdr_metadata["observations"],
+            ["first"],
+        )
 
     def test_request_body_rejects_wfs_without_required_fields(self):
         body = make_request_body([make_feature("1")])
@@ -513,6 +561,33 @@ class ApiTests(unittest.TestCase):
         aligner_config = aligner_mock.call_args.kwargs["config"]
         self.assertTrue(aligner_config.log_metadata)
         self.assertTrue(aligner_config.add_observations)
+
+    def test_calculate_alignment_passes_request_properties_to_dict_loader(self):
+        body = make_request_body([make_feature("feat-1")])
+        body["featurecollection"]["features"][0]["properties"] = {
+            "metadata": {
+                "actuation": "created",
+                "observations": ["first"],
+            }
+        }
+        request_model = RequestBody.model_validate(body)
+        fake_aligner = MagicMock()
+        fake_result = MagicMock()
+        fake_result.get_results_as_geojson.return_value = {"status": "ok"}
+        fake_aligner.evaluate.return_value = fake_result
+
+        with (
+            patch("brdr_webservice.Aligner", return_value=fake_aligner),
+            patch("brdr_webservice.GRBActualLoader", return_value="grb_loader"),
+            patch("brdr_webservice.DictLoader", return_value=MagicMock()) as dict_loader_mock,
+        ):
+            result = calculate_alignment_geojson(request_model)
+
+        self.assertEqual(result, {"status": "ok"})
+        dict_loader_mock.assert_called_once()
+        loader_kwargs = dict_loader_mock.call_args.kwargs
+        self.assertEqual(loader_kwargs["data_dict_properties"]["feat-1"]["metadata"]["actuation"], "created")
+        self.assertEqual(loader_kwargs["data_dict_properties"]["feat-1"]["metadata"]["observations"], ["first"])
 
     def test_calculate_alignment_uses_wfs_loader(self):
         body = make_request_body([make_feature("feat-1")])

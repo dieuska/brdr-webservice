@@ -7,8 +7,14 @@ import Draw from "ol/interaction/Draw";
 import VectorLayer from "ol/layer/Vector";
 import { transformExtent } from "ol/proj";
 import VectorSource from "ol/source/Vector";
+import View from "ol/View";
 import { bbox as bboxStrategy } from "ol/loadingstrategy";
-import { createBaseLayers, DEFAULT_BASE_LAYER_VISIBILITY } from "../components/map/layers/baseLayers";
+import {
+  BASE_LAYER_GRB_GRAY,
+  BASE_LAYER_KEY,
+  createBaseLayers,
+  DEFAULT_BASE_LAYER_VISIBILITY,
+} from "../components/map/layers/baseLayers";
 import { createDefaultView } from "../components/map/view";
 import type { Geometry } from "../types/brdr";
 import "../components/map/MapView.css";
@@ -21,6 +27,7 @@ const OGC_OUTPUT_CRS_31370 = "http://www.opengis.net/def/crs/EPSG/0/31370";
 const OGC_OUTPUT_CRS_CRS84 = "http://www.opengis.net/def/crs/OGC/1.3/CRS84";
 const OGC_RESPONSE_FORMAT = "application/json";
 const OGC_FETCH_LIMIT = 5000;
+const OGC_REFERENCE_MIN_ZOOM = 16;
 
 const referenceStyle = new Style({
   stroke: new Stroke({
@@ -89,15 +96,48 @@ const draftStyle = new Style({
   }),
 });
 
+function capakeyFromImpactItem(item: string) {
+  return item.replace(/\s+\([^()]*%\)$/, "");
+}
+
 interface Props {
   referenceCollectionId: string | null;
+  showReferenceLayer: boolean;
+  showGrbBackground: boolean;
   originalGeometry: Geometry | null;
   managedGeometry: Geometry | null;
   proposalGeometry: Geometry | null;
   draftGeometry: Geometry | null;
+  unmanagedImpactItems: string[];
+  managedImpactItems: string[];
+  impactContextLabel: string;
   loading: boolean;
   drawRequestToken: number;
   onDrawn: (geometry: Geometry) => void;
+}
+
+interface PaneProps {
+  title: string;
+  subtitle: string;
+  referenceSource: VectorSource | null;
+  showReferenceLayer: boolean;
+  showGrbBackground: boolean;
+  view: View;
+  primaryGeometry: Geometry | null;
+  secondaryGeometry: Geometry | null;
+  primaryStyle: Style;
+  secondaryStyle: Style;
+  primaryLabel: string;
+  secondaryLabel: string;
+  impactTitle: string;
+  impactItems: string[];
+  impactContextLabel: string;
+  compareTitle: string;
+  compareItems: string[];
+  loading: boolean;
+  drawEnabled?: boolean;
+  drawRequestToken?: number;
+  onDrawn?: (geometry: Geometry) => void;
 }
 
 function buildItemsUrl(collectionId: string, extent31370: number[]) {
@@ -187,60 +227,142 @@ function setSingleGeometryFeature(
   source.addFeature(feature);
 }
 
-export function GeoLifecycleMap({
-  referenceCollectionId,
-  originalGeometry,
-  managedGeometry,
-  proposalGeometry,
-  draftGeometry,
+function getGeometryExtent(
+  geometry: Geometry | null,
+  format: GeoJSON
+): number[] | null {
+  if (!geometry) {
+    return null;
+  }
+
+  const feature = format.readFeature(
+    { type: "Feature", geometry },
+    {
+      dataProjection: "EPSG:31370",
+      featureProjection: "EPSG:31370",
+    }
+  ) as Feature<OlGeometry>;
+  const extent = feature.getGeometry()?.getExtent();
+  if (!extent || !extent.every(Number.isFinite)) {
+    return null;
+  }
+  return extent;
+}
+
+function fitMapToGeometries(
+  view: View,
+  format: GeoJSON,
+  geometries: Array<Geometry | null>
+) {
+  const extents = geometries
+    .map((geometry) => getGeometryExtent(geometry, format))
+    .filter((extent): extent is number[] => Boolean(extent));
+
+  if (extents.length === 0) {
+    return;
+  }
+
+  const [firstExtent, ...rest] = extents;
+  const combined = [...firstExtent];
+  for (const extent of rest) {
+    combined[0] = Math.min(combined[0], extent[0]);
+    combined[1] = Math.min(combined[1], extent[1]);
+    combined[2] = Math.max(combined[2], extent[2]);
+    combined[3] = Math.max(combined[3], extent[3]);
+  }
+
+  view.fit(combined, {
+    padding: [32, 32, 32, 32],
+    maxZoom: 21,
+    duration: 0,
+  });
+}
+
+function LifecycleMapPane({
+  title,
+  subtitle,
+  referenceSource,
+  showReferenceLayer,
+  showGrbBackground,
+  view,
+  primaryGeometry,
+  secondaryGeometry,
+  primaryStyle,
+  secondaryStyle,
+  primaryLabel,
+  secondaryLabel,
+  impactTitle,
+  impactItems,
+  impactContextLabel,
+  compareTitle,
+  compareItems,
   loading,
+  drawEnabled = false,
   drawRequestToken,
   onDrawn,
-}: Props) {
+}: PaneProps) {
   const divRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
   const drawRef = useRef<Draw | null>(null);
-  const fittedRef = useRef(false);
   const lastDrawTokenRef = useRef(-1);
   const referenceLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
-  const originalSourceRef = useRef<VectorSource | null>(null);
-  const managedSourceRef = useRef<VectorSource | null>(null);
-  const proposalSourceRef = useRef<VectorSource | null>(null);
-  const draftSourceRef = useRef<VectorSource | null>(null);
+  const primaryLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
+  const secondaryLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
+  const primarySourceRef = useRef<VectorSource | null>(null);
+  const secondarySourceRef = useRef<VectorSource | null>(null);
   const format = useMemo(() => new GeoJSON(), []);
+  const compareCapakeys = useMemo(
+    () => new Set(compareItems.map(capakeyFromImpactItem)),
+    [compareItems]
+  );
+  const impactCapakeys = useMemo(
+    () => new Set(impactItems.map(capakeyFromImpactItem)),
+    [impactItems]
+  );
 
   useEffect(() => {
     if (!divRef.current || mapRef.current) return;
 
-    const originalSource = new VectorSource();
-    const managedSource = new VectorSource();
-    const proposalSource = new VectorSource();
-    const draftSource = new VectorSource();
+    const primarySource = new VectorSource();
+    const secondarySource = new VectorSource();
     const referenceLayer = new VectorLayer({
-      source: createReferenceSource(referenceCollectionId),
+      source: referenceSource ?? undefined,
+      visible: showReferenceLayer,
       style: referenceStyle,
+      minZoom: OGC_REFERENCE_MIN_ZOOM,
     });
     referenceLayer.setZIndex(8);
+    const primaryLayer = new VectorLayer({
+      source: primarySource,
+      style: primaryStyle,
+      zIndex: 19,
+    });
+    const secondaryLayer = new VectorLayer({
+      source: secondarySource,
+      style: secondaryStyle,
+      zIndex: 20,
+    });
 
     const map = new Map({
       target: divRef.current,
       layers: [
-        ...createBaseLayers(DEFAULT_BASE_LAYER_VISIBILITY),
+        ...createBaseLayers({
+          ...DEFAULT_BASE_LAYER_VISIBILITY,
+          [BASE_LAYER_GRB_GRAY]: showGrbBackground,
+        }),
         referenceLayer,
-        new VectorLayer({ source: originalSource, style: originalStyle, zIndex: 20 }),
-        new VectorLayer({ source: managedSource, style: managedStyle, zIndex: 21 }),
-        new VectorLayer({ source: proposalSource, style: proposalStyle, zIndex: 22 }),
-        new VectorLayer({ source: draftSource, style: draftStyle, zIndex: 23 }),
+        primaryLayer,
+        secondaryLayer,
       ],
-      view: createDefaultView("EPSG:31370"),
+      view,
     });
 
     mapRef.current = map;
     referenceLayerRef.current = referenceLayer;
-    originalSourceRef.current = originalSource;
-    managedSourceRef.current = managedSource;
-    proposalSourceRef.current = proposalSource;
-    draftSourceRef.current = draftSource;
+    primaryLayerRef.current = primaryLayer;
+    secondaryLayerRef.current = secondaryLayer;
+    primarySourceRef.current = primarySource;
+    secondarySourceRef.current = secondarySource;
 
     return () => {
       if (drawRef.current) {
@@ -249,54 +371,52 @@ export function GeoLifecycleMap({
       map.setTarget(undefined);
       mapRef.current = null;
       referenceLayerRef.current = null;
-      originalSourceRef.current = null;
-      managedSourceRef.current = null;
-      proposalSourceRef.current = null;
-      draftSourceRef.current = null;
+      primaryLayerRef.current = null;
+      secondaryLayerRef.current = null;
+      primarySourceRef.current = null;
+      secondarySourceRef.current = null;
     };
-  }, [format, referenceCollectionId]);
+  }, [view]);
 
   useEffect(() => {
     if (!referenceLayerRef.current) return;
-    referenceLayerRef.current.setSource(createReferenceSource(referenceCollectionId));
-  }, [referenceCollectionId]);
+    referenceLayerRef.current.setSource(referenceSource ?? null);
+  }, [referenceSource]);
 
   useEffect(() => {
-    setSingleGeometryFeature(originalSourceRef.current, originalGeometry, format);
-    setSingleGeometryFeature(managedSourceRef.current, managedGeometry, format);
-    setSingleGeometryFeature(proposalSourceRef.current, proposalGeometry, format);
-    setSingleGeometryFeature(draftSourceRef.current, draftGeometry, format);
-  }, [draftGeometry, format, managedGeometry, originalGeometry, proposalGeometry]);
+    if (!primaryLayerRef.current) return;
+    primaryLayerRef.current.setStyle(primaryStyle);
+  }, [primaryStyle]);
+
+  useEffect(() => {
+    if (!secondaryLayerRef.current) return;
+    secondaryLayerRef.current.setStyle(secondaryStyle);
+  }, [secondaryStyle]);
+
+  useEffect(() => {
+    if (!referenceLayerRef.current) return;
+    referenceLayerRef.current.setVisible(showReferenceLayer);
+  }, [showReferenceLayer]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    const focusGeometry = proposalGeometry ?? managedGeometry ?? draftGeometry ?? originalGeometry;
-    if (!focusGeometry) return;
+    const grbLayer = map
+      .getLayers()
+      .getArray()
+      .find((layer) => layer.get(BASE_LAYER_KEY) === BASE_LAYER_GRB_GRAY);
+    grbLayer?.setVisible(showGrbBackground);
+  }, [showGrbBackground]);
 
-    const feature = format.readFeature(
-      { type: "Feature", geometry: focusGeometry },
-      {
-        dataProjection: "EPSG:31370",
-        featureProjection: "EPSG:31370",
-      }
-    ) as Feature<OlGeometry>;
-    const extent = feature.getGeometry()?.getExtent();
-    if (!extent || !extent.every(Number.isFinite)) return;
-
-    if (!fittedRef.current) {
-      map.getView().fit(extent, {
-        padding: [48, 48, 48, 48],
-        maxZoom: 20,
-      });
-      fittedRef.current = true;
-    }
-  }, [draftGeometry, format, managedGeometry, originalGeometry, proposalGeometry]);
+  useEffect(() => {
+    setSingleGeometryFeature(primarySourceRef.current, primaryGeometry, format);
+    setSingleGeometryFeature(secondarySourceRef.current, secondaryGeometry, format);
+  }, [format, primaryGeometry, secondaryGeometry]);
 
   useEffect(() => {
     const map = mapRef.current;
-    const source = draftSourceRef.current;
-    if (!map || !source) return;
+    const source = drawEnabled ? secondarySourceRef.current : null;
+    if (!map || !source || drawRequestToken === undefined) return;
     if (drawRequestToken === lastDrawTokenRef.current) return;
     lastDrawTokenRef.current = drawRequestToken;
 
@@ -316,7 +436,7 @@ export function GeoLifecycleMap({
 
     draw.on("drawend", (event) => {
       const geometry = event.feature.getGeometry();
-      if (!geometry) return;
+      if (!geometry || !onDrawn) return;
       const nextGeometry = format.writeGeometryObject(geometry, {
         dataProjection: "EPSG:31370",
         featureProjection: "EPSG:31370",
@@ -326,19 +446,172 @@ export function GeoLifecycleMap({
 
     drawRef.current = draw;
     map.addInteraction(draw);
-  }, [drawRequestToken, format, onDrawn]);
+  }, [drawEnabled, drawRequestToken, format, onDrawn]);
 
   return (
-    <div className="map-container-wrapper">
+    <section className="lifecycle-map-split-pane">
+      <div className="lifecycle-map-split-header">
+        <div>
+          <h3>{title}</h3>
+          <p>{subtitle}</p>
+        </div>
+        {loading && <span className="lifecycle-map-badge">herberekenen</span>}
+      </div>
       <div ref={divRef} className="map-container" />
+      <div className="lifecycle-map-legend">
+        <span>{primaryLabel}</span>
+        <span>{secondaryLabel}</span>
+      </div>
+      <div className={`lifecycle-map-impact${loading ? " is-loading" : ""}`}>
+        <div className="lifecycle-map-impact-block">
+          <strong>{impactTitle}</strong>
+          <span className="lifecycle-map-impact-context">t.o.v. {impactContextLabel}</span>
+          <div className="lifecycle-map-impact-list">
+            {impactItems.length > 0 ? (
+              impactItems.map((item) => (
+                <span key={item} className="lifecycle-map-impact-chip">
+                  {item}
+                </span>
+              ))
+            ) : (
+              <span className="lifecycle-chip">geen CAPAKEYs</span>
+            )}
+          </div>
+        </div>
+        <div className="lifecycle-map-impact-block">
+          <strong>Verschil t.o.v. {compareTitle}</strong>
+          <div className="lifecycle-map-impact-list">
+            {impactItems.filter((item) => !compareCapakeys.has(capakeyFromImpactItem(item))).length > 0 ? (
+              impactItems
+                .filter((item) => !compareCapakeys.has(capakeyFromImpactItem(item)))
+                .map((item) => (
+                  <span key={item} className="lifecycle-map-impact-chip is-added">
+                    Alleen hier: {item}
+                  </span>
+                ))
+            ) : (
+              <span className="lifecycle-chip">geen extra CAPAKEYs</span>
+            )}
+            {compareItems.filter((item) => !impactCapakeys.has(capakeyFromImpactItem(item))).length > 0 &&
+              compareItems
+                .filter((item) => !impactCapakeys.has(capakeyFromImpactItem(item)))
+                .map((item) => (
+                  <span key={item} className="lifecycle-map-impact-chip is-removed">
+                    Niet hier: {item}
+                  </span>
+                ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function GeoLifecycleMap({
+  referenceCollectionId,
+  showReferenceLayer,
+  showGrbBackground,
+  originalGeometry,
+  managedGeometry,
+  proposalGeometry,
+  draftGeometry,
+  unmanagedImpactItems,
+  managedImpactItems,
+  impactContextLabel,
+  loading,
+  drawRequestToken,
+  onDrawn,
+}: Props) {
+  const sharedView = useMemo(() => createDefaultView("EPSG:31370"), []);
+  const fitFormat = useMemo(() => new GeoJSON(), []);
+  const referenceSource = useMemo(
+    () => createReferenceSource(referenceCollectionId),
+    [referenceCollectionId]
+  );
+  const fitSignatureRef = useRef<string>("");
+
+  useEffect(() => {
+    const nextSignature = JSON.stringify({
+      referenceCollectionId: referenceCollectionId ?? "",
+      originalGeometry: originalGeometry ?? null,
+      managedGeometry: managedGeometry ?? null,
+      proposalGeometry: proposalGeometry ?? null,
+      draftGeometry: draftGeometry ?? null,
+    });
+    if (nextSignature === fitSignatureRef.current) {
+      return;
+    }
+    fitSignatureRef.current = nextSignature;
+    fitMapToGeometries(sharedView, fitFormat, [
+      originalGeometry,
+      managedGeometry,
+      proposalGeometry,
+      draftGeometry,
+    ]);
+  }, [
+    draftGeometry,
+    fitFormat,
+    managedGeometry,
+    originalGeometry,
+    proposalGeometry,
+    referenceCollectionId,
+    sharedView,
+  ]);
+
+  return (
+    <div
+      className={`lifecycle-map-split${loading ? " is-loading" : ""}`}
+      aria-busy={loading}
+    >
       {loading && (
-        <div className="map-loading-overlay" role="status" aria-live="polite">
-          Lifecycle wordt herberekend...
+        <div className="lifecycle-map-loading" role="status">
+          <span className="lifecycle-map-loading-spinner" aria-hidden="true" />
+          <span>BRDR verwerkt de nieuwe lifecycle-stap…</span>
         </div>
       )}
-      <div className="map-draw-hint">
-        Teken een polygon als startgeometrie. Groen = beheerde versie, rood = voorstel, blauw = oorspronkelijke input.
-      </div>
+      <LifecycleMapPane
+        title="Onbeheerde geometrie"
+        subtitle="Initiële baseline en actuele draft."
+        referenceSource={referenceSource}
+        showReferenceLayer={showReferenceLayer}
+        showGrbBackground={showGrbBackground}
+        view={sharedView}
+        primaryGeometry={originalGeometry}
+        secondaryGeometry={draftGeometry}
+        primaryStyle={originalStyle}
+        secondaryStyle={draftStyle}
+        primaryLabel="baseline"
+        secondaryLabel="draft"
+        impactTitle="Onbeheerd"
+        impactItems={unmanagedImpactItems}
+        impactContextLabel={impactContextLabel}
+        compareTitle="beheerd"
+        compareItems={managedImpactItems}
+        loading={loading}
+        drawEnabled
+        drawRequestToken={drawRequestToken}
+        onDrawn={onDrawn}
+      />
+      <LifecycleMapPane
+        title="Beheerde geometrie"
+        subtitle="Huidige managed versie en eventuele kandidaat."
+        referenceSource={referenceSource}
+        showReferenceLayer={showReferenceLayer}
+        showGrbBackground={showGrbBackground}
+        view={sharedView}
+        primaryGeometry={managedGeometry}
+        secondaryGeometry={proposalGeometry}
+        primaryStyle={managedStyle}
+        secondaryStyle={proposalStyle}
+        primaryLabel="beheerd"
+        secondaryLabel="voorstel"
+        impactTitle="Beheerd"
+        impactItems={managedImpactItems}
+        impactContextLabel={impactContextLabel}
+        compareTitle="onbeheerd"
+        compareItems={unmanagedImpactItems}
+        loading={loading}
+      />
     </div>
   );
 }
