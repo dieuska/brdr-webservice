@@ -56,7 +56,7 @@ export function useBrdrState(options: UseBrdrStateOptions) {
   const [currentStep, setCurrentStep] = useState<BrdrStep | null>(null);
   const [inputGeometryBeforeApply, setInputGeometryBeforeApply] =
     useState<Geometry | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!options.skipInitialCalculation);
   const [error, setError] = useState<string | null>(null);
 
   function withUpdatedInputGeometry(
@@ -125,6 +125,7 @@ export function useBrdrState(options: UseBrdrStateOptions) {
   }
 
   useEffect(() => {
+    if (options.skipInitialCalculation) return;
     runCalculation(requestBody);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

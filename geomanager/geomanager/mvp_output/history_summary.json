@@ -1,0 +1,50 @@
+{
+  "obj_1": [
+    {
+      "cycle_id": "cycle_1_baseline",
+      "decision": "to_review",
+      "reason": "conservative_policy_triggered",
+      "evaluation": "to_check_no_prediction",
+      "prediction_score": -1.0,
+      "has_metadata": true,
+      "auto_applied": false,
+      "geometry_managed_wkt": "POLYGON ((0 0, 0 20, 20 20, 20 0, 0 0))",
+      "geometry_candidate_wkt": "POLYGON ((0 0, 0 20, 20 20, 20 0, 0 0))"
+    },
+    {
+      "cycle_id": "cycle_2_reference_update",
+      "decision": "to_review",
+      "reason": "conservative_policy_triggered",
+      "evaluation": "to_check_no_prediction",
+      "prediction_score": -1.0,
+      "has_metadata": true,
+      "auto_applied": false,
+      "geometry_managed_wkt": "POLYGON ((0 0, 0 20, 20 20, 20 0, 0 0))",
+      "geometry_candidate_wkt": "POLYGON ((0 0, 0 20, 20 20, 20 0, 0 0))"
+    }
+  ],
+  "obj_2": [
+    {
+      "cycle_id": "cycle_1_baseline",
+      "decision": "to_review",
+      "reason": "conservative_policy_triggered",
+      "evaluation": "to_check_no_prediction",
+      "prediction_score": -1.0,
+      "has_metadata": true,
+      "auto_applied": false,
+      "geometry_managed_wkt": "POLYGON ((30 0, 30 12, 42 12, 42 0, 30 0))",
+      "geometry_candidate_wkt": "POLYGON ((30 0, 30 12, 42 12, 42 0, 30 0))"
+    },
+    {
+      "cycle_id": "cycle_2_reference_update",
+      "decision": "to_review",
+      "reason": "observation_full_changed",
+      "evaluation": "to_check_no_prediction",
+      "prediction_score": -1.0,
+      "has_metadata": true,
+      "auto_applied": false,
+      "geometry_managed_wkt": "POLYGON ((30 0, 30 12, 42 12, 42 0, 30 0))",
+      "geometry_candidate_wkt": "POLYGON ((30 0, 30 12, 42 12, 42 0, 30 0))"
+    }
+  ]
+}

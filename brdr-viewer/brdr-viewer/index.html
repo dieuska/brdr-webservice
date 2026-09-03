@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="nl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,41 +8,57 @@
       body {
         margin: 0;
         font-family: "Segoe UI", sans-serif;
-        background: #f8fafc;
+        background: linear-gradient(180deg, #f0f7f5 0%, #f8fafc 48%, #eef4f2 100%);
         color: #0f172a;
       }
       .wrap {
-        max-width: 860px;
-        margin: 36px auto;
-        padding: 0 16px;
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 56px 24px 70px;
       }
       h1 {
-        margin: 0 0 10px;
-        font-size: 28px;
+        margin: 0;
+        color: #102a2b;
+        font-size: clamp(32px, 5vw, 52px);
+        line-height: 1.03;
       }
       p {
         margin: 0 0 20px;
         color: #334155;
       }
+      .intro { max-width: 720px; margin: 14px 0 34px; font-size: 16px; line-height: 1.6; }
       .grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         gap: 12px;
       }
       .section {
-        margin-top: 24px;
+        margin-top: 38px;
       }
       .section:first-of-type {
         margin-top: 0;
       }
       .section h2 {
-        margin: 0 0 6px;
-        font-size: 20px;
+        margin: 0 0 8px;
+        color: #173839;
+        font-size: 22px;
       }
-      .section p {
+      .section > p {
         margin: 0 0 14px;
         font-size: 14px;
       }
+      .secondary-section {
+        margin-top: 46px;
+        padding-top: 24px;
+        border-top: 1px solid #dbe5e2;
+        opacity: .78;
+      }
+      .secondary-section h2 { color: #647775; font-size: 17px; }
+      .secondary-section > p { color: #748482; font-size: 12px; }
+      .secondary-section .card { border-color: #d9e2e0; background: rgba(248,250,250,.78); color: #526260; box-shadow: none; }
+      .secondary-section .card:hover { border-color: #aabbb7; box-shadow: 0 2px 8px rgba(71,85,83,.08); }
+      .secondary-section .title { color: #526260; font-size: 13px; }
+      .secondary-section .sub { color: #81908e; font-size: 12px; }
       a.card {
         display: block;
         padding: 14px;
@@ -64,59 +80,104 @@
         font-size: 13px;
         color: #475569;
       }
+      .viewer-table { overflow: hidden; border: 1px solid #cbded9; border-radius: 16px; background: rgba(255,255,255,.88); box-shadow: 0 18px 44px rgba(15,65,61,.08); }
+      .viewer-table-header, a.viewer-row { display: grid; grid-template-columns: 220px minmax(0, 1fr) 110px; gap: 20px; align-items: center; }
+      .viewer-table-header { padding: 10px 20px; color: #607576; background: #f1f8f6; border-bottom: 1px solid #dceae6; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+      a.viewer-row { padding: 18px 20px; border-bottom: 1px solid #e2ece9; color: #173839; text-decoration: none; transition: background .15s ease, padding .15s ease; }
+      a.viewer-row:last-child { border-bottom: 0; }
+      a.viewer-row:hover { padding-left: 25px; background: #effaf6; }
+      .viewer-name { font-weight: 800; font-size: 15px; }
+      .viewer-context { margin-top: 4px; color: #0f766e; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+      .viewer-description { color: #475b5c; font-size: 13px; line-height: 1.5; }
+      .viewer-open { justify-self: end; color: #0f766e; font-size: 12px; font-weight: 800; }
+      @media (max-width: 700px) {
+        .wrap { padding: 34px 16px 48px; }
+        .viewer-table-header { display: none; }
+        a.viewer-row { display: block; padding: 16px; }
+        .viewer-description { margin-top: 9px; }
+        .viewer-open { margin-top: 10px; }
+      }
     </style>
   </head>
   <body>
     <main class="wrap">
-      <h1>brdr-aligner frontend</h1>
-      <p>Kies een demo-hostviewer, open een losse BRDR-alignment MFE, of ga naar de backend-webservice en documentatie.</p>
+      <h1>BRDR demo-overzicht</h1>
+      <p class="intro">Verken hoe BRDR geometrieën uitlijnt op referentiedata, CRS-conversies controleert en geometrieën doorheen de tijd opvolgt.</p>
 
       <section class="section">
-        <h2>Host-Viewers</h2>
+        <h2>Demo-viewers</h2>
         <p>Volledige demo’s met kaart, geometrieselectie en integratie van de alignment microfrontend.</p>
-        <div class="grid">
-          <a class="card" href="/grb-viewer">
-            <div class="title">GRB Viewer</div>
-            <div class="sub">Vlaamse demo-host met GRB-context</div>
+        <div class="viewer-table">
+          <div class="viewer-table-header"><span>Viewer</span><span>Wat toont deze demo?</span><span>Openen</span></div>
+          <a class="viewer-row" href="./grb-viewer.html">
+            <div><div class="viewer-name">GRB Viewer</div><div class="viewer-context">Vlaanderen · EPSG:3812</div></div>
+            <div class="viewer-description">Een generieke kaartviewer waarin je geometrieën kunt tekenen, selecteren en via de BRDR-alignment-MFE op GRB kunt uitlijnen.</div>
+            <div class="viewer-open">Bekijk demo →</div>
           </a>
-          <a class="card" href="/brk-viewer">
-            <div class="title">BRK Viewer</div>
-            <div class="sub">Nederlandse demo-host met WFS/BRK-context</div>
+          <a class="viewer-row" href="./crs-viewer.html">
+            <div><div class="viewer-name">CRS alignment viewer</div><div class="viewer-context">Lambert 72 → Lambert 2008</div></div>
+            <div class="viewer-description">Toont dat een geometrie die correct is in EPSG:31370 na conversie kleine grensverschillen kan vertonen, en hoe BRDR die in EPSG:3812 corrigeert.</div>
+            <div class="viewer-open">Bekijk demo →</div>
+          </a>
+          <a class="viewer-row" href="./brk-viewer.html">
+            <div><div class="viewer-name">BRK Viewer</div><div class="viewer-context">Nederland · WFS / EPSG:28992</div></div>
+            <div class="viewer-description">Demonstreert dezelfde hostintegratie met Nederlandse BRK/WFS-referentiedata en een andere CRS-configuratie.</div>
+            <div class="viewer-open">Bekijk demo →</div>
+          </a>
+          <a class="viewer-row" href="./geolifecyclemanager.html">
+            <div><div class="viewer-name">GeoLifecycleViewer</div><div class="viewer-context">Referenties doorheen de tijd</div></div>
+            <div class="viewer-description">Volgt geometrieën en BRDR-metadata doorheen historische versies van de ADPF-referentie.</div>
+            <div class="viewer-open">Bekijk demo →</div>
           </a>
         </div>
       </section>
 
-      <section class="section">
+      <section class="section secondary-section">
         <h2>BRDR-Alignment MFE's</h2>
-        <p>Losse microfrontends voor embedding in een externe hosttoepassing, in volledige of compacte variant.</p>
+        <p>Deze MFE’s zijn geen zelfstandige viewers: ze leveren alleen de BRDR-aligneringsworkflow en zijn bedoeld om in een andere kaartviewer ingebouwd te worden.</p>
         <div class="grid">
-          <a class="card" href="/alignment-mfe.html">
+          <a class="card" href="./alignment-mfe.html">
             <div class="title">GRB Alignment MFE</div>
             <div class="sub">Volledige workflow met grafiek en timeline</div>
           </a>
-          <a class="card" href="/alignment-mfe-simple.html">
+          <a class="card" href="./alignment-mfe-simple.html">
             <div class="title">Compacte GRB MFE</div>
             <div class="sub">Snelle predictielijst zonder grafiek</div>
           </a>
-          <a class="card" href="/alignment-mfe-wfs.html">
+          <a class="card" href="./alignment-mfe-wfs.html">
             <div class="title">BRK/WFS Alignment MFE</div>
             <div class="sub">Volledige workflow voor WFS/BRK</div>
           </a>
-          <a class="card" href="/alignment-mfe-wfs-simple.html">
+          <a class="card" href="./alignment-mfe-wfs-simple.html">
             <div class="title">Compacte BRK/WFS MFE</div>
             <div class="sub">Snelle predictielijst zonder grafiek</div>
           </a>
         </div>
       </section>
 
-      <section class="section">
+      <section class="section secondary-section">
+        <h2>BRDR op GitHub</h2>
+        <p>De open-sourceprojecten en achtergrondinformatie achter deze demo.</p>
+        <div class="grid">
+          <a class="card" href="https://github.com/OnroerendErfgoed/brdr" target="_blank" rel="noreferrer">
+            <div class="title">BRDR Python-library</div>
+            <div class="sub">Algoritme en herbruikbare Python-module</div>
+          </a>
+          <a class="card" href="https://github.com/OnroerendErfgoed/brdrQ" target="_blank" rel="noreferrer">
+            <div class="title">brdrQ</div>
+            <div class="sub">QGIS-plugin voor BRDR-alignering</div>
+          </a>
+          <a class="card" href="https://github.com/dieuska/brdr-webservice" target="_blank" rel="noreferrer">
+            <div class="title">BRDR Webservice</div>
+            <div class="sub">Broncode van deze webservice en viewers</div>
+          </a>
+        </div>
+      </section>
+
+      <section class="section secondary-section">
         <h2>Backend</h2>
         <p>Webservice-endpoint, service-overzicht en OpenAPI-documentatie van de backend.</p>
         <div class="grid">
-          <a class="card" id="backend-overview-link" href="/">
-            <div class="title">Backend overzicht</div>
-            <div class="sub">Service links en statusinformatie</div>
-          </a>
           <a class="card" id="backend-api-link" href="/aligner">
             <div class="title">Webservice</div>
             <div class="sub">POST /aligner</div>
@@ -135,11 +196,9 @@
           ? "http://127.0.0.1:80"
           : window.location.origin;
 
-        var overview = document.getElementById("backend-overview-link");
         var api = document.getElementById("backend-api-link");
         var docs = document.getElementById("backend-docs-link");
 
-        if (overview) overview.setAttribute("href", backendBase + "/");
         if (api) api.setAttribute("href", backendBase + "/aligner");
         if (docs) docs.setAttribute("href", backendBase + "/docs");
       })();

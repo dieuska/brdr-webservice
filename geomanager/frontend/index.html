@@ -1,0 +1,63 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GeoManager Time Demo (EPSG:31370)</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@10.6.1/ol.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="panel">
+        <h1>GeoManager Visual Demo</h1>
+        <p>
+          Volg één geometrie door de levensloop van de fiscale ADP-referentiepercelen met BRDR.
+        </p>
+
+        <div class="control-group">
+          <label for="yearA">Reference year A</label>
+          <select id="yearA"></select>
+        </div>
+
+        <div class="control-group">
+          <label for="yearB">Reference year B</label>
+          <select id="yearB"></select>
+        </div>
+
+        <div class="control-group">
+          <label for="timeSlider">Lifecycle progression</label>
+          <input type="range" id="timeSlider" min="0" max="100" step="1" value="0" />
+          <div class="row">
+            <span>Year A (0%)</span>
+            <span id="progressLabel">0%</span>
+            <span>Year B (100%)</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <button id="reloadParcels">Reload parcels for current map extent</button>
+        </div>
+
+        <div class="control-group">
+          <button id="runLifecycle">Start BRDR lifecycle</button>
+        </div>
+
+        <div class="legend">
+          <div><span class="swatch parcel"></span> Fiscal GRB parcels (background)</div>
+          <div><span class="swatch base"></span> Vorige geometrie</div>
+          <div><span class="swatch updated"></span> Nieuwe BRDR-prediction</div>
+          <div><span class="swatch current"></span> Huidige lifecycle-geometrie</div>
+        </div>
+
+        <pre id="status">Initializing...</pre>
+      </aside>
+
+      <main class="map-wrap">
+        <div id="map"></div>
+      </main>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

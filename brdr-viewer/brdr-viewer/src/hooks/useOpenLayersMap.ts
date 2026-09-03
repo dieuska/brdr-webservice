@@ -18,7 +18,8 @@ export function useOpenLayersMap(
   grbTypeLabels?: string[],
   crs?: BrdrSupportedCrs,
   includeReferenceLayer = true,
-  baseLayerVisibility?: BaseLayerVisibility
+  baseLayerVisibility?: BaseLayerVisibility,
+  initialCenterLonLat?: [number, number]
 ) {
   const mapRef = useRef<Map | null>(null);
   const [map, setMap] = useState<Map | null>(null);
@@ -32,12 +33,12 @@ export function useOpenLayersMap(
         ...createBaseLayers(baseLayerVisibility),
         ...(includeReferenceLayer ? createOverlayLayers(grbTypeLabels, crs) : []),
       ],
-      view: createDefaultView(crs),
+      view: createDefaultView(crs, initialCenterLonLat),
     });
 
     mapRef.current = olMap;
     setMap(olMap);
-  }, [baseLayerVisibility, crs, grbTypeLabels, includeReferenceLayer, targetRef]);
+  }, [baseLayerVisibility, crs, grbTypeLabels, includeReferenceLayer, initialCenterLonLat, targetRef]);
 
   useEffect(() => {
     if (!includeReferenceLayer || !mapRef.current) return;

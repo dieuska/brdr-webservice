@@ -1,5 +1,9 @@
 import requestBody from "../data/request_body.json";
-import type { BrdrRequestBody, BrdrResponse } from "../types/brdr";
+import type {
+  AdpfCollectionSummary,
+  BrdrRequestBody,
+  BrdrResponse,
+} from "../types/brdr";
 
 const API_BASE_URL =
   import.meta.env.VITE_BRDR_API_BASE_URL ??
@@ -76,12 +80,24 @@ function forceGrbReference(payload: BrdrRequestBody): BrdrRequestBody {
   return next;
 }
 
+interface FetchBrdrOptions {
+  includeMetadata?: boolean;
+}
+
 async function postViewerRequest(
-  payload: BrdrRequestBody
+  payload: BrdrRequestBody,
+  options: FetchBrdrOptions = {}
 ): Promise<Response> {
   const sanitizedPayload = forceGrbReference(payload);
   const featureId = getFeatureId(sanitizedPayload);
-  const query = featureId ? `?feature_id=${encodeURIComponent(featureId)}` : "";
+  const params = new URLSearchParams();
+  if (featureId) {
+    params.set("feature_id", featureId);
+  }
+  if (options.includeMetadata) {
+    params.set("include_metadata", "true");
+  }
+  const query = params.toString() ? `?${params.toString()}` : "";
   const url = `${API_BASE_URL}/aligner${query}`;
 
   return fetch(url, {
@@ -95,9 +111,10 @@ async function postViewerRequest(
 }
 
 export async function fetchBrdrResponse(
-  payload: BrdrRequestBody
+  payload: BrdrRequestBody,
+  options: FetchBrdrOptions = {}
 ): Promise<BrdrResponse> {
-  let response = await postViewerRequest(payload);
+  let response = await postViewerRequest(payload, options);
 
   // Compatibiliteit: sommige backend-versies verwachten legacy GRB labels,
   // andere de nieuwe labels. Bij 422 proberen we automatisch de andere variant.
@@ -115,14 +132,16 @@ export async function fetchBrdrResponse(
 
     if (expectsLegacy && payload.params.grb_type === "Administratieve percelen") {
       response = await postViewerRequest(
-        cloneWithGrbType(payload, "GRB - ADP - administratief perceel")
+        cloneWithGrbType(payload, "GRB - ADP - administratief perceel"),
+        options
       );
     } else if (
       expectsNew &&
       payload.params.grb_type === "GRB - ADP - administratief perceel"
     ) {
       response = await postViewerRequest(
-        cloneWithGrbType(payload, "Administratieve percelen")
+        cloneWithGrbType(payload, "Administratieve percelen"),
+        options
       );
     }
   }
@@ -144,5 +163,16 @@ export async function fetchBrdrResponse(
 
   const responseData = (await response.json()) as BrdrResponse;
   return responseData;
+}
+
+export async function fetchAdpfCollections(): Promise<AdpfCollectionSummary[]> {
+  const response = await fetch(`${API_BASE_URL}/adpf/collections`, {
+    headers: { Accept: "application/json" },
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to load Adpf collections: ${response.status} ${response.statusText}`);
+  }
+  const payload = (await response.json()) as { collections?: AdpfCollectionSummary[] };
+  return Array.isArray(payload.collections) ? payload.collections : [];
 }
 

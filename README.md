@@ -9,6 +9,7 @@ Webservice to align thematic features to GRB reference features, based on [brdr]
 
 ## Current Architecture
 - Backend: FastAPI (`brdr_webservice.py`) with one alignment endpoint: `/aligner`.
+- `/aligner` supports optional feature metadata in `properties` for lifecycle-driven evaluation.
 - Frontend: React + OpenLayers app (`brdr-viewer/brdr-viewer`) with two distinct frontend roles:
   - **Host viewers**: demo apps with their own map, geometry selection, import/export, and embedded BRDR alignment
   - **BRDR alignment MFE's**: reusable alignment micro-frontends for embedding in another host application
