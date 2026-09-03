@@ -50,9 +50,11 @@ ADPF_COLLECTIONS_URL = (
 ADPF_REFERENCE_ID_PROPERTY = "CAPAKEY"
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
+    allow_origins=os.environ.get("BRDR_CORS_ORIGINS", "").split(",") if os.environ.get("BRDR_CORS_ORIGINS") else [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "http://localhost:8081",
+        "http://127.0.0.1:8081",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -716,6 +718,7 @@ def home():
 
 if not viewer_static_dir:
     @app.get("/grb-viewer")
+    @app.get("/grb-viewer.html")
     def viewer_unavailable():
         return {
             "detail": (
@@ -726,6 +729,7 @@ if not viewer_static_dir:
         }
 
     @app.get("/brk-viewer")
+    @app.get("/brk-viewer.html")
     def viewer_brk_unavailable():
         return {
             "detail": (
@@ -736,7 +740,18 @@ if not viewer_static_dir:
         }
 
     @app.get("/geolifecyclemanager")
+    @app.get("/geolifecyclemanager.html")
     def geolifecycle_unavailable():
+        return {
+            "detail": (
+                "Viewer assets not found. Run the frontend dev server on "
+                "http://127.0.0.1:5173 or build the viewer (`npm run build` in "
+                "`brdr-viewer/brdr-viewer`) or use the Docker image that bundles the viewer."
+            )
+        }
+
+    @app.get("/crs-viewer.html")
+    def crs_viewer_unavailable():
         return {
             "detail": (
                 "Viewer assets not found. Run the frontend dev server on "
@@ -746,16 +761,23 @@ if not viewer_static_dir:
         }
 else:
     @app.get("/grb-viewer")
+    @app.get("/grb-viewer.html")
     def grb_viewer():
         return FileResponse(_viewer_html_file("grb-viewer.html"))
 
     @app.get("/brk-viewer")
+    @app.get("/brk-viewer.html")
     def brk_viewer():
         return FileResponse(_viewer_html_file("brk-viewer.html"))
 
     @app.get("/geolifecyclemanager")
+    @app.get("/geolifecyclemanager.html")
     def geolifecycle_manager():
         return FileResponse(_viewer_html_file("geolifecyclemanager.html"))
+
+    @app.get("/crs-viewer.html")
+    def crs_viewer():
+        return FileResponse(_viewer_html_file("crs-viewer.html"))
 
     @app.get("/alignment-mfe.html")
     def alignment_mfe():
