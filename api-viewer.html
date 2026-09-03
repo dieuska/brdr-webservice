@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -12,10 +12,13 @@
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
 */
-code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -74,10 +77,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-b9c91b1e117c879de662b9ae260051b4.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-3f2496242c16263c0d5ed257b2b27fab.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -190,6 +193,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li><code>feature_id</code> (optional): required when request contains multiple features</li>
 <li><code>result_mode=all</code> (default) or <code>result_mode=predictions</code></li>
+<li><code>include_metadata=true</code> (optional): also returns raw BRDR metadata in the response</li>
 </ul>
 <p>Request body (shape):</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
@@ -199,31 +203,36 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>      <span class="fu">{</span></span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"Feature"</span><span class="fu">,</span></span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"id"</span><span class="fu">:</span> <span class="st">"2"</span><span class="fu">,</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"properties"</span><span class="fu">:</span> <span class="fu">{},</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"geometry"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>          <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"Polygon"</span><span class="fu">,</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>          <span class="dt">"coordinates"</span><span class="fu">:</span> <span class="ot">[[[</span><span class="dv">0</span><span class="ot">,</span><span class="dv">0</span><span class="ot">],[</span><span class="dv">1</span><span class="ot">,</span><span class="dv">0</span><span class="ot">],[</span><span class="dv">1</span><span class="ot">,</span><span class="dv">1</span><span class="ot">],[</span><span class="dv">0</span><span class="ot">,</span><span class="dv">1</span><span class="ot">],[</span><span class="dv">0</span><span class="ot">,</span><span class="dv">0</span><span class="ot">]]]</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>        <span class="fu">}</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">}</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="ot">]</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"params"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"crs"</span><span class="fu">:</span> <span class="st">"EPSG:31370"</span><span class="fu">,</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"reference_loader"</span><span class="fu">:</span> <span class="st">"grb"</span><span class="fu">,</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"grb_type"</span><span class="fu">:</span> <span class="st">"GRB - ADP - administratief perceel"</span><span class="fu">,</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"reference_url"</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"reference_id_property"</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"reference_typename"</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"reference_collection"</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"reference_partition"</span><span class="fu">:</span> <span class="dv">1000</span><span class="fu">,</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"reference_limit"</span><span class="fu">:</span> <span class="dv">10000</span><span class="fu">,</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"full_reference_strategy"</span><span class="fu">:</span> <span class="st">"prefer_full_reference"</span><span class="fu">,</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"od_strategy"</span><span class="fu">:</span> <span class="st">"SNAP_ALL_SIDE"</span><span class="fu">,</span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"snap_strategy"</span><span class="fu">:</span> <span class="st">"PREFER_VERTICES"</span><span class="fu">,</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"max_relevant_distance"</span><span class="fu">:</span> <span class="fl">6.0</span><span class="fu">,</span></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"processor"</span><span class="fu">:</span> <span class="st">"AlignerGeometryProcessor"</span></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"properties"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>          <span class="dt">"metadata"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"actuation"</span><span class="fu">:</span> <span class="st">"created"</span><span class="fu">,</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>            <span class="dt">"observations"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"first"</span><span class="ot">]</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>          <span class="fu">}</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        <span class="fu">},</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>        <span class="dt">"geometry"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>          <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"Polygon"</span><span class="fu">,</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>          <span class="dt">"coordinates"</span><span class="fu">:</span> <span class="ot">[[[</span><span class="dv">0</span><span class="ot">,</span><span class="dv">0</span><span class="ot">],[</span><span class="dv">1</span><span class="ot">,</span><span class="dv">0</span><span class="ot">],[</span><span class="dv">1</span><span class="ot">,</span><span class="dv">1</span><span class="ot">],[</span><span class="dv">0</span><span class="ot">,</span><span class="dv">1</span><span class="ot">],[</span><span class="dv">0</span><span class="ot">,</span><span class="dv">0</span><span class="ot">]]]</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>        <span class="fu">}</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">}</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="ot">]</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"params"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"crs"</span><span class="fu">:</span> <span class="st">"EPSG:31370"</span><span class="fu">,</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"reference_loader"</span><span class="fu">:</span> <span class="st">"grb"</span><span class="fu">,</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"grb_type"</span><span class="fu">:</span> <span class="st">"GRB - ADP - administratief perceel"</span><span class="fu">,</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"reference_url"</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"reference_id_property"</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"reference_typename"</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"reference_collection"</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"reference_partition"</span><span class="fu">:</span> <span class="dv">1000</span><span class="fu">,</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"reference_limit"</span><span class="fu">:</span> <span class="dv">10000</span><span class="fu">,</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"full_reference_strategy"</span><span class="fu">:</span> <span class="st">"prefer_full_reference"</span><span class="fu">,</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"od_strategy"</span><span class="fu">:</span> <span class="st">"SNAP_ALL_SIDE"</span><span class="fu">,</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"snap_strategy"</span><span class="fu">:</span> <span class="st">"PREFER_VERTICES"</span><span class="fu">,</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"max_relevant_distance"</span><span class="fu">:</span> <span class="fl">6.0</span><span class="fu">,</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"processor"</span><span class="fu">:</span> <span class="st">"AlignerGeometryProcessor"</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Notes:</p>
 <ul>
 <li><code>geometry.type</code> can be <code>Point</code>, <code>LineString</code>, <code>Polygon</code> and multi-variants.</li>
@@ -234,6 +243,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><code>wfs</code>: requires <code>reference_url</code>, <code>reference_id_property</code>, <code>reference_typename</code></li>
 <li><code>ogc_feature_api</code>: requires <code>reference_url</code>, <code>reference_id_property</code>, <code>reference_collection</code></li>
 </ul></li>
+<li><code>properties</code> is optional. When present, it can be used to pass lifecycle metadata to BRDR.</li>
+<li>The GeoLifecycleManager viewer sends this metadata by default for subsequent versions, but the request remains valid when <code>properties</code> is empty.</li>
+<li>Supported metadata forms:
+<ul>
+<li>nested <code>properties.metadata</code></li>
+<li>flattened <code>properties.actuation</code></li>
+<li>flattened <code>properties.observations</code></li>
+<li>flattened <code>properties.reference_version</code></li>
+</ul></li>
+<li>Existing geometry-only requests remain valid. If <code>properties</code> is omitted or empty, the endpoint behaves as before.</li>
 </ul>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"series"</span><span class="fu">:</span> <span class="fu">{</span></span>
@@ -252,8 +271,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
 <span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"prediction_scores"</span><span class="fu">:</span> <span class="fu">{</span></span>
 <span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"0.0"</span><span class="fu">:</span> <span class="fl">0.0</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"metadata"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    <span class="dt">"0.0"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"alignment_date"</span><span class="fu">:</span> <span class="st">"2025-02-13"</span><span class="fu">,</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"brdr_version"</span><span class="fu">:</span> <span class="st">"0.8.1"</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="status-codes" class="level2">
 <h2 class="anchored" data-anchor-id="status-codes">Status Codes</h2>

@@ -1,75 +1,5 @@
 [
   {
-    "objectID": "run-locally.html",
-    "href": "run-locally.html",
-    "title": "Run Locally",
-    "section": "",
-    "text": "Python 3.x\nNode.js 18+\nnpm\nOptional: Docker Desktop"
-  },
-  {
-    "objectID": "run-locally.html#prerequisites",
-    "href": "run-locally.html#prerequisites",
-    "title": "Run Locally",
-    "section": "",
-    "text": "Python 3.x\nNode.js 18+\nnpm\nOptional: Docker Desktop"
-  },
-  {
-    "objectID": "run-locally.html#fastest-start-recommended",
-    "href": "run-locally.html#fastest-start-recommended",
-    "title": "Run Locally",
-    "section": "Fastest Start (Recommended)",
-    "text": "Fastest Start (Recommended)\nFrom repository root:\n.\\start-local.ps1\nOr:\nstart-local.cmd\nThis starts:\n\nbackend on http://127.0.0.1:80\nviewer on http://127.0.0.1:5173\nbrowser opens automatically"
-  },
-  {
-    "objectID": "run-locally.html#manual-start",
-    "href": "run-locally.html#manual-start",
-    "title": "Run Locally",
-    "section": "Manual Start",
-    "text": "Manual Start\n\n1. Start backend\npython brdr_webservice.py\n\n\n2. Start viewer\ncd brdr-viewer\\brdr-viewer\nnpm install\nnpm run dev -- --host 127.0.0.1 --port 5173\nOpen http://127.0.0.1:5173."
-  },
-  {
-    "objectID": "run-locally.html#docker-backend-option",
-    "href": "run-locally.html#docker-backend-option",
-    "title": "Run Locally",
-    "section": "Docker Backend Option",
-    "text": "Docker Backend Option\nFrom repository root:\ndocker build -f Dockerfile . -t brdr-aligner\ndocker run --rm -p 80:80 --name brdr-aligner brdr-aligner\nMake sure Docker Desktop / Docker Engine is running before executing these commands.\nThis image bundles both backend and viewer:\n\nAPI: http://127.0.0.1:80\nSwagger: http://127.0.0.1:80/docs\nFrontend landing page: http://127.0.0.1:80/\nGRB host viewer: http://127.0.0.1:80/grb-viewer\nBRK host viewer: http://127.0.0.1:80/brk-viewer\nGRB alignment MFE: http://127.0.0.1:80/alignment-mfe.html\nCompact GRB alignment MFE: http://127.0.0.1:80/alignment-mfe-simple.html\nBRK/WFS alignment MFE: http://127.0.0.1:80/alignment-mfe-wfs.html\nCompact BRK/WFS alignment MFE: http://127.0.0.1:80/alignment-mfe-wfs-simple.html"
-  },
-  {
-    "objectID": "run-locally.html#common-issues",
-    "href": "run-locally.html#common-issues",
-    "title": "Run Locally",
-    "section": "Common Issues",
-    "text": "Common Issues\n\nViewer shows fetch errors\n\nEnsure backend is running on http://127.0.0.1:80.\nCheck CORS origin (localhost:5173 / 127.0.0.1:5173).\nVerify outbound access from backend to GRB upstream services.\n\n\n\nEmpty or flat chart values\n\nTrigger recalculation after drawing or editing geometry.\nEnsure geometry is valid and has area."
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Overview",
-    "section": "",
-    "text": "This project provides a proof-of-concept stack to align user geometries against GRB reference data:\n\na FastAPI webservice (brdr_webservice.py)\nhost viewers to draw/select geometries and launch BRDR alignment\nreusable BRDR alignment micro-frontends (MFE’s) for embedding in another host application\nDocker and local scripts for quick startup"
-  },
-  {
-    "objectID": "index.html#brdr-webservice-proof-of-concept",
-    "href": "index.html#brdr-webservice-proof-of-concept",
-    "title": "Overview",
-    "section": "",
-    "text": "This project provides a proof-of-concept stack to align user geometries against GRB reference data:\n\na FastAPI webservice (brdr_webservice.py)\nhost viewers to draw/select geometries and launch BRDR alignment\nreusable BRDR alignment micro-frontends (MFE’s) for embedding in another host application\nDocker and local scripts for quick startup"
-  },
-  {
-    "objectID": "index.html#what-you-can-do",
-    "href": "index.html#what-you-can-do",
-    "title": "Overview",
-    "section": "What You Can Do",
-    "text": "What You Can Do\n\nStart backend and viewer locally.\nUse a host viewer to draw, import, export, select, and align a geometry.\nOpen a BRDR alignment MFE directly or embed it into another map application.\nInspect BRDR steps, predictions, and resulting geometry."
-  },
-  {
-    "objectID": "index.html#components-at-a-glance",
-    "href": "index.html#components-at-a-glance",
-    "title": "Overview",
-    "section": "Components at a Glance",
-    "text": "Components at a Glance\n\nBackend endpoint: POST /aligner (viewer-oriented response)\nHost viewers:\n\n/grb-viewer\n/brk-viewer\n\nBRDR alignment MFE’s:\n\n/alignment-mfe.html\n/alignment-mfe-simple.html\n/alignment-mfe-wfs.html\n/alignment-mfe-wfs-simple.html\n\n\nContinue with:\n\nArchitecture\nRun Locally\nAPI and Viewer\nMFE Integration"
-  },
-  {
     "objectID": "mfe-integration.html",
     "href": "mfe-integration.html",
     "title": "MFE Integration",
@@ -88,7 +18,7 @@
     "href": "mfe-integration.html#integration-model",
     "title": "MFE Integration",
     "section": "Integration Model",
-    "text": "Integration Model\nThe current integration contract is based on an iframe plus postMessage.\nFlow:\n\nHost application loads the MFE in an iframe.\nMFE emits BRDR_ALIGNMENT_READY.\nHost sends the selected geometry and CRS using BRDR_ALIGNMENT_INIT.\nUser works in the MFE and clicks Aanpassen.\nMFE emits BRDR_ALIGNMENT_APPLY with the aligned geometry.\n\nThe same MFE can be embedded same-origin or cross-origin, provided the host validates event.origin correctly and avoids mixed-content situations."
+    "text": "Integration Model\nThe current integration contract is based on an iframe plus postMessage. The recommended production setup is to use a sandboxed iframe, explicit target origins, and strict runtime validation of message payloads.\nFlow:\n\nHost application loads the MFE in an iframe.\nMFE emits BRDR_ALIGNMENT_READY.\nHost sends the selected geometry and CRS using BRDR_ALIGNMENT_INIT.\nUser works in the MFE and clicks Aanpassen.\nMFE emits BRDR_ALIGNMENT_APPLY with the aligned geometry.\n\nThe same MFE can be embedded same-origin or cross-origin, provided the host validates both event.origin and event.source correctly, uses explicit targetOrigin values, and avoids mixed-content situations."
   },
   {
     "objectID": "mfe-integration.html#message-contract",
@@ -102,14 +32,14 @@
     "href": "mfe-integration.html#minimal-example",
     "title": "MFE Integration",
     "section": "Minimal Example",
-    "text": "Minimal Example\n&lt;iframe\n  id=\"brdr-mfe\"\n  src=\"https://example.com/alignment-mfe.html\"\n  style=\"width:100%;height:800px;border:0\"\n&gt;&lt;/iframe&gt;\n\n&lt;script&gt;\n  const iframe = document.getElementById(\"brdr-mfe\");\n  const mfeOrigin = \"https://example.com\";\n\n  const selectedGeometry = {\n    type: \"Polygon\",\n    coordinates: [[[674109.9, 679157.1], [674108.4, 679157.3], [674067.2, 679162.5], [674109.9, 679157.1]]]\n  };\n\n  window.addEventListener(\"message\", (event) =&gt; {\n    if (event.origin !== mfeOrigin) return;\n    const msg = event.data;\n    if (!msg || typeof msg !== \"object\") return;\n\n    if (msg.type === \"BRDR_ALIGNMENT_READY\") {\n      iframe.contentWindow.postMessage(\n        {\n          type: \"BRDR_ALIGNMENT_INIT\",\n          payload: {\n            crs: \"EPSG:3812\",\n            geometry: selectedGeometry\n          }\n        },\n        mfeOrigin\n      );\n    }\n\n    if (msg.type === \"BRDR_ALIGNMENT_APPLY\") {\n      const alignedGeometry = msg.payload.geometry;\n      console.log(\"Aligned geometry\", alignedGeometry);\n    }\n  });\n&lt;/script&gt;"
+    "text": "Minimal Example\n&lt;iframe\n  id=\"brdr-mfe\"\n  src=\"https://example.com/alignment-mfe.html?hostOrigin=https%3A%2F%2Fhost.example.com\"\n  style=\"width:100%;height:800px;border:0\"\n  sandbox=\"allow-scripts allow-same-origin\"\n&gt;&lt;/iframe&gt;\n\n&lt;script&gt;\n  const iframe = document.getElementById(\"brdr-mfe\");\n  const mfeOrigin = \"https://example.com\";\n\n  const selectedGeometry = {\n    type: \"Polygon\",\n    coordinates: [[[674109.9, 679157.1], [674108.4, 679157.3], [674067.2, 679162.5], [674109.9, 679157.1]]]\n  };\n\n  window.addEventListener(\"message\", (event) =&gt; {\n    if (event.origin !== mfeOrigin) return;\n    const msg = event.data;\n    if (!msg || typeof msg !== \"object\") return;\n\n    if (msg.type === \"BRDR_ALIGNMENT_READY\") {\n      iframe.contentWindow.postMessage(\n        {\n          type: \"BRDR_ALIGNMENT_INIT\",\n          payload: {\n            crs: \"EPSG:3812\",\n            geometry: selectedGeometry\n          }\n        },\n        mfeOrigin\n      );\n    }\n\n    if (msg.type === \"BRDR_ALIGNMENT_APPLY\") {\n      const alignedGeometry = msg.payload.geometry;\n      console.log(\"Aligned geometry\", alignedGeometry);\n    }\n  });\n&lt;/script&gt;"
   },
   {
     "objectID": "mfe-integration.html#same-origin-and-cross-origin-notes",
     "href": "mfe-integration.html#same-origin-and-cross-origin-notes",
     "title": "MFE Integration",
     "section": "Same-Origin and Cross-Origin Notes",
-    "text": "Same-Origin and Cross-Origin Notes\n\nSame-origin embedding works directly.\nCross-origin embedding is supported in the MFE handshake.\nIf the host runs on https, the MFE should also be served on https.\nhttps host + http MFE will be blocked by browsers as mixed content."
+    "text": "Same-Origin and Cross-Origin Notes\n\nSame-origin embedding works directly.\nCross-origin embedding is supported in the MFE handshake.\nHost and MFE should both reject messages from unexpected event.source windows.\nPass the expected host origin in the MFE URL, for example ?hostOrigin=https://host.example.com.\nThe MFE can optionally enforce an allowlist via VITE_BRDR_ALLOWED_HOST_ORIGINS.\nIf VITE_BRDR_ALLOWED_HOST_ORIGINS is not configured, the MFE stays non-blocking for demo deployments.\nIf the host runs on https, the MFE should also be served on https.\nhttps host + http MFE will be blocked by browsers as mixed content."
   },
   {
     "objectID": "mfe-integration.html#full-vs-compact-variants",
@@ -161,11 +91,81 @@
     "text": "Runtime Modes\n\nNative: Python backend + Node viewer\nContainerized backend: Docker backend + Node viewer\nOne-command local startup: start-local.ps1 / start-local.cmd"
   },
   {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Overview",
+    "section": "",
+    "text": "This project provides a proof-of-concept stack to align user geometries against GRB reference data:\n\na FastAPI webservice (brdr_webservice.py)\nhost viewers to draw/select geometries and launch BRDR alignment\nreusable BRDR alignment micro-frontends (MFE’s) for embedding in another host application\nDocker and local scripts for quick startup"
+  },
+  {
+    "objectID": "index.html#brdr-webservice-proof-of-concept",
+    "href": "index.html#brdr-webservice-proof-of-concept",
+    "title": "Overview",
+    "section": "",
+    "text": "This project provides a proof-of-concept stack to align user geometries against GRB reference data:\n\na FastAPI webservice (brdr_webservice.py)\nhost viewers to draw/select geometries and launch BRDR alignment\nreusable BRDR alignment micro-frontends (MFE’s) for embedding in another host application\nDocker and local scripts for quick startup"
+  },
+  {
+    "objectID": "index.html#what-you-can-do",
+    "href": "index.html#what-you-can-do",
+    "title": "Overview",
+    "section": "What You Can Do",
+    "text": "What You Can Do\n\nStart backend and viewer locally.\nUse a host viewer to draw, import, export, select, and align a geometry.\nOpen a BRDR alignment MFE directly or embed it into another map application.\nInspect BRDR steps, predictions, and resulting geometry."
+  },
+  {
+    "objectID": "index.html#components-at-a-glance",
+    "href": "index.html#components-at-a-glance",
+    "title": "Overview",
+    "section": "Components at a Glance",
+    "text": "Components at a Glance\n\nBackend endpoint: POST /aligner (viewer-oriented response)\nHost viewers:\n\n/grb-viewer\n/brk-viewer\n\nBRDR alignment MFE’s:\n\n/alignment-mfe.html\n/alignment-mfe-simple.html\n/alignment-mfe-wfs.html\n/alignment-mfe-wfs-simple.html\n\n\nContinue with:\n\nArchitecture\nRun Locally\nAPI and Viewer\nMFE Integration\nGeneral Documentation and Integration Guide"
+  },
+  {
+    "objectID": "run-locally.html",
+    "href": "run-locally.html",
+    "title": "Run Locally",
+    "section": "",
+    "text": "Python 3.x\nNode.js 18+\nnpm\nOptional: Docker Desktop"
+  },
+  {
+    "objectID": "run-locally.html#prerequisites",
+    "href": "run-locally.html#prerequisites",
+    "title": "Run Locally",
+    "section": "",
+    "text": "Python 3.x\nNode.js 18+\nnpm\nOptional: Docker Desktop"
+  },
+  {
+    "objectID": "run-locally.html#fastest-start-recommended",
+    "href": "run-locally.html#fastest-start-recommended",
+    "title": "Run Locally",
+    "section": "Fastest Start (Recommended)",
+    "text": "Fastest Start (Recommended)\nFrom repository root:\n.\\start-local.ps1\nOr:\nstart-local.cmd\nThis starts:\n\nbackend on http://127.0.0.1:80\nviewer on http://127.0.0.1:5173\nbrowser opens automatically"
+  },
+  {
+    "objectID": "run-locally.html#manual-start",
+    "href": "run-locally.html#manual-start",
+    "title": "Run Locally",
+    "section": "Manual Start",
+    "text": "Manual Start\n\n1. Start backend\npython brdr_webservice.py\n\n\n2. Start viewer\ncd brdr-viewer\\brdr-viewer\nnpm install\nnpm run dev -- --host 127.0.0.1 --port 5173\nOpen http://127.0.0.1:5173."
+  },
+  {
+    "objectID": "run-locally.html#docker-backend-option",
+    "href": "run-locally.html#docker-backend-option",
+    "title": "Run Locally",
+    "section": "Docker Backend Option",
+    "text": "Docker Backend Option\nFrom repository root:\ndocker build -f Dockerfile . -t brdr-aligner\ndocker run --rm -p 80:80 --name brdr-aligner brdr-aligner\nMake sure Docker Desktop / Docker Engine is running before executing these commands.\nThis image bundles both backend and viewer:\n\nAPI: http://127.0.0.1:80\nSwagger: http://127.0.0.1:80/docs\nFrontend landing page: http://127.0.0.1:80/\nGRB host viewer: http://127.0.0.1:80/grb-viewer\nBRK host viewer: http://127.0.0.1:80/brk-viewer\nGRB alignment MFE: http://127.0.0.1:80/alignment-mfe.html\nCompact GRB alignment MFE: http://127.0.0.1:80/alignment-mfe-simple.html\nBRK/WFS alignment MFE: http://127.0.0.1:80/alignment-mfe-wfs.html\nCompact BRK/WFS alignment MFE: http://127.0.0.1:80/alignment-mfe-wfs-simple.html"
+  },
+  {
+    "objectID": "run-locally.html#common-issues",
+    "href": "run-locally.html#common-issues",
+    "title": "Run Locally",
+    "section": "Common Issues",
+    "text": "Common Issues\n\nViewer shows fetch errors\n\nEnsure backend is running on http://127.0.0.1:80.\nCheck CORS origin (localhost:5173 / 127.0.0.1:5173).\nVerify outbound access from backend to GRB upstream services.\n\n\n\nEmpty or flat chart values\n\nTrigger recalculation after drawing or editing geometry.\nEnsure geometry is valid and has area."
+  },
+  {
     "objectID": "api-viewer.html#post-aligner",
     "href": "api-viewer.html#post-aligner",
     "title": "API and Viewer",
     "section": "POST /aligner",
-    "text": "POST /aligner\nReturns the viewer-oriented BRDR output structure.\nQuery parameter:\n\nfeature_id (optional): required when request contains multiple features\nresult_mode=all (default) or result_mode=predictions\n\nRequest body (shape):\n{\n  \"featurecollection\": {\n    \"type\": \"FeatureCollection\",\n    \"features\": [\n      {\n        \"type\": \"Feature\",\n        \"id\": \"2\",\n        \"properties\": {},\n        \"geometry\": {\n          \"type\": \"Polygon\",\n          \"coordinates\": [[[0,0],[1,0],[1,1],[0,1],[0,0]]]\n        }\n      }\n    ]\n  },\n  \"params\": {\n    \"crs\": \"EPSG:31370\",\n    \"reference_loader\": \"grb\",\n    \"grb_type\": \"GRB - ADP - administratief perceel\",\n    \"reference_url\": null,\n    \"reference_id_property\": null,\n    \"reference_typename\": null,\n    \"reference_collection\": null,\n    \"reference_partition\": 1000,\n    \"reference_limit\": 10000,\n    \"full_reference_strategy\": \"prefer_full_reference\",\n    \"od_strategy\": \"SNAP_ALL_SIDE\",\n    \"snap_strategy\": \"PREFER_VERTICES\",\n    \"max_relevant_distance\": 6.0,\n    \"processor\": \"AlignerGeometryProcessor\"\n  }\n}\nNotes:\n\ngeometry.type can be Point, LineString, Polygon and multi-variants.\nmax_relevant_distance is limited to 25.\nreference_loader:\n\ngrb: uses grb_type\nwfs: requires reference_url, reference_id_property, reference_typename\nogc_feature_api: requires reference_url, reference_id_property, reference_collection\n\n\n{\n  \"series\": {\n    \"0.0\": {\n      \"result\": { \"type\": \"Polygon\", \"coordinates\": [] },\n      \"result_diff_min\": { \"type\": \"Polygon\", \"coordinates\": [] },\n      \"result_diff_plus\": { \"type\": \"Polygon\", \"coordinates\": [] }\n    }\n  },\n  \"diffs\": {\n    \"0.0\": 0.0\n  },\n  \"diff_metric\": \"area\",\n  \"predictions\": {\n    \"0.0\": false\n  },\n  \"prediction_scores\": {\n    \"0.0\": 0.0\n  }\n}"
+    "text": "POST /aligner\nReturns the viewer-oriented BRDR output structure.\nQuery parameter:\n\nfeature_id (optional): required when request contains multiple features\nresult_mode=all (default) or result_mode=predictions\ninclude_metadata=true (optional): also returns raw BRDR metadata in the response\n\nRequest body (shape):\n{\n  \"featurecollection\": {\n    \"type\": \"FeatureCollection\",\n    \"features\": [\n      {\n        \"type\": \"Feature\",\n        \"id\": \"2\",\n        \"properties\": {\n          \"metadata\": {\n            \"actuation\": \"created\",\n            \"observations\": [\"first\"]\n          }\n        },\n        \"geometry\": {\n          \"type\": \"Polygon\",\n          \"coordinates\": [[[0,0],[1,0],[1,1],[0,1],[0,0]]]\n        }\n      }\n    ]\n  },\n  \"params\": {\n    \"crs\": \"EPSG:31370\",\n    \"reference_loader\": \"grb\",\n    \"grb_type\": \"GRB - ADP - administratief perceel\",\n    \"reference_url\": null,\n    \"reference_id_property\": null,\n    \"reference_typename\": null,\n    \"reference_collection\": null,\n    \"reference_partition\": 1000,\n    \"reference_limit\": 10000,\n    \"full_reference_strategy\": \"prefer_full_reference\",\n    \"od_strategy\": \"SNAP_ALL_SIDE\",\n    \"snap_strategy\": \"PREFER_VERTICES\",\n    \"max_relevant_distance\": 6.0,\n    \"processor\": \"AlignerGeometryProcessor\"\n  }\n}\nNotes:\n\ngeometry.type can be Point, LineString, Polygon and multi-variants.\nmax_relevant_distance is limited to 25.\nreference_loader:\n\ngrb: uses grb_type\nwfs: requires reference_url, reference_id_property, reference_typename\nogc_feature_api: requires reference_url, reference_id_property, reference_collection\n\nproperties is optional. When present, it can be used to pass lifecycle metadata to BRDR.\nThe GeoLifecycleManager viewer sends this metadata by default for subsequent versions, but the request remains valid when properties is empty.\nSupported metadata forms:\n\nnested properties.metadata\nflattened properties.actuation\nflattened properties.observations\nflattened properties.reference_version\n\nExisting geometry-only requests remain valid. If properties is omitted or empty, the endpoint behaves as before.\n\n{\n  \"series\": {\n    \"0.0\": {\n      \"result\": { \"type\": \"Polygon\", \"coordinates\": [] },\n      \"result_diff_min\": { \"type\": \"Polygon\", \"coordinates\": [] },\n      \"result_diff_plus\": { \"type\": \"Polygon\", \"coordinates\": [] }\n    }\n  },\n  \"diffs\": {\n    \"0.0\": 0.0\n  },\n  \"diff_metric\": \"area\",\n  \"predictions\": {\n    \"0.0\": false\n  },\n  \"prediction_scores\": {\n    \"0.0\": 0.0\n  },\n  \"metadata\": {\n    \"0.0\": {\n      \"alignment_date\": \"2025-02-13\",\n      \"brdr_version\": \"0.8.1\"\n    }\n  }\n}"
   },
   {
     "objectID": "api-viewer.html#status-codes",
