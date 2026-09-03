@@ -17,6 +17,7 @@ Available MFE routes:
 ## Integration Model
 
 The current integration contract is based on an `iframe` plus `postMessage`.
+The recommended production setup is to use a sandboxed iframe, explicit target origins, and strict runtime validation of message payloads.
 
 Flow:
 
@@ -26,7 +27,7 @@ Flow:
 4. User works in the MFE and clicks `Aanpassen`.
 5. MFE emits `BRDR_ALIGNMENT_APPLY` with the aligned geometry.
 
-The same MFE can be embedded same-origin or cross-origin, provided the host validates `event.origin` correctly and avoids mixed-content situations.
+The same MFE can be embedded same-origin or cross-origin, provided the host validates both `event.origin` and `event.source` correctly, uses explicit `targetOrigin` values, and avoids mixed-content situations.
 
 ## Message Contract
 
@@ -84,8 +85,9 @@ Apply event:
 ```html
 <iframe
   id="brdr-mfe"
-  src="https://example.com/alignment-mfe.html"
+  src="https://example.com/alignment-mfe.html?hostOrigin=https%3A%2F%2Fhost.example.com"
   style="width:100%;height:800px;border:0"
+  sandbox="allow-scripts allow-same-origin"
 ></iframe>
 
 <script>
@@ -127,6 +129,10 @@ Apply event:
 
 - Same-origin embedding works directly.
 - Cross-origin embedding is supported in the MFE handshake.
+- Host and MFE should both reject messages from unexpected `event.source` windows.
+- Pass the expected host origin in the MFE URL, for example `?hostOrigin=https://host.example.com`.
+- The MFE can optionally enforce an allowlist via `VITE_BRDR_ALLOWED_HOST_ORIGINS`.
+- If `VITE_BRDR_ALLOWED_HOST_ORIGINS` is not configured, the MFE stays non-blocking for demo deployments.
 - If the host runs on `https`, the MFE should also be served on `https`.
 - `https` host + `http` MFE will be blocked by browsers as mixed content.
 

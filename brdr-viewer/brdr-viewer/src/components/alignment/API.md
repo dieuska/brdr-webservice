@@ -77,11 +77,14 @@ Gedrag:
 - Same-origin en cross-origin embedding worden beide ondersteund.
 - Aanbevolen hostgedrag:
   - valideer `event.origin` tegen de origin van de iframe `src`
+  - valideer ook `event.source` tegen `iframe.contentWindow`
   - stuur `postMessage(..., iframeOrigin)` naar de MFE
   - accepteer `BRDR_ALIGNMENT_READY` en `BRDR_ALIGNMENT_APPLY` enkel van die iframe-origin
 - MFE-gedrag:
-  - `BRDR_ALIGNMENT_READY` wordt breed uitgezonden zodat een cross-origin host de handshake kan opstarten
+  - host geeft zijn verwachte origin mee via `?hostOrigin=https://host.example.com`
+  - `BRDR_ALIGNMENT_READY` en `BRDR_ALIGNMENT_APPLY` worden naar die expliciete host-origin gestuurd
   - bij het eerste geldige init/update-bericht vergrendelt de MFE zich op `event.origin` van de host
+  - berichten worden enkel geaccepteerd van `window.parent`
 
 ## 3) Integratieverwachtingen
 
@@ -89,6 +92,7 @@ Gedrag:
 - Alignment viewer is verantwoordelijk voor BRDR-instellingen, herberekening en keuze van prediction.
 - Geometry moet geldig GeoJSON zijn (`Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon`).
 - Bij CRS-mismatch moet de host eerst reprojection uitvoeren.
+- Gebruik een gesandboxte iframe, bijvoorbeeld `sandbox="allow-scripts allow-same-origin"`.
 
 ## 4) Lage-level bouwblokken
 

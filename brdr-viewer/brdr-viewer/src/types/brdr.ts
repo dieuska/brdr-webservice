@@ -48,6 +48,8 @@ export interface BrdrResponse {
   diff_metric?: "area" | "length" | "count";
   predictions: Record<string, boolean>;
   prediction_scores: Record<string, number>;
+  evaluations?: Record<string, string | null>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface BrdrFeature {
@@ -79,4 +81,11 @@ export interface BrdrRequestBody {
     relevant_distance_step?: number;
     processor?: string;
   };
+}
+
+export interface AdpfCollectionSummary {
+  id: string;
+  title: string;
+  version_date?: string | null;
+  year?: number | null;
 }

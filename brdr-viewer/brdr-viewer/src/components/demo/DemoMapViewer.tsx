@@ -110,6 +110,17 @@ export function DemoMapViewer({
   const selectedIndex = selectedGeometryId
     ? geometries.findIndex((item) => item.id === selectedGeometryId)
     : -1;
+  const hasSelection = selectedIndex >= 0 && Boolean(selectedGeometry);
+  const selectedLabel =
+    selectedIndex >= 0 ? `Geometrie ${selectedIndex + 1}` : "Geen selectie";
+  const workflowHint = hasSelection
+    ? "Kies hieronder een aligneringsmodus of pas de gekozen geometrie verder aan."
+    : selectionModeEnabled
+      ? "Klik op een bestaande geometrie in de kaart om die te selecteren."
+      : "Kies een tekentype en klik in de kaart, of importeer een geometrie.";
+  const selectionSummary = hasSelection
+    ? `${selectedLabel} is klaar om te aligneren.`
+    : "Selecteer of teken eerst een geometrie.";
 
   useEffect(() => {
     if (!selectedGeometryId || !selectedGeometry) return;
@@ -177,274 +188,320 @@ export function DemoMapViewer({
       await navigator.clipboard.writeText(exportText);
       setExportFeedback("Geometrie gekopieerd.");
     } catch {
-      setExportFeedback("Kopiëren via klembord is niet gelukt.");
+      setExportFeedback("Kopieren via klembord is niet gelukt.");
     }
   }
 
   return (
     <div className="demo-map-viewer">
-      <div className="demo-map-toolbar">
-        <div className="draw-type-picker" aria-label="Tekentype">
-          {DRAW_TYPE_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className="draw-type-button"
-              aria-pressed={drawGeometryType === option.value}
-              onClick={() => {
-                setDrawGeometryType(option.value);
-                setDrawRequestToken((v) => v + 1);
-                setSelectionModeEnabled(false);
-              }}
-              title={option.label}
-            >
-              <span className="draw-type-icon" aria-hidden="true">
-                {option.icon}
-              </span>
-              <span>{option.label}</span>
-            </button>
-          ))}
+      <div className="demo-map-intro">
+        <a className="viewer-home-link" href={import.meta.env.BASE_URL}>← Demo-overzicht</a>
+        <p className="demo-map-eyebrow">Demo-hostviewer</p>
+        <h2>Elke kaartviewer kan hier BRDR aanroepen</h2>
+        <p>
+          Dit scherm toont een generieke kaartviewer die geometrieën kan tekenen, selecteren en
+          uitwisselen. Vanuit deze host kun je de BRDR-MFE openen om een geometrie te herberekenen,
+          aan te passen of terug te zetten.
+        </p>
+        <div className="demo-map-intro-meta">
+          <span>{workflowHint}</span>
+          <span>{selectionSummary}</span>
         </div>
-
-        <label className="demo-geometry-select">
-          Geometrie
-          <select
-            value={selectedGeometryId ?? ""}
-            onChange={(event) =>
-              onSelectGeometry(event.target.value || null)
-            }
-          >
-            <option value="">Geen selectie</option>
-            {geometries.map((item, index) => (
-              <option key={item.id} value={item.id}>
-                Geometrie {index + 1}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <button
-          type="button"
-          className="demo-secondary-button"
-          aria-pressed={selectionModeEnabled}
-          onClick={() => setSelectionModeEnabled((prev) => !prev)}
-        >
-          {selectionModeEnabled ? "Selectie actief" : "Selecteer op kaart"}
-        </button>
-
-        <button
-          type="button"
-          className="demo-secondary-button"
-          onClick={onDeleteSelectedGeometry}
-          disabled={selectedIndex < 0}
-        >
-          Verwijder geselecteerde
-        </button>
-
-        {alignmentModes.map((mode) => (
-          <button
-            key={mode.path}
-            type="button"
-            className="demo-align-button"
-            onClick={() => onStartAlignment(mode)}
-            disabled={!selectedGeometry}
-          >
-            {mode.label}
-          </button>
-        ))}
-
-        <details className="demo-layer-picker">
-          <summary>Achtergrondlagen</summary>
-          <div className="demo-layer-picker-list">
-            {!showGrbReferenceControls && (
-              <label className="demo-layer-checkbox">
-                <input
-                  type="checkbox"
-                  checked={baseLayerVisibility[BASE_LAYER_BRK_PDOK]}
-                  onChange={() => toggleBaseLayer(BASE_LAYER_BRK_PDOK)}
-                />
-                <span>PDOK BRK percelen</span>
-              </label>
-            )}
-            {!showGrbReferenceControls && (
-              <label className="demo-layer-checkbox">
-                <input
-                  type="checkbox"
-                  checked={baseLayerVisibility[BASE_LAYER_BRK_LUCHTFOTO]}
-                  onChange={() => toggleBaseLayer(BASE_LAYER_BRK_LUCHTFOTO)}
-                />
-                <span>PDOK luchtfoto RGB</span>
-              </label>
-            )}
-            {showGrbReferenceControls && (
-              <label className="demo-layer-checkbox">
-                <input
-                  type="checkbox"
-                  checked={baseLayerVisibility[BASE_LAYER_GRB_COLOR]}
-                  onChange={() => toggleBaseLayer(BASE_LAYER_GRB_COLOR)}
-                />
-                <span>GRB basiskaart kleur</span>
-              </label>
-            )}
-            {showGrbReferenceControls && (
-              <label className="demo-layer-checkbox">
-                <input
-                  type="checkbox"
-                  checked={baseLayerVisibility[BASE_LAYER_GRB_GRAY]}
-                  onChange={() => toggleBaseLayer(BASE_LAYER_GRB_GRAY)}
-                />
-                <span>GRB basiskaart grijs</span>
-              </label>
-            )}
-            {showGrbReferenceControls && (
-              <label className="demo-layer-checkbox">
-                <input
-                  type="checkbox"
-                  checked={baseLayerVisibility[BASE_LAYER_OSM]}
-                  onChange={() => toggleBaseLayer(BASE_LAYER_OSM)}
-                />
-                <span>OSM</span>
-              </label>
-            )}
-          </div>
-        </details>
-
-        {showGrbReferenceControls && (
-          <details className="demo-layer-picker">
-            <summary>GRB OGC lagen</summary>
-            <div className="demo-layer-picker-list">
-              {GRB_REFERENCE_LAYER_OPTIONS.map((layerName) => (
-                <label key={layerName} className="demo-layer-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={activeReferenceLayers.includes(layerName)}
-                    onChange={() => toggleReferenceLayer(layerName)}
-                  />
-                  <span>{layerName}</span>
-                </label>
-              ))}
-            </div>
-          </details>
-        )}
-
-        <details className="demo-layer-picker demo-import-panel">
-          <summary>Plak WKT / GeoJSON</summary>
-          <div className="demo-layer-picker-list">
-            <label className="demo-geometry-select">
-              Bron-CRS
-              <select
-                value={importSourceCrs}
-                onChange={(event) =>
-                  setImportSourceCrs(event.target.value as ImportSourceCrs)
-                }
-              >
-                <option value="EPSG:3812">EPSG:3812</option>
-                <option value="EPSG:31370">EPSG:31370</option>
-                <option value="EPSG:28992">EPSG:28992</option>
-                <option value="EPSG:4326">WGS84 (EPSG:4326)</option>
-              </select>
-            </label>
-            <textarea
-              className="demo-import-textarea"
-              placeholder="Plak hier WKT of GeoJSON..."
-              value={importText}
-              onChange={(event) => {
-                setImportText(event.target.value);
-                setImportFeedback(null);
-              }}
-            />
-            <button
-              type="button"
-              className="demo-align-button"
-              onClick={handleImport}
-              disabled={!importText.trim()}
-            >
-              Voeg geometrie toe
-            </button>
-            {importFeedback && (
-              <p className="demo-import-feedback">{importFeedback}</p>
-            )}
-          </div>
-        </details>
-
-        <details className="demo-layer-picker demo-import-panel">
-          <summary>Haal WKT / GeoJSON op</summary>
-          <div className="demo-layer-picker-list">
-            <label className="demo-geometry-select">
-              Formaat
-              <select
-                value={exportFormat}
-                onChange={(event) => {
-                  setExportFormat(event.target.value as GeometryExportFormat);
-                  setExportFeedback(null);
-                }}
-              >
-                <option value="wkt">WKT</option>
-                <option value="geojson">GeoJSON</option>
-              </select>
-            </label>
-            <label className="demo-geometry-select">
-              Doel-CRS
-              <select
-                value={exportTargetCrs}
-                onChange={(event) => {
-                  setExportTargetCrs(event.target.value as ExportTargetCrs);
-                  setExportFeedback(null);
-                }}
-              >
-                <option value="EPSG:3812">EPSG:3812</option>
-                <option value="EPSG:31370">EPSG:31370</option>
-                <option value="EPSG:28992">EPSG:28992</option>
-                <option value="EPSG:4326">WGS84 (EPSG:4326)</option>
-              </select>
-            </label>
-            <textarea
-              className="demo-import-textarea demo-export-textarea"
-              placeholder="Selecteer een geometrie om WKT of GeoJSON op te halen..."
-              value={exportText}
-              readOnly
-            />
-            <button
-              type="button"
-              className="demo-align-button"
-              onClick={() => void handleCopyExport()}
-              disabled={!selectedGeometry}
-            >
-              Kopieer geometrie
-            </button>
-            {exportFeedback && (
-              <p className="demo-import-feedback">{exportFeedback}</p>
-            )}
-          </div>
-        </details>
       </div>
 
-      <MapView
-        crs={crs}
-        step={null}
-        contextGeometries={geometries.map((item, index) => ({
-          ...(item as MapGeometryItem),
-          label: String(index + 1),
-        }))}
-        selectedGeometryId={selectedGeometryId}
-        selectionEnabled={selectionModeEnabled}
-        onSelectGeometryById={onSelectGeometry}
-        fitRequestToken={fitRequestToken}
-        baseLayerVisibility={baseLayerVisibility}
-        showReferenceLayer
-        selectedGrbTypes={activeReferenceLayers}
-        showDiffLayers={false}
-        suspendBrdrLayers={false}
-        loading={false}
-        inputGeometry={selectedGeometry}
-        onInputGeometryChange={onGeometryDrawn}
-        drawRequestToken={drawRequestToken}
-        drawGeometryType={drawGeometryType}
-        drawHint={drawHint}
-        drawEnabled={!selectionModeEnabled}
-        allowGeometryEditing={false}
-        inputGeometryStyle="yellow"
-      />
+      <div className="demo-map-content">
+        <div className="demo-map-toolbar">
+          <div className="demo-toolbar-section demo-toolbar-section-primary">
+            <div className="demo-toolbar-heading">
+              <strong>1. Kies of teken een geometrie</strong>
+              <span>{selectionSummary}</span>
+            </div>
+
+            <div className="draw-type-picker" aria-label="Tekentype">
+              {DRAW_TYPE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className="draw-type-button"
+                  aria-pressed={drawGeometryType === option.value}
+                  onClick={() => {
+                    setDrawGeometryType(option.value);
+                    setDrawRequestToken((v) => v + 1);
+                    setSelectionModeEnabled(false);
+                  }}
+                  title={option.label}
+                >
+                  <span className="draw-type-icon" aria-hidden="true">
+                    {option.icon}
+                  </span>
+                  <span>{option.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="demo-toolbar-section">
+            <label className="demo-geometry-select">
+              Geometrie
+              <select
+                value={selectedGeometryId ?? ""}
+                onChange={(event) =>
+                  onSelectGeometry(event.target.value || null)
+                }
+              >
+                <option value="">Geen selectie</option>
+                {geometries.map((item, index) => (
+                  <option key={item.id} value={item.id}>
+                    Geometrie {index + 1}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <button
+              type="button"
+              className="demo-secondary-button"
+              aria-pressed={selectionModeEnabled}
+              onClick={() => setSelectionModeEnabled((prev) => !prev)}
+            >
+              {selectionModeEnabled ? "Selectie actief" : "Selecteer op kaart"}
+            </button>
+
+            <button
+              type="button"
+              className="demo-secondary-button"
+              onClick={() => setFitRequestToken((token) => token + 1)}
+              disabled={!hasSelection}
+            >
+              Zoom naar selectie
+            </button>
+
+            <button
+              type="button"
+              className="demo-secondary-button"
+              onClick={onDeleteSelectedGeometry}
+              disabled={!hasSelection}
+            >
+              Verwijder geselecteerde
+            </button>
+          </div>
+
+          <div className="demo-toolbar-section demo-toolbar-section-accent">
+            <div className="demo-toolbar-heading">
+              <strong>2. Start een alignering</strong>
+              <span>Kies de gewenste flow voor de geselecteerde geometrie.</span>
+            </div>
+
+            <div className="demo-align-actions">
+              {alignmentModes.map((mode) => (
+                <button
+                  key={mode.path}
+                  type="button"
+                  className="demo-align-button"
+                  onClick={() => onStartAlignment(mode)}
+                  disabled={!selectedGeometry}
+                >
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <details className="demo-layer-picker">
+            <summary>Achtergrondlagen</summary>
+            <div className="demo-layer-picker-list">
+              {!showGrbReferenceControls && (
+                <label className="demo-layer-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={baseLayerVisibility[BASE_LAYER_BRK_PDOK]}
+                    onChange={() => toggleBaseLayer(BASE_LAYER_BRK_PDOK)}
+                  />
+                  <span>PDOK BRK percelen</span>
+                </label>
+              )}
+              {!showGrbReferenceControls && (
+                <label className="demo-layer-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={baseLayerVisibility[BASE_LAYER_BRK_LUCHTFOTO]}
+                    onChange={() => toggleBaseLayer(BASE_LAYER_BRK_LUCHTFOTO)}
+                  />
+                  <span>PDOK luchtfoto RGB</span>
+                </label>
+              )}
+              {showGrbReferenceControls && (
+                <label className="demo-layer-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={baseLayerVisibility[BASE_LAYER_GRB_COLOR]}
+                    onChange={() => toggleBaseLayer(BASE_LAYER_GRB_COLOR)}
+                  />
+                  <span>GRB basiskaart kleur</span>
+                </label>
+              )}
+              {showGrbReferenceControls && (
+                <label className="demo-layer-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={baseLayerVisibility[BASE_LAYER_GRB_GRAY]}
+                    onChange={() => toggleBaseLayer(BASE_LAYER_GRB_GRAY)}
+                  />
+                  <span>GRB basiskaart grijs</span>
+                </label>
+              )}
+              {showGrbReferenceControls && (
+                <label className="demo-layer-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={baseLayerVisibility[BASE_LAYER_OSM]}
+                    onChange={() => toggleBaseLayer(BASE_LAYER_OSM)}
+                  />
+                  <span>OSM</span>
+                </label>
+              )}
+            </div>
+          </details>
+
+          {showGrbReferenceControls && (
+            <details className="demo-layer-picker">
+              <summary>GRB OGC lagen</summary>
+              <div className="demo-layer-picker-list">
+                {GRB_REFERENCE_LAYER_OPTIONS.map((layerName) => (
+                  <label key={layerName} className="demo-layer-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={activeReferenceLayers.includes(layerName)}
+                      onChange={() => toggleReferenceLayer(layerName)}
+                    />
+                    <span>{layerName}</span>
+                  </label>
+                ))}
+              </div>
+            </details>
+          )}
+
+          <details className="demo-layer-picker demo-import-panel">
+            <summary>Plak WKT / GeoJSON</summary>
+            <div className="demo-layer-picker-list">
+              <label className="demo-geometry-select">
+                Bron-CRS
+                <select
+                  value={importSourceCrs}
+                  onChange={(event) =>
+                    setImportSourceCrs(event.target.value as ImportSourceCrs)
+                  }
+                >
+                  <option value="EPSG:3812">EPSG:3812</option>
+                  <option value="EPSG:31370">EPSG:31370</option>
+                  <option value="EPSG:28992">EPSG:28992</option>
+                  <option value="EPSG:4326">WGS84 (EPSG:4326)</option>
+                </select>
+              </label>
+              <textarea
+                className="demo-import-textarea"
+                placeholder="Plak hier WKT of GeoJSON..."
+                value={importText}
+                onChange={(event) => {
+                  setImportText(event.target.value);
+                  setImportFeedback(null);
+                }}
+              />
+              <button
+                type="button"
+                className="demo-align-button"
+                onClick={handleImport}
+                disabled={!importText.trim()}
+              >
+                Voeg geometrie toe
+              </button>
+              {importFeedback && (
+                <p className="demo-import-feedback">{importFeedback}</p>
+              )}
+            </div>
+          </details>
+
+          <details className="demo-layer-picker demo-import-panel">
+            <summary>Haal WKT / GeoJSON op</summary>
+            <div className="demo-layer-picker-list">
+              <label className="demo-geometry-select">
+                Formaat
+                <select
+                  value={exportFormat}
+                  onChange={(event) => {
+                    setExportFormat(event.target.value as GeometryExportFormat);
+                    setExportFeedback(null);
+                  }}
+                >
+                  <option value="wkt">WKT</option>
+                  <option value="geojson">GeoJSON</option>
+                </select>
+              </label>
+              <label className="demo-geometry-select">
+                Doel-CRS
+                <select
+                  value={exportTargetCrs}
+                  onChange={(event) => {
+                    setExportTargetCrs(event.target.value as ExportTargetCrs);
+                    setExportFeedback(null);
+                  }}
+                >
+                  <option value="EPSG:3812">EPSG:3812</option>
+                  <option value="EPSG:31370">EPSG:31370</option>
+                  <option value="EPSG:28992">EPSG:28992</option>
+                  <option value="EPSG:4326">WGS84 (EPSG:4326)</option>
+                </select>
+              </label>
+              <textarea
+                className="demo-import-textarea demo-export-textarea"
+                placeholder="Selecteer een geometrie om WKT of GeoJSON op te halen..."
+                value={exportText}
+                readOnly
+              />
+              <button
+                type="button"
+                className="demo-align-button"
+                onClick={() => void handleCopyExport()}
+                disabled={!selectedGeometry}
+              >
+                Kopieer geometrie
+              </button>
+              {exportFeedback && (
+                <p className="demo-import-feedback">{exportFeedback}</p>
+              )}
+            </div>
+          </details>
+        </div>
+
+        <div className="demo-map-canvas">
+          <MapView
+            crs={crs}
+            step={null}
+            contextGeometries={geometries.map((item, index) => ({
+              ...(item as MapGeometryItem),
+              label: String(index + 1),
+            }))}
+            selectedGeometryId={selectedGeometryId}
+            selectionEnabled={selectionModeEnabled}
+            onSelectGeometryById={onSelectGeometry}
+            fitRequestToken={fitRequestToken}
+            baseLayerVisibility={baseLayerVisibility}
+            showReferenceLayer
+            selectedGrbTypes={activeReferenceLayers}
+            showDiffLayers={false}
+            suspendBrdrLayers={false}
+            loading={false}
+            inputGeometry={selectedGeometry}
+            onInputGeometryChange={onGeometryDrawn}
+            drawRequestToken={drawRequestToken}
+            drawGeometryType={drawGeometryType}
+            drawHint={drawHint}
+            drawEnabled={!selectionModeEnabled}
+            allowGeometryEditing={false}
+            inputGeometryStyle="yellow"
+          />
+        </div>
+      </div>
     </div>
   );
 }

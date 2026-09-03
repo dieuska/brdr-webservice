@@ -86,37 +86,35 @@ class Metadata(BaseModel):
 
 
 class RequestProperties(BaseModel):
-    # id: Any
-    metadata: Optional[Metadata] = None
+    metadata: Optional[Dict[str, Any]] = None
+    brdr_metadata: Optional[Dict[str, Any]] = None
+    actuation: Optional[str] = None
+    observations: Optional[list[Any]] = None
+    reference_version: Optional[str] = None
 
     model_config = {
+        "extra": "allow",
         "json_schema_extra": {
             "examples": [
                 {
-                    # "id": "300",
                     "metadata": {
-                        "alignment_date": "2025-02-13",
-                        "brdr_version": "0.8.1",
-                        "reference_source": {
-                            "source": "Adpf",
-                            "version_date": "2022-01-01",
-                        },
-                        "full": True,
-                        "area": 1344.81,
-                        "reference_features": {
-                            "24126B0031/00N005": {
-                                "full": True,
-                                "area": 1344.81,
-                                "percentage": 100,
-                                "version_date": "2019-07-25",
-                            }
-                        },
-                        "reference_od": None,
-                        "last_version_date": "2019-07-25",
+                        "actuation": "created",
+                        "observations": ["first"],
                     }
-                }
+                },
+                {
+                    "brdr_metadata": {
+                        "actuation": "created",
+                        "observations": ["first"],
+                    }
+                },
+                {
+                    "actuation": "created",
+                    "observations": ["first"],
+                    "reference_version": "2019-07-25",
+                },
             ]
-        }
+        },
     }
 
 
@@ -215,8 +213,8 @@ class RequestParams(BaseModel):
     def validate_max_relevant_distance(cls, value):
         if value is None:
             return value
-        if value <= 0:
-            raise ValueError("max_relevant_distance must be > 0")
+        if value < 0:
+            raise ValueError("max_relevant_distance must be >= 0")
         if value > 25:
             raise ValueError("max_relevant_distance must be <= 25")
         return value
@@ -411,3 +409,16 @@ class ViewerResponse(BaseModel):
     diff_metric: Literal["area", "length", "count"]
     predictions: Dict[str, bool]
     prediction_scores: Dict[str, float]
+    evaluations: Optional[Dict[str, Optional[str]]] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class AdpfCollectionSummary(BaseModel):
+    id: str
+    title: str
+    version_date: Optional[str] = None
+    year: Optional[int] = None
+
+
+class AdpfCollectionsResponse(BaseModel):
+    collections: list[AdpfCollectionSummary]
