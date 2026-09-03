@@ -12,3 +12,7 @@ docs_src/_site
 brdr-viewer/brdr-viewer/node_modules
 brdr-viewer/brdr-viewer/dist
 brdr-viewer/brdr-viewer/.vite
+mapstore-brdr-demo/node_modules
+mapstore-brdr-demo/dist
+mapstore-brdr-demo/.git
+mapstore-brdr-demo/MapStore2/.git
