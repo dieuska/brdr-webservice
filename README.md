@@ -8,11 +8,14 @@ Webservice to align thematic features to GRB reference features, based on [brdr]
 - MFE integration guide: https://dieuska.github.io/brdr-webservice/mfe-integration.html
 
 ## Current Architecture
-- Backend: FastAPI (`brdr_webservice.py`) with one alignment endpoint: `/aligner`.
+- Backend: FastAPI (`services/brdr-api`) with one alignment endpoint: `/aligner`.
 - `/aligner` supports optional feature metadata in `properties` for lifecycle-driven evaluation.
-- Frontend: React + OpenLayers app (`brdr-viewer/brdr-viewer`) with two distinct frontend roles:
+- Frontend: React + OpenLayers app (`apps/brdr-viewers`) with two distinct frontend roles:
   - **Host viewers**: demo apps with their own map, geometry selection, import/export, and embedded BRDR alignment
   - **BRDR alignment MFE's**: reusable alignment micro-frontends for embedding in another host application
+- Optional MapStore integration: everything is isolated in the local, ignored `mapstore/` folder and is intentionally not part of the committed application.
+- Development and Azure helper commands are documented in [`docs_src/development.qmd`](docs_src/development.qmd) and live in `deploy/azure/`.
+- Azure-specific deployment definitions live in `deploy/azure/`.
 
 ### Frontend Routes
 
@@ -46,7 +49,7 @@ Then open:
 
 ## Frontend Build (manual)
 ```powershell
-cd brdr-viewer\brdr-viewer
+cd apps\brdr-viewers
 npm install
 npm run build
 ```
@@ -76,8 +79,8 @@ curl -X GET http://127.0.0.1:80/ -H "accept: application/json"
 - Swagger UI: http://127.0.0.1:80/docs
 
 ## Commit/Deploy Checklist
-- Run frontend build: `npm run build` in `brdr-viewer/brdr-viewer`.
-- Validate backend starts: `python brdr_webservice.py`.
+- Run frontend build: `npm run build` in `apps/brdr-viewers`.
+- Validate backend starts: `python services/brdr-api/brdr_webservice.py`.
 - Verify bundled viewer URL: `http://127.0.0.1:80/`.
 - Verify required host viewer and MFE URLs resolve after deploy.
 - Verify Docker image build succeeds with current `Dockerfile`.

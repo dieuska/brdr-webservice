@@ -1,0 +1,19 @@
+# Copy this file to `azure-deploy.settings.ps1` and fill in your values.
+
+$SubscriptionId = ""            # e.g. "00000000-0000-0000-0000-000000000000"
+$ResourceGroup = ""             # e.g. "rg-brdr-prod"
+$AcrName = ""                   # e.g. "acrbrdrprod"
+$ImageName = "brdr-aligner"     # container repository name in ACR
+$Tag = "latest"
+$Dockerfile = "Dockerfile"
+
+# Build mode:
+# - $true  => az acr build (cloud build in ACR)
+# - $false => local docker build + push
+$UseAcrBuild = $true
+
+# Target (pick one in script call):
+# - webapp
+# - containerapp
+$WebAppName = ""                # required for Target=webapp
+$ContainerAppName = ""          # required for Target=containerapp

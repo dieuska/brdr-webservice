@@ -63,7 +63,7 @@ app.add_middleware(
 
 frontend_dist_dir = os.path.join(os.path.dirname(__file__), "frontend_dist")
 local_viewer_dist_dir = os.path.join(
-    os.path.dirname(__file__), "brdr-viewer", "brdr-viewer", "dist"
+    os.path.dirname(__file__), "..", "..", "apps", "brdr-viewers", "dist"
 )
 
 viewer_static_dir = None
@@ -724,7 +724,7 @@ if not viewer_static_dir:
             "detail": (
                 "Viewer assets not found. Run the frontend dev server on "
                 "http://127.0.0.1:5173 or build the viewer (`npm run build` in "
-                "`brdr-viewer/brdr-viewer`) or use the Docker image that bundles the viewer."
+                "`apps/brdr-viewers`) or use the Docker image that bundles the viewer."
             )
         }
 
@@ -735,7 +735,7 @@ if not viewer_static_dir:
             "detail": (
                 "Viewer assets not found. Run the frontend dev server on "
                 "http://127.0.0.1:5173 or build the viewer (`npm run build` in "
-                "`brdr-viewer/brdr-viewer`) or use the Docker image that bundles the viewer."
+                "`apps/brdr-viewers`) or use the Docker image that bundles the viewer."
             )
         }
 
@@ -746,7 +746,7 @@ if not viewer_static_dir:
             "detail": (
                 "Viewer assets not found. Run the frontend dev server on "
                 "http://127.0.0.1:5173 or build the viewer (`npm run build` in "
-                "`brdr-viewer/brdr-viewer`) or use the Docker image that bundles the viewer."
+                "`apps/brdr-viewers`) or use the Docker image that bundles the viewer."
             )
         }
 
@@ -756,7 +756,7 @@ if not viewer_static_dir:
             "detail": (
                 "Viewer assets not found. Run the frontend dev server on "
                 "http://127.0.0.1:5173 or build the viewer (`npm run build` in "
-                "`brdr-viewer/brdr-viewer`) or use the Docker image that bundles the viewer."
+                "`apps/brdr-viewers`) or use the Docker image that bundles the viewer."
             )
         }
 else:
