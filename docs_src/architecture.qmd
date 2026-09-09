@@ -18,8 +18,8 @@ format: html
 ## Backend
 
 - Framework: **FastAPI**
-- Main file: `brdr_webservice.py`
-- Typings/models: `brdr_webservice_typings.py`
+- Main file: `services/brdr-api/brdr_webservice.py`
+- Typings/models: `services/brdr-api/brdr_webservice_typings.py`
 - BRDR dependency: `brdr` package
 
 Important behavior:

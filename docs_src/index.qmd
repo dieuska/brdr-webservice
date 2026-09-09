@@ -7,7 +7,7 @@ format: html
 
 This project provides a proof-of-concept stack to align user geometries against GRB reference data:
 
-- a **FastAPI webservice** (`brdr_webservice.py`)
+- a **FastAPI webservice** (`services/brdr-api`)
 - **host viewers** to draw/select geometries and launch BRDR alignment
 - reusable **BRDR alignment micro-frontends (MFE's)** for embedding in another host application
 - **Docker and local scripts** for quick startup

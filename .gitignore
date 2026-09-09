@@ -162,12 +162,18 @@ cython_debug/
 #.idea/
 /.idea
 
+# JavaScript dependencies and generated artifacts
+node_modules/
+dist/
+*.tgz
+
 
 
 /.quarto/
 **/*.quarto_ipynb
 /docs_src/_site/
 /docs_src/.quarto/
-/dev/
 az-acr-local-build-push.cmd
 az-acr-local-build-push.ps1
+/geomanager/
+/mapstore/

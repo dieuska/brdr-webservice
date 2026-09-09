@@ -9,6 +9,9 @@ pytest-cache-files-*
 *.pyc
 docs_src/.quarto
 docs_src/_site
-brdr-viewer/brdr-viewer/node_modules
-brdr-viewer/brdr-viewer/dist
-brdr-viewer/brdr-viewer/.vite
+node_modules
+dist
+apps/brdr-viewers/node_modules
+apps/brdr-viewers/dist
+apps/brdr-viewers/.vite
+mapstore

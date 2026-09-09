@@ -1,6 +1,7 @@
 import json
 import threading
 import time
+from pathlib import Path
 
 import requests
 
@@ -18,7 +19,7 @@ time.sleep(2)
 # Make a call to the web service
 url = base_url + "/aligner?result_mode=all"
 
-with open("body.json", "r") as f:
+with open(Path(__file__).with_name("body.json"), "r") as f:
     request_body = json.load(f)
 response = requests.post(url, json=request_body, timeout=120)
 response.raise_for_status()

@@ -1,0 +1,70 @@
+---
+title: "Development and deployment commands"
+format: html
+---
+
+## Project layout
+
+- `services/brdr-api`: FastAPI service and API tests.
+- `apps/brdr-viewers`: React/Vite host viewers, GeoLifecycleManager and BRDR MFE's.
+- `mapstore/`: optional, locally ignored MapStore demo and BRDR plugin (available only in a local checkout where it has been installed).
+- `deploy/azure`: Azure build, push, deploy and ACI refresh helpers.
+
+## Build and test
+
+Build the viewers:
+
+```powershell
+cd apps/brdr-viewers
+npm ci
+npm run build
+```
+
+Run the API tests:
+
+```powershell
+cd services/brdr-api
+..\..\venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py"
+```
+
+Build the single Docker image used by the current deployment flow:
+
+```powershell
+docker build -f Dockerfile . -t brdr-webservice
+```
+
+Build the MapStore demo bundle:
+
+```powershell
+cd mapstore/demo
+npm run compile
+npm run verify:demo
+```
+
+## Local Docker demo
+
+From the `mapstore` folder:
+
+```powershell
+docker compose up --build
+```
+
+This starts the BRDR service on port `8000` and the MapStore demo on port
+`8081`.
+
+## Azure helpers
+
+The scripts in `deploy/azure/` are optional PowerShell/CMD wrappers:
+
+- `az-acr-build-push`: build and push with Azure Container Registry Build.
+- `az-acr-local-build-push`: local Docker build and push.
+- `az-deploy`: deploy the configured single image to Web App or Container Apps.
+- `az-aci-refresh-latest`: recreate an existing ACI group with the latest image.
+
+Copy `deploy/azure/azure-deploy.settings.ps1.example` to
+`deploy/azure/azure-deploy.settings.ps1`, fill in the Azure values, and run the desired
+wrapper from the repository root, for example:
+
+```powershell
+.\deploy\azure\az-deploy.ps1 -Target webapp -SettingsFile .\deploy\azure\azure-deploy.settings.ps1
+```
