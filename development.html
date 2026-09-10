@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Overview – BRDR Webservice PoC</title>
+<title>Development and deployment commands – BRDR Webservice PoC</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -25,6 +25,41 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -95,7 +130,7 @@ ul.task-list li input[type="checkbox"] {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" aria-current="page"> 
+    <a class="nav-link" href="./index.html"> 
 <span class="menu-text">Overview</span></a>
   </li>  
   <li class="nav-item">
@@ -107,7 +142,7 @@ ul.task-list li input[type="checkbox"] {
 <span class="menu-text">Run Locally</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./development.html"> 
+    <a class="nav-link active" href="./development.html" aria-current="page"> 
 <span class="menu-text">Development</span></a>
   </li>  
   <li class="nav-item">
@@ -135,7 +170,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Overview</h1>
+<h1 class="title">Development and deployment commands</h1>
 </div>
 
 
@@ -152,50 +187,48 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="brdr-webservice-proof-of-concept" class="level2">
-<h2 class="anchored" data-anchor-id="brdr-webservice-proof-of-concept">BRDR Webservice Proof of Concept</h2>
-<p>This project provides a proof-of-concept stack to align user geometries against GRB reference data:</p>
+<section id="project-layout" class="level2">
+<h2 class="anchored" data-anchor-id="project-layout">Project layout</h2>
 <ul>
-<li>a <strong>FastAPI webservice</strong> (<code>services/brdr-api</code>)</li>
-<li><strong>host viewers</strong> to draw/select geometries and launch BRDR alignment</li>
-<li>reusable <strong>BRDR alignment micro-frontends (MFE’s)</strong> for embedding in another host application</li>
-<li><strong>Docker and local scripts</strong> for quick startup</li>
+<li><code>services/brdr-api</code>: FastAPI service and API tests.</li>
+<li><code>apps/brdr-viewers</code>: React/Vite host viewers, GeoLifecycleManager and BRDR MFE’s.</li>
+<li><code>mapstore/</code>: optional, locally ignored MapStore demo and BRDR plugin (available only in a local checkout where it has been installed).</li>
+<li><code>deploy/azure</code>: Azure build, push, deploy and ACI refresh helpers.</li>
 </ul>
 </section>
-<section id="what-you-can-do" class="level2">
-<h2 class="anchored" data-anchor-id="what-you-can-do">What You Can Do</h2>
-<ol type="1">
-<li>Start backend and viewer locally.</li>
-<li>Use a host viewer to draw, import, export, select, and align a geometry.</li>
-<li>Open a BRDR alignment MFE directly or embed it into another map application.</li>
-<li>Inspect BRDR steps, predictions, and resulting geometry.</li>
-</ol>
+<section id="build-and-test" class="level2">
+<h2 class="anchored" data-anchor-id="build-and-test">Build and test</h2>
+<p>Build the viewers:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cd</span> apps<span class="op">/</span>brdr-viewers</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>npm ci</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>npm run build</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Run the API tests:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cd</span> services<span class="op">/</span>brdr-api</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="op">..</span>\<span class="op">..</span>\venv\Scripts\python<span class="op">.</span><span class="fu">exe</span> <span class="op">-</span>m unittest discover <span class="op">-</span>s tests <span class="op">-</span>p <span class="st">"test_*.py"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Build the single Docker image used by the current deployment flow:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>docker build <span class="op">-</span>f Dockerfile <span class="op">.</span> <span class="op">-</span>t brdr-webservice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Build the MapStore demo bundle:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cd</span> mapstore<span class="op">/</span>demo</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>npm run compile</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>npm run verify<span class="op">:</span>demo</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="components-at-a-glance" class="level2">
-<h2 class="anchored" data-anchor-id="components-at-a-glance">Components at a Glance</h2>
+<section id="local-docker-demo" class="level2">
+<h2 class="anchored" data-anchor-id="local-docker-demo">Local Docker demo</h2>
+<p>From the <code>mapstore</code> folder:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>docker compose up <span class="op">--</span>build</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This starts the BRDR service on port <code>8000</code> and the MapStore demo on port <code>8081</code>.</p>
+</section>
+<section id="azure-helpers" class="level2">
+<h2 class="anchored" data-anchor-id="azure-helpers">Azure helpers</h2>
+<p>The scripts in <code>deploy/azure/</code> are optional PowerShell/CMD wrappers:</p>
 <ul>
-<li><strong>Backend endpoint</strong>: <code>POST /aligner</code> (viewer-oriented response)</li>
-<li><strong>Host viewers</strong>:
-<ul>
-<li><code>/grb-viewer</code></li>
-<li><code>/brk-viewer</code></li>
-</ul></li>
-<li><strong>BRDR alignment MFE’s</strong>:
-<ul>
-<li><code>/alignment-mfe.html</code></li>
-<li><code>/alignment-mfe-simple.html</code></li>
-<li><code>/alignment-mfe-wfs.html</code></li>
-<li><code>/alignment-mfe-wfs-simple.html</code></li>
-</ul></li>
+<li><code>az-acr-build-push</code>: build and push with Azure Container Registry Build.</li>
+<li><code>az-acr-local-build-push</code>: local Docker build and push.</li>
+<li><code>az-deploy</code>: deploy the configured single image to Web App or Container Apps.</li>
+<li><code>az-aci-refresh-latest</code>: recreate an existing ACI group with the latest image.</li>
 </ul>
-<p>Continue with:</p>
-<ul>
-<li><a href="./architecture.html">Architecture</a></li>
-<li><a href="./run-locally.html">Run Locally</a></li>
-<li><a href="./api-viewer.html">API and Viewer</a></li>
-<li><a href="./mfe-integration.html">MFE Integration</a></li>
-<li><a href="https://dieuska.github.io/brdr-webservice/">General Documentation and Integration Guide</a></li>
-</ul>
+<p>Copy <code>deploy/azure/azure-deploy.settings.ps1.example</code> to <code>deploy/azure/azure-deploy.settings.ps1</code>, fill in the Azure values, and run the desired wrapper from the repository root, for example:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="op">.</span>\deploy\azure\az-deploy<span class="op">.</span><span class="fu">ps1</span> <span class="op">-</span>Target webapp <span class="op">-</span>SettingsFile <span class="op">.</span>\deploy\azure\azure-deploy<span class="op">.</span><span class="fu">settings</span><span class="op">.</span><span class="fu">ps1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 </section>

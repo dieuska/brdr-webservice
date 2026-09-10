@@ -142,6 +142,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Run Locally</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./development.html"> 
+<span class="menu-text">Development</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./api-viewer.html"> 
 <span class="menu-text">API and Viewer</span></a>
   </li>  
@@ -209,11 +213,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="manual-start">Manual Start</h2>
 <section id="start-backend" class="level3">
 <h3 class="anchored" data-anchor-id="start-backend">1. Start backend</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>python brdr_webservice<span class="op">.</span><span class="fu">py</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>python services<span class="op">/</span>brdr-api<span class="op">/</span>brdr_webservice<span class="op">.</span><span class="fu">py</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="start-viewer" class="level3">
 <h3 class="anchored" data-anchor-id="start-viewer">2. Start viewer</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cd</span> brdr-viewer\brdr-viewer</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cd</span> apps\brdr-viewers</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>npm install</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>npm run dev <span class="op">--</span> <span class="op">--</span>host <span class="dv">127.0</span><span class="op">.</span><span class="dv">0.1</span> <span class="op">--</span>port <span class="dv">5173</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Open <code>http://127.0.0.1:5173</code>.</p>

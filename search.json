@@ -56,67 +56,39 @@
     "text": "Alternative to iframe\nThe project also contains React components for direct integration into another React app, but the ready-to-use public contract today is the iframe-based MFE integration.\nKey files:\n\nsrc/alignmentMfeApp.tsx\nsrc/components/alignment/BrdrAlignmentViewer.tsx\nsrc/components/alignment/BrdrCompactAlignmentViewer.tsx"
   },
   {
-    "objectID": "architecture.html",
-    "href": "architecture.html",
-    "title": "Architecture",
+    "objectID": "development.html",
+    "href": "development.html",
+    "title": "Development and deployment commands",
     "section": "",
-    "text": "A host viewer or embedded MFE works with a GeoJSON input geometry.\nThe backend loads the configured reference data and evaluates multiple distances.\nThe backend returns viewer-oriented BRDR output via /aligner.\nThe BRDR alignment MFE renders:\n\nresult geometry\nresult_diff_min (negative diff)\nresult_diff_plus (positive diff)\ndiffs chart values per distance step\n\nIn host-viewer mode, the selected geometry can be replaced with the aligned result."
+    "text": "services/brdr-api: FastAPI service and API tests.\napps/brdr-viewers: React/Vite host viewers, GeoLifecycleManager and BRDR MFE’s.\nmapstore/: optional, locally ignored MapStore demo and BRDR plugin (available only in a local checkout where it has been installed).\ndeploy/azure: Azure build, push, deploy and ACI refresh helpers."
   },
   {
-    "objectID": "architecture.html#high-level-flow",
-    "href": "architecture.html#high-level-flow",
-    "title": "Architecture",
+    "objectID": "development.html#project-layout",
+    "href": "development.html#project-layout",
+    "title": "Development and deployment commands",
     "section": "",
-    "text": "A host viewer or embedded MFE works with a GeoJSON input geometry.\nThe backend loads the configured reference data and evaluates multiple distances.\nThe backend returns viewer-oriented BRDR output via /aligner.\nThe BRDR alignment MFE renders:\n\nresult geometry\nresult_diff_min (negative diff)\nresult_diff_plus (positive diff)\ndiffs chart values per distance step\n\nIn host-viewer mode, the selected geometry can be replaced with the aligned result."
+    "text": "services/brdr-api: FastAPI service and API tests.\napps/brdr-viewers: React/Vite host viewers, GeoLifecycleManager and BRDR MFE’s.\nmapstore/: optional, locally ignored MapStore demo and BRDR plugin (available only in a local checkout where it has been installed).\ndeploy/azure: Azure build, push, deploy and ACI refresh helpers."
   },
   {
-    "objectID": "architecture.html#backend",
-    "href": "architecture.html#backend",
-    "title": "Architecture",
-    "section": "Backend",
-    "text": "Backend\n\nFramework: FastAPI\nMain file: brdr_webservice.py\nTypings/models: brdr_webservice_typings.py\nBRDR dependency: brdr package\n\nImportant behavior:\n\nRequest validation on feature IDs (must be present and unique).\nCompatibility handling for GRB type labels across BRDR versions.\n503 when upstream GRB service is unavailable."
+    "objectID": "development.html#build-and-test",
+    "href": "development.html#build-and-test",
+    "title": "Development and deployment commands",
+    "section": "Build and test",
+    "text": "Build and test\nBuild the viewers:\ncd apps/brdr-viewers\nnpm ci\nnpm run build\nRun the API tests:\ncd services/brdr-api\n..\\..\\venv\\Scripts\\python.exe -m unittest discover -s tests -p \"test_*.py\"\nBuild the single Docker image used by the current deployment flow:\ndocker build -f Dockerfile . -t brdr-webservice\nBuild the MapStore demo bundle:\ncd mapstore/demo\nnpm run compile\nnpm run verify:demo"
   },
   {
-    "objectID": "architecture.html#frontend-split",
-    "href": "architecture.html#frontend-split",
-    "title": "Architecture",
-    "section": "Frontend Split",
-    "text": "Frontend Split\nThe frontend is intentionally split into two roles.\n\n1. Host Viewers\n\nFramework: React + TypeScript + Vite\nMap library: OpenLayers\nRoutes:\n\n/grb-viewer\n/brk-viewer\n\n\nCapabilities:\n\ndraw a new point/line/polygon\nselect a geometry from the map or list\nimport geometry as WKT / GeoJSON\nexport selected geometry as WKT / GeoJSON\nopen either the full or compact BRDR alignment MFE\n\n\n\n2. BRDR Alignment MFE’s\n\nFramework: React + TypeScript + Vite\nMap library: OpenLayers\nRoutes:\n\n/alignment-mfe.html\n/alignment-mfe-simple.html\n/alignment-mfe-wfs.html\n/alignment-mfe-wfs-simple.html\n\n\nCapabilities:\n\nreceive geometry and CRS from a host via postMessage\ncalculate BRDR output through /aligner\ninspect prediction steps and aligned result\nreturn the selected aligned geometry back to the host\n\nIntegration variants:\n\nfull: includes chart/timeline navigation\ncompact: optimized for faster prediction switching"
+    "objectID": "development.html#local-docker-demo",
+    "href": "development.html#local-docker-demo",
+    "title": "Development and deployment commands",
+    "section": "Local Docker demo",
+    "text": "Local Docker demo\nFrom the mapstore folder:\ndocker compose up --build\nThis starts the BRDR service on port 8000 and the MapStore demo on port 8081."
   },
   {
-    "objectID": "architecture.html#runtime-modes",
-    "href": "architecture.html#runtime-modes",
-    "title": "Architecture",
-    "section": "Runtime Modes",
-    "text": "Runtime Modes\n\nNative: Python backend + Node viewer\nContainerized backend: Docker backend + Node viewer\nOne-command local startup: start-local.ps1 / start-local.cmd"
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Overview",
-    "section": "",
-    "text": "This project provides a proof-of-concept stack to align user geometries against GRB reference data:\n\na FastAPI webservice (brdr_webservice.py)\nhost viewers to draw/select geometries and launch BRDR alignment\nreusable BRDR alignment micro-frontends (MFE’s) for embedding in another host application\nDocker and local scripts for quick startup"
-  },
-  {
-    "objectID": "index.html#brdr-webservice-proof-of-concept",
-    "href": "index.html#brdr-webservice-proof-of-concept",
-    "title": "Overview",
-    "section": "",
-    "text": "This project provides a proof-of-concept stack to align user geometries against GRB reference data:\n\na FastAPI webservice (brdr_webservice.py)\nhost viewers to draw/select geometries and launch BRDR alignment\nreusable BRDR alignment micro-frontends (MFE’s) for embedding in another host application\nDocker and local scripts for quick startup"
-  },
-  {
-    "objectID": "index.html#what-you-can-do",
-    "href": "index.html#what-you-can-do",
-    "title": "Overview",
-    "section": "What You Can Do",
-    "text": "What You Can Do\n\nStart backend and viewer locally.\nUse a host viewer to draw, import, export, select, and align a geometry.\nOpen a BRDR alignment MFE directly or embed it into another map application.\nInspect BRDR steps, predictions, and resulting geometry."
-  },
-  {
-    "objectID": "index.html#components-at-a-glance",
-    "href": "index.html#components-at-a-glance",
-    "title": "Overview",
-    "section": "Components at a Glance",
-    "text": "Components at a Glance\n\nBackend endpoint: POST /aligner (viewer-oriented response)\nHost viewers:\n\n/grb-viewer\n/brk-viewer\n\nBRDR alignment MFE’s:\n\n/alignment-mfe.html\n/alignment-mfe-simple.html\n/alignment-mfe-wfs.html\n/alignment-mfe-wfs-simple.html\n\n\nContinue with:\n\nArchitecture\nRun Locally\nAPI and Viewer\nMFE Integration\nGeneral Documentation and Integration Guide"
+    "objectID": "development.html#azure-helpers",
+    "href": "development.html#azure-helpers",
+    "title": "Development and deployment commands",
+    "section": "Azure helpers",
+    "text": "Azure helpers\nThe scripts in deploy/azure/ are optional PowerShell/CMD wrappers:\n\naz-acr-build-push: build and push with Azure Container Registry Build.\naz-acr-local-build-push: local Docker build and push.\naz-deploy: deploy the configured single image to Web App or Container Apps.\naz-aci-refresh-latest: recreate an existing ACI group with the latest image.\n\nCopy deploy/azure/azure-deploy.settings.ps1.example to deploy/azure/azure-deploy.settings.ps1, fill in the Azure values, and run the desired wrapper from the repository root, for example:\n.\\deploy\\azure\\az-deploy.ps1 -Target webapp -SettingsFile .\\deploy\\azure\\azure-deploy.settings.ps1"
   },
   {
     "objectID": "run-locally.html",
@@ -144,7 +116,7 @@
     "href": "run-locally.html#manual-start",
     "title": "Run Locally",
     "section": "Manual Start",
-    "text": "Manual Start\n\n1. Start backend\npython brdr_webservice.py\n\n\n2. Start viewer\ncd brdr-viewer\\brdr-viewer\nnpm install\nnpm run dev -- --host 127.0.0.1 --port 5173\nOpen http://127.0.0.1:5173."
+    "text": "Manual Start\n\n1. Start backend\npython services/brdr-api/brdr_webservice.py\n\n\n2. Start viewer\ncd apps\\brdr-viewers\nnpm install\nnpm run dev -- --host 127.0.0.1 --port 5173\nOpen http://127.0.0.1:5173."
   },
   {
     "objectID": "run-locally.html#docker-backend-option",
@@ -159,6 +131,69 @@
     "title": "Run Locally",
     "section": "Common Issues",
     "text": "Common Issues\n\nViewer shows fetch errors\n\nEnsure backend is running on http://127.0.0.1:80.\nCheck CORS origin (localhost:5173 / 127.0.0.1:5173).\nVerify outbound access from backend to GRB upstream services.\n\n\n\nEmpty or flat chart values\n\nTrigger recalculation after drawing or editing geometry.\nEnsure geometry is valid and has area."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Overview",
+    "section": "",
+    "text": "This project provides a proof-of-concept stack to align user geometries against GRB reference data:\n\na FastAPI webservice (services/brdr-api)\nhost viewers to draw/select geometries and launch BRDR alignment\nreusable BRDR alignment micro-frontends (MFE’s) for embedding in another host application\nDocker and local scripts for quick startup"
+  },
+  {
+    "objectID": "index.html#brdr-webservice-proof-of-concept",
+    "href": "index.html#brdr-webservice-proof-of-concept",
+    "title": "Overview",
+    "section": "",
+    "text": "This project provides a proof-of-concept stack to align user geometries against GRB reference data:\n\na FastAPI webservice (services/brdr-api)\nhost viewers to draw/select geometries and launch BRDR alignment\nreusable BRDR alignment micro-frontends (MFE’s) for embedding in another host application\nDocker and local scripts for quick startup"
+  },
+  {
+    "objectID": "index.html#what-you-can-do",
+    "href": "index.html#what-you-can-do",
+    "title": "Overview",
+    "section": "What You Can Do",
+    "text": "What You Can Do\n\nStart backend and viewer locally.\nUse a host viewer to draw, import, export, select, and align a geometry.\nOpen a BRDR alignment MFE directly or embed it into another map application.\nInspect BRDR steps, predictions, and resulting geometry."
+  },
+  {
+    "objectID": "index.html#components-at-a-glance",
+    "href": "index.html#components-at-a-glance",
+    "title": "Overview",
+    "section": "Components at a Glance",
+    "text": "Components at a Glance\n\nBackend endpoint: POST /aligner (viewer-oriented response)\nHost viewers:\n\n/grb-viewer\n/brk-viewer\n\nBRDR alignment MFE’s:\n\n/alignment-mfe.html\n/alignment-mfe-simple.html\n/alignment-mfe-wfs.html\n/alignment-mfe-wfs-simple.html\n\n\nContinue with:\n\nArchitecture\nRun Locally\nAPI and Viewer\nMFE Integration\nGeneral Documentation and Integration Guide"
+  },
+  {
+    "objectID": "architecture.html",
+    "href": "architecture.html",
+    "title": "Architecture",
+    "section": "",
+    "text": "A host viewer or embedded MFE works with a GeoJSON input geometry.\nThe backend loads the configured reference data and evaluates multiple distances.\nThe backend returns viewer-oriented BRDR output via /aligner.\nThe BRDR alignment MFE renders:\n\nresult geometry\nresult_diff_min (negative diff)\nresult_diff_plus (positive diff)\ndiffs chart values per distance step\n\nIn host-viewer mode, the selected geometry can be replaced with the aligned result."
+  },
+  {
+    "objectID": "architecture.html#high-level-flow",
+    "href": "architecture.html#high-level-flow",
+    "title": "Architecture",
+    "section": "",
+    "text": "A host viewer or embedded MFE works with a GeoJSON input geometry.\nThe backend loads the configured reference data and evaluates multiple distances.\nThe backend returns viewer-oriented BRDR output via /aligner.\nThe BRDR alignment MFE renders:\n\nresult geometry\nresult_diff_min (negative diff)\nresult_diff_plus (positive diff)\ndiffs chart values per distance step\n\nIn host-viewer mode, the selected geometry can be replaced with the aligned result."
+  },
+  {
+    "objectID": "architecture.html#backend",
+    "href": "architecture.html#backend",
+    "title": "Architecture",
+    "section": "Backend",
+    "text": "Backend\n\nFramework: FastAPI\nMain file: services/brdr-api/brdr_webservice.py\nTypings/models: services/brdr-api/brdr_webservice_typings.py\nBRDR dependency: brdr package\n\nImportant behavior:\n\nRequest validation on feature IDs (must be present and unique).\nCompatibility handling for GRB type labels across BRDR versions.\n503 when upstream GRB service is unavailable."
+  },
+  {
+    "objectID": "architecture.html#frontend-split",
+    "href": "architecture.html#frontend-split",
+    "title": "Architecture",
+    "section": "Frontend Split",
+    "text": "Frontend Split\nThe frontend is intentionally split into two roles.\n\n1. Host Viewers\n\nFramework: React + TypeScript + Vite\nMap library: OpenLayers\nRoutes:\n\n/grb-viewer\n/brk-viewer\n\n\nCapabilities:\n\ndraw a new point/line/polygon\nselect a geometry from the map or list\nimport geometry as WKT / GeoJSON\nexport selected geometry as WKT / GeoJSON\nopen either the full or compact BRDR alignment MFE\n\n\n\n2. BRDR Alignment MFE’s\n\nFramework: React + TypeScript + Vite\nMap library: OpenLayers\nRoutes:\n\n/alignment-mfe.html\n/alignment-mfe-simple.html\n/alignment-mfe-wfs.html\n/alignment-mfe-wfs-simple.html\n\n\nCapabilities:\n\nreceive geometry and CRS from a host via postMessage\ncalculate BRDR output through /aligner\ninspect prediction steps and aligned result\nreturn the selected aligned geometry back to the host\n\nIntegration variants:\n\nfull: includes chart/timeline navigation\ncompact: optimized for faster prediction switching"
+  },
+  {
+    "objectID": "architecture.html#runtime-modes",
+    "href": "architecture.html#runtime-modes",
+    "title": "Architecture",
+    "section": "Runtime Modes",
+    "text": "Runtime Modes\n\nNative: Python backend + Node viewer\nContainerized backend: Docker backend + Node viewer\nOne-command local startup: start-local.ps1 / start-local.cmd"
   },
   {
     "objectID": "api-viewer.html#post-aligner",
