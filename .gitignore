@@ -177,3 +177,5 @@ az-acr-local-build-push.cmd
 az-acr-local-build-push.ps1
 /geomanager/
 /mapstore/
+/geomanager/
+/deploy/
