@@ -1,0 +1,18 @@
+.heritage-page { min-height: 100%; box-sizing: border-box; padding: 18px; background: linear-gradient(135deg, #f7f4ea, #edf5f1); color: #18332b; overflow: auto; }
+.heritage-selector { max-width: 1480px; margin: 0 auto 12px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 540px); gap: 24px; align-items: end; }
+.heritage-kicker { margin: 0 0 4px; color: #8a5a16; text-transform: uppercase; letter-spacing: .12em; font-size: 11px; font-weight: 800; }
+.heritage-selector h1 { margin: 0; font: 700 clamp(1.4rem, 2.4vw, 2rem) Georgia, serif; }
+.heritage-selector p:not(.heritage-kicker) { max-width: 75ch; margin: 7px 0 0; color: #496057; font-size: .9rem; }
+.heritage-uri-form { padding: 14px; border: 1px solid #c9d8d1; border-radius: 14px; background: rgba(255,255,255,.78); box-shadow: 0 8px 24px rgba(26,58,45,.08); }
+.heritage-uri-form label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 800; }
+.heritage-uri-row { display: flex; gap: 8px; }
+.heritage-uri-row input { min-width: 0; flex: 1; padding: 9px 10px; border: 1px solid #a9c2b7; border-radius: 8px; font: inherit; font-size: 12px; }
+.heritage-uri-row button { border: 0; border-radius: 8px; padding: 0 14px; background: #21664d; color: white; font-weight: 800; cursor: pointer; }
+.heritage-uri-row button:disabled { opacity: .55; cursor: wait; }
+.heritage-uri-form small { display: block; margin-top: 7px; color: #60756c; font-size: 11px; }
+.heritage-load-error { max-width: 1480px; margin: 0 auto 10px; padding: 10px 12px; border-radius: 10px; background: #fff0ed; color: #9b2c1f; font-size: 12px; }
+.heritage-empty-state { max-width: 1480px; margin: 34px auto; padding: 42px 20px; border: 1px dashed #a9c2b7; border-radius: 18px; text-align: center; display: grid; gap: 8px; color: #567066; }
+.heritage-runtime-error { max-width: 700px; margin: 34px auto; padding: 20px; border: 1px solid #e3b6ad; border-radius: 14px; background: #fff7f5; color: #842c21; display: grid; gap: 8px; }
+.heritage-runtime-error button { width: fit-content; border: 0; border-radius: 7px; padding: 8px 12px; background: #842c21; color: #fff; font-weight: 700; cursor: pointer; }
+.heritage-page > .lifecycle-app { max-width: 1480px; height: calc(100vh - 166px); min-height: 620px; margin: 0 auto; padding: 10px 0 0; background: transparent; }
+@media (max-width: 900px) { .heritage-selector { grid-template-columns: 1fr; gap: 12px; } .heritage-page > .lifecycle-app { height: auto; min-height: 820px; } }

@@ -53,6 +53,7 @@ interface Props {
   onMapReady?: (map: Map) => void;
   layerVisibility?: MapLayerVisibility;
   measureEnabled?: boolean;
+  diffLayersOnTop?: boolean;
 }
 
 const INPUT_LAYER_KEY = "brdr-input";
@@ -96,6 +97,7 @@ export default function MapView({
   onMapReady,
   layerVisibility,
   measureEnabled = false,
+  diffLayersOnTop = false,
 }: Props) {
   assertSupportedCrs(crs);
   const divRef = useRef<HTMLDivElement>(null);
@@ -117,7 +119,7 @@ export default function MapView({
   const onInputGeometryChangeRef = useRef(onInputGeometryChange);
   const format = useMemo(() => new GeoJSON(), []);
 
-  useBrdrLayers(map, step, showDiffLayers, suspendBrdrLayers, crs);
+  useBrdrLayers(map, step, showDiffLayers, suspendBrdrLayers, crs, diffLayersOnTop);
 
   useEffect(() => {
     if (!map) return;

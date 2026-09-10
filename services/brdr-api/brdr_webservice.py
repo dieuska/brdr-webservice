@@ -750,6 +750,17 @@ if not viewer_static_dir:
             )
         }
 
+    @app.get("/erfgoed-lifecycle")
+    @app.get("/erfgoed-lifecycle.html")
+    def heritage_lifecycle_unavailable():
+        return {
+            "detail": (
+                "Viewer assets not found. Run the frontend dev server on "
+                "http://127.0.0.1:5173 or build the viewer (`npm run build` in "
+                "apps/brdr-viewers) or use the Docker image that bundles the viewer."
+            )
+        }
+
     @app.get("/crs-viewer.html")
     def crs_viewer_unavailable():
         return {
@@ -774,6 +785,11 @@ else:
     @app.get("/geolifecyclemanager.html")
     def geolifecycle_manager():
         return FileResponse(_viewer_html_file("geolifecyclemanager.html"))
+
+    @app.get("/erfgoed-lifecycle")
+    @app.get("/erfgoed-lifecycle.html")
+    def heritage_lifecycle_manager():
+        return FileResponse(_viewer_html_file("erfgoed-lifecycle.html"))
 
     @app.get("/crs-viewer.html")
     def crs_viewer():

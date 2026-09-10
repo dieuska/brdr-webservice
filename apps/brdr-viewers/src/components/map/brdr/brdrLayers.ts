@@ -86,7 +86,7 @@ export function createBrdrLayers(step: BrdrStep, crs: BrdrSupportedCrs) {
 
 export function createBrdrLayersWithOptions(
   step: BrdrStep,
-  options: { showDiffLayers: boolean },
+  options: { showDiffLayers: boolean; diffLayersOnTop?: boolean },
   crs: BrdrSupportedCrs
 ) {
   const layers = [
@@ -112,7 +112,7 @@ export function createBrdrLayersWithOptions(
         fill: new Fill({ color: "rgba(255,0,0,0.5)" }),
         image: createPointSymbol("rgba(255,0,0,0.95)"),
       }),
-      110
+      options.diffLayersOnTop ? 1500 : 110
     ),
     createVectorLayer(
       step.result_diff_plus,
@@ -122,7 +122,7 @@ export function createBrdrLayersWithOptions(
         fill: new Fill({ color: "rgba(0,180,0,0.5)" }),
         image: createPointSymbol("rgba(0,180,0,0.95)"),
       }),
-      120
+      options.diffLayersOnTop ? 1510 : 120
     )
   );
   layers[1].set(BRDR_LAYER_ROLE_KEY, "diff-min");

@@ -4,6 +4,7 @@ import WKT from "ol/format/WKT";
 import type { Geometry as OlGeometry } from "ol/geom";
 import Map from "ol/Map";
 import { transform } from "ol/proj";
+import { getArea } from "ol/sphere";
 import { unByKey } from "ol/Observable";
 import type { EventsKey } from "ol/events";
 import MapView, { type DrawGeometryType, type MapLayerVisibility } from "../map/MapView";
@@ -24,21 +25,41 @@ import {
 
 const GRB_ADP_REFERENCE_LAYER = "GRB - ADP - administratief perceel";
 
-// Gealigneerde brongeometrie in EPSG:31370 (Lambert 72).
+// Nieuwe startgeometrie: vooraf door BRDR gealigneerd in EPSG:31370 (Lambert 72).
 const INITIAL_GEOMETRY: Geometry = {
   type: "Polygon",
   coordinates: [[
-    [174117.48808407906, 179158.054926374],
-    [174111.6830116799, 179153.79482142627],
-    [174110.1237813422, 179153.99846482463],
-    [174069.13814894308, 179159.35178971943],
-    [174069.15837224852, 179159.4705032697],
-    [174072.0591689511, 179176.47963143047],
-    [174074.13729168347, 179188.66770655755],
-    [174121.469167022, 179180.50787992403],
-    [174119.27110119144, 179168.10886237584],
-    [174117.5118922592, 179158.18913362268],
-    [174117.48808407906, 179158.054926374],
+    [48433.75917304639733629, 203834.50587149756029248],
+    [48436.10400505000143312, 203836.14599950009142049],
+    [48439.29901170708035352, 203838.38100655350717716],
+    [48447.71001992926903768, 203844.26401470912969671],
+    [48453.73798905999865383, 203848.48001550990738906],
+    [48462.33600416752597084, 203854.49403087882092223],
+    [48481.2170290799549548, 203867.69998351999674924],
+    [48487.54298108998045791, 203875.61697552999248728],
+    [48495.92102909003733657, 203886.10203153008478694],
+    [48496.04928416918846779, 203885.96769649453926831],
+    [48497.03718910002498887, 203884.93287952992250212],
+    [48514.3219890999753261, 203866.82798352008103393],
+    [48516.77024500197148882, 203864.26375963306054473],
+    [48521.55738110999664059, 203859.24955151000176556],
+    [48531.37997311004437506, 203848.96103951000259258],
+    [48523.02202109317295253, 203841.04097548400750384],
+    [48518.55802111002412857, 203836.8339994999114424],
+    [48513.94202109998150263, 203833.07003149992669933],
+    [48510.15731709999818122, 203830.05524748991592787],
+    [48490.33101307445758721, 203814.2620314676896669],
+    [48483.06502908067341195, 203808.52302348043303937],
+    [48481.85101307895092759, 203807.62497547920793295],
+    [48472.56998908050445607, 203801.04199947026791051],
+    [48463.13997306989040226, 203794.90798346992232837],
+    [48459.48102906484564301, 203793.27700747209019028],
+    [48453.35501306958758505, 203790.65697546990122646],
+    [48447.87098376165522495, 203789.3909920837613754],
+    [48440.58400505001918646, 203787.70798345998628065],
+    [48438.64998904988897266, 203796.22299147050944157],
+    [48432.87302904998068698, 203833.88603150009294041],
+    [48433.75917304639733629, 203834.50587149756029248],
   ]],
 };
 
@@ -57,6 +78,33 @@ function transformGeometry(
     dataProjection: targetCrs,
     featureProjection: targetCrs,
   }) as Geometry;
+}
+
+function calculateArea(geometry: Geometry | null, crs: string): number | null {
+  if (!geometry || (geometry.type !== "Polygon" && geometry.type !== "MultiPolygon")) {
+    return null;
+  }
+  const olGeometry = new GeoJSON().readGeometry(geometry, {
+    dataProjection: crs,
+    featureProjection: crs,
+  });
+  return getArea(olGeometry as import("ol/geom/Polygon").default | import("ol/geom/MultiPolygon").default, {
+    projection: crs,
+  });
+}
+
+function formatArea(area: number | null): string {
+  if (area === null || !Number.isFinite(area)) return "n.v.t.";
+  return `${new Intl.NumberFormat("nl-BE", {
+    minimumFractionDigits: Math.abs(area) < 0.01 ? 4 : 2,
+    maximumFractionDigits: Math.abs(area) < 0.01 ? 4 : 2,
+  }).format(area)} m²`;
+}
+
+function formatAreaDifference(area: number | null): string {
+  if (area === null || !Number.isFinite(area)) return "n.v.t.";
+  const sign = area > 0 ? "+" : area < 0 ? "−" : "";
+  return `${sign}${formatArea(Math.abs(area))}`;
 }
 
 const DRAW_TYPES: Array<{ value: DrawGeometryType; label: string }> = [
@@ -97,7 +145,7 @@ export function CrsComparisonViewer() {
   }, []);
 
   useEffect(() => {
-    if (maps.length < 3) return;
+    if (maps.length < 2) return;
     const listeners: EventsKey[] = [];
 
     const syncFrom = (source: { map: Map; crs: "EPSG:31370" | "EPSG:3812" }) => {
@@ -146,6 +194,13 @@ export function CrsComparisonViewer() {
 
   const transformedInput3812 = transformGeometry(inputGeometry, BRDR_CRS_31370, "EPSG:3812");
   const aligned3812 = currentStep?.result ?? null;
+  const originalArea = useMemo(() => calculateArea(inputGeometry, BRDR_CRS_31370), [inputGeometry]);
+  const transformedArea = useMemo(() => calculateArea(transformedInput3812, "EPSG:3812"), [transformedInput3812]);
+  const alignedArea = useMemo(() => calculateArea(aligned3812, "EPSG:3812"), [aligned3812]);
+  const transformationAlignmentAreaDifference =
+    transformedArea !== null && alignedArea !== null
+      ? transformedArea - alignedArea
+      : null;
   const currentDiffValue = values[stepIndex] ?? null;
   const metricLabel = diffMetric === "area"
     ? "Oppervlakteverschil"
@@ -304,7 +359,7 @@ export function CrsComparisonViewer() {
             initialCenterLonLat={[4.7, 50.88]}
             onMapReady={(map) => registerMap(map, "EPSG:31370")}
           />
-          <div className="map-corner-label">GRB / brongeometrie</div>
+          <div className="map-corner-label">EPSG:31370 · GRB / brongeometrie</div>
         </div>
         <details className="crs-layer-picker">
           <summary>Kaartlagen</summary>
@@ -337,17 +392,16 @@ export function CrsComparisonViewer() {
           {currentDiffValue !== null && <span><strong>{metricLabel}</strong> {currentDiffValue.toFixed(diffMetric === "count" ? 0 : 2)} {metricUnit}</span>}
         </div>
         <div className="crs-result-grid">
-          <ResultMap title="Gewone transformatie" subtitle="Zonder BRDR-correctie" crs="EPSG:3812" geometry={transformedInput3812} loading={false} inputGeometryStyle="yellow" onMapReady={registerMap} />
-          <ResultMap title="BRDR-gecorrigeerd" subtitle="Terug afgestemd op GRB" crs="EPSG:3812" geometry={aligned3812} loading={loading} inputGeometryStyle="blue" onMapReady={registerMap} />
+          <ResultMap title="Na transformatie" subtitle="Zonder BRDR-correctie — rood/groen toont de afwijking tegenover GRB" crs="EPSG:3812" geometry={transformedInput3812} step={currentStep} showDiffLayers={Boolean(currentStep)} loading={loading} inputGeometryStyle="yellow" emptyLabel="Nog geen transformatie beschikbaar" mapHint="Geel = transformatie · rood/groen = verschil met GRB" originalArea={originalArea} comparisonArea={transformationAlignmentAreaDifference} onMapReady={registerMap} />
+          <ResultMap title="Na BRDR-alignering" subtitle="Terug afgestemd op GRB — de geometrie volgt de perceelsrand" crs="EPSG:3812" geometry={aligned3812} loading={loading} inputGeometryStyle="blue" emptyLabel="Nog geen BRDR-resultaat" mapHint="Blauw = BRDR-resultaat · geen diff-overlay" originalArea={originalArea} comparisonArea={transformationAlignmentAreaDifference !== null ? -transformationAlignmentAreaDifference : null} onMapReady={registerMap} />
         </div>
-        <DifferenceMap ordinaryGeometry={transformedInput3812} brdrGeometry={aligned3812} step={currentStep} loading={loading} onMapReady={registerMap} />
         <div className="crs-legend" aria-label="Legenda">
           <span><i className="crs-legend-swatch is-yellow" /> Gewone transformatie</span>
           <span><i className="crs-legend-swatch is-blue" /> BRDR-resultaat</span>
           <span><i className="crs-legend-swatch is-reference" /> GRB-referentie</span>
           <span><i className="crs-legend-swatch is-red" /> BRDR-diff min</span>
           <span><i className="crs-legend-swatch is-green" /> BRDR-diff plus</span>
-          <span className="crs-legend-note">De voorbeeldafwijking is bewust klein en realistisch gehouden.</span>
+          <span className="crs-legend-note">Links zie je de transformatieafwijking aan de dubbele rand; rechts controleert BRDR die afwijking tegen dezelfde GRB-referentie.</span>
         </div>
       </section>
     </main>
@@ -384,7 +438,7 @@ export function CrsComparisonViewer() {
   );
 }
 
-function DifferenceMap({ ordinaryGeometry, brdrGeometry, step, loading, onMapReady }: { ordinaryGeometry: Geometry | null; brdrGeometry: Geometry | null; step: import("../../types/brdr").BrdrStep | null; loading: boolean; onMapReady: (map: Map, crs: "EPSG:31370" | "EPSG:3812") => void }) {
+export function DifferenceMap({ ordinaryGeometry, brdrGeometry, step, loading, onMapReady }: { ordinaryGeometry: Geometry | null; brdrGeometry: Geometry | null; step: import("../../types/brdr").BrdrStep | null; loading: boolean; onMapReady: (map: Map, crs: "EPSG:31370" | "EPSG:3812") => void }) {
   const [layerVisibility, setLayerVisibility] = useState<MapLayerVisibility>({
     input: true, context: true, reference: true,
     brdrResult: true, brdrDiffMin: true, brdrDiffPlus: true,
@@ -441,7 +495,9 @@ function DifferenceMap({ ordinaryGeometry, brdrGeometry, step, loading, onMapRea
   );
 }
 
-function ResultMap({ title, subtitle, crs, geometry, loading, inputGeometryStyle, onMapReady }: { title: string; subtitle: string; crs: "EPSG:31370" | "EPSG:3812"; geometry: Geometry | null; loading: boolean; inputGeometryStyle: "blue" | "yellow"; onMapReady: (map: Map, crs: "EPSG:31370" | "EPSG:3812") => void }) {
+function ResultMap({ title, subtitle, crs, geometry, step = null, showDiffLayers = false, loading, inputGeometryStyle, emptyLabel, mapHint, originalArea, comparisonArea, onMapReady }: { title: string; subtitle: string; crs: "EPSG:31370" | "EPSG:3812"; geometry: Geometry | null; step?: import("../../types/brdr").BrdrStep | null; showDiffLayers?: boolean; loading: boolean; inputGeometryStyle: "blue" | "yellow"; emptyLabel: string; mapHint: string; originalArea: number | null; comparisonArea: number | null; onMapReady: (map: Map, crs: "EPSG:31370" | "EPSG:3812") => void }) {
+  const area = useMemo(() => calculateArea(geometry, crs), [crs, geometry]);
+  const originalAreaDifference = area !== null && originalArea !== null ? area - originalArea : null;
   const wkt = useMemo(() => {
     if (!geometry) return "";
 
@@ -455,14 +511,20 @@ function ResultMap({ title, subtitle, crs, geometry, loading, inputGeometryStyle
   return (
     <article className="crs-result-panel">
       <div className="crs-result-title"><div><h3>{title}</h3><p>{subtitle}</p></div><span>{crs}</span></div>
+      <div className="crs-result-metrics" aria-label={`Oppervlaktemetrics ${title}`}>
+        <span><strong>Oppervlakte</strong>{formatArea(area)}</span>
+        <span><strong>Verschil met origineel</strong>{formatAreaDifference(originalAreaDifference)}</span>
+        <span><strong>Verschil transformatie ↔ alignering</strong>{formatAreaDifference(comparisonArea)}</span>
+      </div>
       <div className="crs-result-map">
         <MapView
           crs={crs}
-          step={null}
+          step={step}
           showReferenceLayer
           selectedGrbTypes={[GRB_ADP_REFERENCE_LAYER]}
-          showDiffLayers={false}
-          suspendBrdrLayers
+          showDiffLayers={showDiffLayers}
+          suspendBrdrLayers={!step}
+          diffLayersOnTop={showDiffLayers}
           loading={loading}
           inputGeometryStyle={inputGeometryStyle}
           inputGeometry={geometry}
@@ -472,7 +534,8 @@ function ResultMap({ title, subtitle, crs, geometry, loading, inputGeometryStyle
           initialCenterLonLat={[4.7, 50.88]}
           onMapReady={(map) => onMapReady(map, crs)}
         />
-        {!geometry && <div className="crs-empty-map">Nog geen BRDR-resultaat</div>}
+        <div className="crs-result-map-hint">{mapHint}</div>
+        {!geometry && <div className="crs-empty-map">{emptyLabel}</div>}
       </div>
       <div className="crs-wkt-panel">
         <div className="crs-wkt-heading">

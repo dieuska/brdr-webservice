@@ -95,6 +95,30 @@
   word-break: break-word;
 }
 
+.lifecycle-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  max-width: 1480px;
+  margin: 0 auto 10px;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.lifecycle-flow-step { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px 10px; border-radius: 11px; color: #64748b; }
+.lifecycle-flow-step.is-active { background: #eff6ff; color: #1d4ed8; }
+.lifecycle-flow-step.is-complete { color: #166534; }
+.lifecycle-flow-number { display: grid; place-items: center; width: 24px; height: 24px; flex: 0 0 auto; border-radius: 50%; background: #e2e8f0; font-size: .78rem; font-weight: 800; }
+.lifecycle-flow-step.is-active .lifecycle-flow-number { background: #2563eb; color: #fff; }
+.lifecycle-flow-step.is-complete .lifecycle-flow-number { background: #dcfce7; color: #166534; }
+.lifecycle-flow-step strong, .lifecycle-flow-step small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lifecycle-flow-step strong { font-size: .78rem; }
+.lifecycle-flow-step small { margin-top: 2px; font-size: .68rem; color: #64748b; }
+
 .lifecycle-review-banner {
   position: relative;
   z-index: 40;
@@ -147,10 +171,149 @@
 .lifecycle-layout {
   flex: 1 1 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(420px, 0.95fr);
+  grid-template-columns: minmax(320px, 0.78fr) minmax(520px, 1.22fr);
   gap: 12px;
   min-height: 0;
   overflow: hidden;
+}
+
+.lifecycle-layout > * {
+  min-height: 0;
+}
+
+.lifecycle-source-panel,
+.lifecycle-management-map {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px;
+}
+
+.lifecycle-source-panel {
+  grid-template-rows: auto auto minmax(280px, 1fr);
+  border-color: rgba(37, 99, 235, 0.34);
+  background: linear-gradient(180deg, rgba(239, 246, 255, 0.9), rgba(255, 255, 255, 0.86));
+}
+
+.lifecycle-management-panel {
+  display: grid;
+  grid-template-rows: minmax(250px, 0.72fr) minmax(0, 1.28fr);
+  gap: 12px;
+  padding: 12px;
+  box-sizing: border-box;
+  border: 1px solid rgba(22, 101, 52, 0.32);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(240, 253, 244, 0.82), rgba(248, 250, 252, 0.9));
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.lifecycle-source-panel .lifecycle-module-heading,
+.lifecycle-management-map .lifecycle-module-heading {
+  grid-row: 1;
+}
+
+.lifecycle-source-panel .lifecycle-source-controls {
+  grid-row: 3;
+  align-self: start;
+}
+
+.lifecycle-source-panel .lifecycle-map-split {
+  grid-row: 2;
+  min-height: 280px;
+}
+
+.lifecycle-management-map .lifecycle-map-split {
+  grid-row: 2 / span 2;
+}
+
+.lifecycle-management-map {
+  grid-template-rows: auto minmax(0, 1fr);
+  border-color: rgba(22, 101, 52, 0.34);
+  background: linear-gradient(180deg, rgba(240, 253, 244, 0.9), rgba(255, 255, 255, 0.86));
+}
+
+.lifecycle-module-heading {
+  flex: 0 0 auto;
+  padding: 2px 4px 10px;
+}
+
+.lifecycle-module-kicker {
+  display: block;
+  margin-bottom: 3px;
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.lifecycle-module-heading h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.lifecycle-module-heading p {
+  margin: 4px 0 0;
+  color: #475569;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.lifecycle-source-controls {
+  flex: 0 0 auto;
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.lifecycle-source-controls summary {
+  cursor: pointer;
+  color: #1d4ed8;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.lifecycle-source-controls[open] summary {
+  margin-bottom: 8px;
+}
+
+.lifecycle-source-controls-body {
+  padding-top: 2px;
+}
+
+.lifecycle-source-controls .lifecycle-card-header {
+  margin-bottom: 6px;
+}
+
+.lifecycle-source-controls h3 {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.lifecycle-source-controls .lifecycle-help {
+  font-size: 0.82rem;
+}
+
+.lifecycle-source-panel .lifecycle-map-split,
+.lifecycle-management-map .lifecycle-map-split {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  grid-template-columns: 1fr;
+}
+
+.lifecycle-source-panel .lifecycle-map-split-pane,
+.lifecycle-management-map .lifecycle-map-split-pane {
+  border-radius: 18px;
 }
 
 .lifecycle-map-panel {
@@ -168,6 +331,9 @@
   opacity: 0.58;
   transition: opacity 160ms ease;
 }
+
+.lifecycle-map-header-meta { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.lifecycle-map-crs { padding: 4px 7px; border: 1px solid rgba(37, 99, 235, .22); border-radius: 999px; background: #eff6ff; color: #1d4ed8; font-size: .68rem; font-weight: 800; }
 
 .lifecycle-map-loading {
   position: absolute;
@@ -234,10 +400,6 @@
 }
 
 .lifecycle-step-card.is-collapsed .lifecycle-card-header > .lifecycle-button-secondary {
-  display: none;
-}
-
-.lifecycle-step-divider + .lifecycle-step-subtitle + .lifecycle-card-header {
   display: none;
 }
 
@@ -440,6 +602,30 @@
 .lifecycle-metadata-details[open] summary {
   margin-bottom: 8px;
   color: #166534;
+}
+
+.lifecycle-secondary-details {
+  margin-top: 8px;
+  border-top: 1px solid rgba(203, 213, 225, 0.72);
+  padding-top: 8px;
+}
+
+.lifecycle-secondary-details > summary {
+  cursor: pointer;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.lifecycle-secondary-details[open] > summary {
+  margin-bottom: 8px;
+  color: #166534;
+}
+
+.lifecycle-card-status .lifecycle-secondary-details {
+  margin-top: 0;
+  border-top: 0;
+  padding-top: 0;
 }
 
 .lifecycle-chip-row {
@@ -826,6 +1012,24 @@
   font-size: 0.9rem;
 }
 
+.lifecycle-management-panel > .lifecycle-sidebar .lifecycle-card-memory {
+  display: none;
+}
+
+.lifecycle-card-managed-metadata {
+  margin-top: 10px;
+  padding: 9px 11px;
+  border-color: rgba(22, 101, 52, 0.2);
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.lifecycle-card-managed-metadata .lifecycle-secondary-details {
+  margin-top: 0;
+  border-top: 0;
+  padding-top: 0;
+}
+
 @media (max-width: 1100px) {
   .lifecycle-hero,
   .lifecycle-layout {
@@ -836,9 +1040,18 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .lifecycle-map-panel {
+  .lifecycle-source-panel,
+  .lifecycle-management-panel {
     min-height: 320px;
+  }
+
+  .lifecycle-source-panel {
     height: 42vh;
+  }
+
+  .lifecycle-management-panel {
+    height: auto;
+    grid-template-rows: minmax(320px, 42vh) minmax(0, 1fr);
   }
 }
 
@@ -886,8 +1099,532 @@
     grid-template-rows: minmax(240px, 38vh) minmax(0, 1fr);
   }
 
-  .lifecycle-map-panel {
+  .lifecycle-source-panel,
+  .lifecycle-management-panel {
     height: auto;
     min-height: 240px;
+  }
+
+  .lifecycle-management-panel {
+    grid-template-rows: minmax(240px, 38vh) minmax(0, 1fr);
+  }
+
+  .lifecycle-flow {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* The lifecycle page owns the vertical scroll. Each map module gets a real,
+   usable height instead of competing with the sidebar for the viewport. */
+.lifecycle-app {
+  overflow: auto;
+}
+
+.lifecycle-layout {
+  flex: 0 0 auto;
+  overflow: visible;
+  align-items: start;
+}
+
+.lifecycle-source-panel {
+  height: 650px;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.lifecycle-management-panel {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  grid-template-rows: 500px auto;
+}
+
+.lifecycle-management-map {
+  height: 500px;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.lifecycle-sidebar {
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+}
+
+.lifecycle-source-panel .lifecycle-map-split,
+.lifecycle-management-map .lifecycle-map-split {
+  height: 100%;
+  min-height: 0;
+}
+
+/* Keep both comparison maps visually comparable. The management cards may
+   continue below the fold, but their map surfaces always share one height. */
+@media (min-width: 1101px) {
+  .lifecycle-layout {
+    grid-template-columns: minmax(280px, 0.62fr) minmax(700px, 1.38fr);
+    align-items: start;
+  }
+
+  .lifecycle-source-panel .lifecycle-map-split,
+  .lifecycle-management-map .lifecycle-map-split {
+    height: 600px;
+    flex: 0 0 600px;
+  }
+
+  .lifecycle-source-panel .lifecycle-map-split-pane,
+  .lifecycle-management-map .lifecycle-map-split-pane {
+    height: 600px;
+  }
+
+  .lifecycle-source-panel {
+    height: auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+
+  .lifecycle-source-panel .lifecycle-source-controls {
+    grid-row: 3;
+  }
+
+  .lifecycle-source-panel .lifecycle-map-split {
+    grid-row: 2;
+  }
+
+  .lifecycle-management-panel {
+    grid-template-columns: minmax(0, 1fr) 290px;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: start;
+    overflow: visible;
+  }
+
+  .lifecycle-management-map {
+    grid-column: 1;
+    grid-row: 1;
+    height: auto;
+  }
+
+  .lifecycle-management-map .lifecycle-map-split-managed {
+    grid-template-columns: 1fr;
+  }
+
+  .lifecycle-management-map .lifecycle-map-actions {
+    display: none;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar {
+    grid-column: 2;
+    grid-row: 1;
+    max-height: 600px;
+    padding-right: 4px;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar::before {
+    content: "Lifecycle-bediening";
+    display: block;
+    margin: 0 2px 2px;
+    color: #166534;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-card {
+    border-radius: 16px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+  }
+}
+
+@media (max-width: 1100px) {
+  .lifecycle-source-panel .lifecycle-map-split,
+  .lifecycle-management-map .lifecycle-map-split {
+    height: 520px;
+    flex-basis: 520px;
+  }
+
+  .lifecycle-source-panel .lifecycle-map-split-pane,
+  .lifecycle-management-map .lifecycle-map-split-pane {
+    height: 520px;
+  }
+
+  .lifecycle-management-map .lifecycle-map-split-managed {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .lifecycle-management-map .lifecycle-map-actions {
+    margin: 10px 0 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .lifecycle-source-panel .lifecycle-map-split,
+  .lifecycle-management-map .lifecycle-map-split {
+    height: 440px;
+    flex-basis: 440px;
+  }
+
+  .lifecycle-source-panel .lifecycle-map-split-pane,
+  .lifecycle-management-map .lifecycle-map-split-pane {
+    height: 440px;
+  }
+}
+
+/* Equalise the actual OpenLayers canvas, independent of the amount of
+   legend/CAPAKEY information rendered below each map. */
+@media (min-width: 1101px) {
+  .lifecycle-source-panel .lifecycle-map-split,
+  .lifecycle-management-map .lifecycle-map-split {
+    height: auto;
+    flex: 0 0 auto;
+  }
+
+  .lifecycle-source-panel .lifecycle-map-split-pane,
+  .lifecycle-management-map .lifecycle-map-split-pane {
+    height: auto;
+  }
+
+  .lifecycle-source-panel .lifecycle-map-split-pane .map-container,
+  .lifecycle-management-map .lifecycle-map-split-pane .map-container {
+    flex: 0 0 360px;
+    height: 360px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .lifecycle-source-panel .lifecycle-map-split,
+  .lifecycle-management-map .lifecycle-map-split,
+  .lifecycle-source-panel .lifecycle-map-split-pane,
+  .lifecycle-management-map .lifecycle-map-split-pane {
+    height: auto;
+  }
+
+  .lifecycle-source-panel .lifecycle-map-split-pane .map-container,
+  .lifecycle-management-map .lifecycle-map-split-pane .map-container {
+    flex: 0 0 320px;
+    height: 320px;
+  }
+}
+
+@media (max-width: 700px) {
+  .lifecycle-source-panel .lifecycle-map-split-pane .map-container,
+  .lifecycle-management-map .lifecycle-map-split-pane .map-container {
+    flex-basis: 280px;
+    height: 280px;
+  }
+}
+
+/* Compact management controls for the narrow side panel. */
+@media (min-width: 1101px) {
+  .lifecycle-management-panel > .lifecycle-sidebar {
+    gap: 6px;
+    font-size: 0.78rem;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-card {
+    padding: 9px;
+    border-radius: 13px;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-card-header {
+    gap: 6px;
+    margin-bottom: 5px;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-card h2 {
+    font-size: 0.82rem;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-card h3,
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-step-subtitle {
+    font-size: 0.76rem;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-help,
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-status-text {
+    font-size: 0.75rem;
+    line-height: 1.3;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-step-divider {
+    margin: 8px 0 7px;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-field {
+    gap: 4px;
+    margin-bottom: 7px;
+    font-size: 0.76rem;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-field select,
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-button {
+    height: 32px;
+    font-size: 0.76rem;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-button {
+    border-radius: 9px;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-step-toggle {
+    width: 23px;
+    height: 23px;
+    font-size: 0.95rem;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-slider-status,
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-play-progress,
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-review-alert {
+    margin: 6px 0;
+    padding: 7px 8px;
+    border-radius: 10px;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-slider-status strong,
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-switch-row strong {
+    font-size: 0.77rem;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-slider-status p,
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-switch-row p,
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-play-progress p,
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-review-alert span {
+    font-size: 0.7rem;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-target-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-target-button {
+    padding: 6px 5px;
+    border-radius: 9px;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-target-button strong {
+    font-size: 0.76rem;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-target-button span,
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-review-alert strong {
+    font-size: 0.68rem;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-candidate-list {
+    gap: 4px;
+    margin: 6px 0;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-candidate {
+    gap: 1px;
+    padding: 6px 7px;
+    border-radius: 9px;
+    font-size: 0.7rem;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-facts {
+    gap: 4px 5px;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-facts div {
+    padding: 6px 7px;
+    border-radius: 8px;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-facts dt,
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-facts dd {
+    font-size: 0.68rem;
+  }
+
+  /* Keep the side panel focused on actions; diagnostics remain available
+     elsewhere in the viewer and are not needed to run the demo workflow. */
+  .lifecycle-management-panel > .lifecycle-sidebar {
+    overflow: visible;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-card-stage-details,
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-card-status:not(:has(.lifecycle-error)),
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-technical-options {
+    display: none;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-help {
+    display: none;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-slider-status p,
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-review-alert span {
+    display: none;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-review-alert {
+    margin-bottom: 5px;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-candidate span:nth-of-type(1),
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-candidate span:nth-of-type(2) {
+    display: none;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-candidate {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  .lifecycle-management-panel > .lifecycle-sidebar .lifecycle-candidate strong {
+    grid-row: 1;
+  }
+
+.lifecycle-management-panel > .lifecycle-sidebar .lifecycle-candidate span:last-child {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+/* Compact overview: the large hero and separate flow bar are replaced by
+   one information strip so the two modules get more vertical space. */
+.lifecycle-hero,
+.lifecycle-flow {
+  display: none;
+}
+
+.lifecycle-compact-header {
+  display: grid;
+  grid-template-columns: auto minmax(260px, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 1480px;
+  margin: 0 auto 10px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+}
+
+.lifecycle-compact-title {
+  display: grid;
+  gap: 1px;
+  min-width: 145px;
+}
+
+.lifecycle-compact-title .viewer-home-link {
+  font-size: 0.68rem;
+}
+
+.lifecycle-compact-title strong {
+  color: #0f172a;
+  font-size: 0.86rem;
+}
+
+.lifecycle-compact-title > span {
+  color: #64748b;
+  font-size: 0.68rem;
+}
+
+.lifecycle-compact-steps {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.lifecycle-compact-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 7px;
+  border-radius: 999px;
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.lifecycle-compact-step b {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  font-size: 0.62rem;
+}
+
+.lifecycle-compact-step.is-active {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.lifecycle-compact-step.is-active b {
+  background: #2563eb;
+  color: #fff;
+}
+
+.lifecycle-compact-step.is-complete {
+  color: #166534;
+}
+
+.lifecycle-compact-step.is-complete b {
+  background: #dcfce7;
+}
+
+.lifecycle-compact-metrics {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 4px 9px;
+  color: #64748b;
+  font-size: 0.67rem;
+  white-space: nowrap;
+}
+
+.lifecycle-compact-metrics b {
+  color: #0f172a;
+}
+
+.lifecycle-compact-metrics .is-alert,
+.lifecycle-compact-metrics .is-alert b {
+  color: #b91c1c;
+}
+
+@media (max-width: 900px) {
+  .lifecycle-compact-header {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .lifecycle-compact-steps,
+  .lifecycle-compact-metrics {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 1100px) {
+  .lifecycle-source-panel {
+    height: 650px;
+  }
+
+  .lifecycle-management-panel {
+    grid-template-rows: 500px auto;
+  }
+}
+
+@media (max-width: 700px) {
+  .lifecycle-source-panel {
+    height: 560px;
+  }
+
+  .lifecycle-management-panel {
+    grid-template-rows: 440px auto;
+  }
+
+  .lifecycle-management-map {
+    height: 440px;
   }
 }
