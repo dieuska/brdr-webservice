@@ -41,6 +41,7 @@ export default defineConfig(() => ({
         crsViewer: resolve(__dirname, "crs-viewer.html"),
         viewerWfs: resolve(__dirname, "brk-viewer.html"),
         geoLifecycleManager: resolve(__dirname, "geolifecyclemanager.html"),
+        heritageLifecycle: resolve(__dirname, "erfgoed-lifecycle.html"),
         alignmentMfe: resolve(__dirname, "alignment-mfe.html"),
         alignmentMfeWfs: resolve(__dirname, "alignment-mfe-wfs.html"),
         alignmentMfeSimple: resolve(__dirname, "alignment-mfe-simple.html"),

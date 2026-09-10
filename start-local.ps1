@@ -5,8 +5,8 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$backendPath = Join-Path $repoRoot "brdr_webservice.py"
-$frontendPath = Join-Path $repoRoot "brdr-viewer\brdr-viewer"
+$backendPath = Join-Path $repoRoot "services\brdr-api\brdr_webservice.py"
+$frontendPath = Join-Path $repoRoot "apps\brdr-viewers"
 $venvPython = Join-Path $repoRoot "venv\Scripts\python.exe"
 $preferredBackendPort = 80
 $fallbackBackendPort = 8000

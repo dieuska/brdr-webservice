@@ -5,6 +5,7 @@ import {
   getDefaultRequestBody,
 } from "../api/brdrApi";
 import { GeoLifecycleMap } from "./GeoLifecycleMap";
+import { createDefaultView } from "../components/map/view";
 import type { AdpfCollectionSummary, BrdrRequestBody, BrdrResponse, Geometry } from "../types/brdr";
 import "./GeoLifecycleManager.css";
 
@@ -500,6 +501,8 @@ function summarizeMetadata(metadata: unknown): MetadataSummary {
 
 function extractCapakeyList(metadata: unknown): string[] {
   const capakeyDetailsByValue = new Map<string, number>();
+  let openDomainArea = 0;
+  let hasOpenDomainArea = false;
 
   function getRecord(value: unknown) {
     return value && typeof value === "object" && !Array.isArray(value)
@@ -582,6 +585,83 @@ function extractCapakeyList(metadata: unknown): string[] {
     }
   }
 
+  function readOpenDomainArea(root: Record<string, unknown>) {
+    const actuation = getRecord(root.actuation);
+    const referenceOd =
+      root.reference_od ?? root.area_od ?? actuation?.reference_od ?? actuation?.area_od;
+    function sumAreas(value: unknown): number {
+      if (typeof value === "number") {
+        return Number.isFinite(value) && value >= 0 ? value : 0;
+      }
+      if (Array.isArray(value)) {
+        return value.reduce((sum, item) => sum + sumAreas(item), 0);
+      }
+      const record = getRecord(value);
+      if (!record) {
+        return 0;
+      }
+      const directArea = readNumberField(record, ["area", "value"]);
+      if (directArea !== null && directArea >= 0) {
+        return directArea;
+      }
+      return Object.values(record).reduce<number>(
+        (sum, item) => sum + sumAreas(item),
+        0
+      );
+    }
+
+    const area = referenceOd === null || referenceOd === undefined
+      ? 0
+      : sumAreas(referenceOd);
+    if (area > 0) {
+      openDomainArea += area;
+      hasOpenDomainArea = true;
+      return;
+    }
+
+    function findOpenDomainObservations(value: unknown): number {
+      if (Array.isArray(value)) {
+        return value.reduce((sum, item) => sum + findOpenDomainObservations(item), 0);
+      }
+      const record = getRecord(value);
+      if (!record) {
+        return 0;
+      }
+
+      const observedProperty = readStringField(record, [
+        "observed_property",
+        "observedProperty",
+      ]).toLowerCase();
+      const usedProcedure = readStringField(record, [
+        "used_procedure",
+        "usedProcedure",
+      ]).toLowerCase();
+      const result = getRecord(record.result);
+      const resultValue = result?.value ?? record.result_value ?? record.resultValue;
+      const numericValue =
+        typeof resultValue === "number" ? resultValue : Number(resultValue);
+      if (
+        (observedProperty.includes("area_open_domain") ||
+          usedProcedure.includes("area_open_domain")) &&
+        Number.isFinite(numericValue) &&
+        numericValue > 0
+      ) {
+        return numericValue;
+      }
+
+      return Object.values(record).reduce<number>(
+        (sum, item) => sum + findOpenDomainObservations(item),
+        0
+      );
+    }
+
+    const observedArea = findOpenDomainObservations(root);
+    if (observedArea > 0) {
+      openDomainArea += observedArea;
+      hasOpenDomainArea = true;
+    }
+  }
+
   function readObservations(root: Record<string, unknown>) {
     const observations: unknown[] = [];
 
@@ -627,6 +707,21 @@ function extractCapakeyList(metadata: unknown): string[] {
     const usedProcedure = readStringField(record, ["used_procedure", "usedProcedure"]);
     const resultRecord = getRecord(record.result);
     const resultValue = resultRecord?.value ?? record.result_value ?? record.resultValue;
+    const numericResultValue =
+      typeof resultValue === "number" ? resultValue : Number(resultValue);
+
+    if (
+      !hasOpenDomainArea &&
+      (observedProperty.toLowerCase().includes("open_domain") ||
+        usedProcedure.toLowerCase().includes("open_domain")) &&
+      Number.isFinite(numericResultValue) &&
+      numericResultValue > 0
+    ) {
+      openDomainArea += numericResultValue;
+      hasOpenDomainArea = true;
+      return;
+    }
+
     const percentageValue =
       readNumberField(record, ["result_value", "resultValue"]) ??
       (typeof resultValue === "number" ? resultValue : Number(resultValue));
@@ -681,15 +776,27 @@ function extractCapakeyList(metadata: unknown): string[] {
   for (const root of roots) {
     const referenceGeometryByUrn = readReferenceGeometryMap(root);
     readReferenceFeaturePercentages(root);
+    readOpenDomainArea(root);
 
     for (const observation of readObservations(root)) {
       addFromObservationNode(observation, referenceGeometryByUrn);
     }
   }
 
-  return Array.from(capakeyDetailsByValue.entries())
+  const capakeyItems = Array.from(capakeyDetailsByValue.entries())
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([capakey, percentage]) => `${capakey} (${percentage.toFixed(2)}%)`);
+
+  if (openDomainArea > 0) {
+    capakeyItems.push(
+      `Openbaar domein (${new Intl.NumberFormat("nl-BE", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(openDomainArea)} m²)`
+    );
+  }
+
+  return capakeyItems;
 }
 
 function formatDiff(value: number, metric: BrdrResponse["diff_metric"]) {
@@ -703,7 +810,26 @@ function formatDiff(value: number, metric: BrdrResponse["diff_metric"]) {
   return `${value.toFixed(2)} m2`;
 }
 
-export default function GeoLifecycleManagerApp() {
+export interface GeoLifecycleManagerOptions {
+  demoName?: string;
+  demoEyebrow?: string;
+  demoIntro?: string;
+  compactSubtitle?: string;
+  initialGeometry?: Geometry;
+  initialGeometryLabel?: string;
+  showPresetControls?: boolean;
+}
+
+export default function GeoLifecycleManagerApp({
+  demoName = "GeoLifecycleManager",
+  demoEyebrow = "GeoLifecycleManager",
+  demoIntro,
+  compactSubtitle = "Geometrische levensloop",
+  initialGeometry: configuredInitialGeometry,
+  initialGeometryLabel = "Standaardpolygon",
+  showPresetControls = true,
+}: GeoLifecycleManagerOptions = {}) {
+  const sharedMapView = useMemo(() => createDefaultView("EPSG:31370"), []);
   const [collections, setCollections] = useState<AdpfCollectionSummary[]>([]);
   const [collectionsLoading, setCollectionsLoading] = useState(true);
   const [collectionsError, setCollectionsError] = useState<string | null>(null);
@@ -713,12 +839,14 @@ export default function GeoLifecycleManagerApp() {
   const [includeRequestMetadata, setIncludeRequestMetadata] = useState(true);
   const [drawRequestToken, setDrawRequestToken] = useState(1);
   const [draftGeometry, setDraftGeometry] = useState<Geometry | null>(
-    DRAFT_PRESETS[0].geometry
+    configuredInitialGeometry ?? DRAFT_PRESETS[0].geometry
   );
   const [initialGeometry, setInitialGeometry] = useState<Geometry | null>(
-    DRAFT_PRESETS[0].geometry
+    configuredInitialGeometry ?? DRAFT_PRESETS[0].geometry
   );
-  const [draftPresetId, setDraftPresetId] = useState<string>(DRAFT_PRESETS[0].id);
+  const [draftPresetId, setDraftPresetId] = useState<string>(
+    configuredInitialGeometry ? "heritage-object" : DRAFT_PRESETS[0].id
+  );
   const [baselineProposal, setBaselineProposal] = useState<LifecycleStage | null>(null);
   const [baselineSelectedStepKey, setBaselineSelectedStepKey] = useState("");
   const [acceptedStages, setAcceptedStages] = useState<LifecycleStage[]>([]);
@@ -736,7 +864,7 @@ export default function GeoLifecycleManagerApp() {
   const [impactPreviewLoading, setImpactPreviewLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [statusText, setStatusText] = useState(
-    "Standaardpolygon geladen. Kies een historische AdpF-versie als baseline of teken een nieuwe polygon."
+    `${initialGeometryLabel} geladen. Kies een historische AdpF-versie als baseline of teken een nieuwe polygon.`
   );
   const [error, setError] = useState<string | null>(null);
   const initialBaselineStartedRef = useRef(false);
@@ -1177,6 +1305,16 @@ export default function GeoLifecycleManagerApp() {
           Math.max(collections.length - 1 - autoPlayStart, 1)) *
         100
       : 0;
+  const activeFlowStep = pendingStage
+    ? 4
+    : acceptedStages.length > 0
+      ? 3
+      : baselineProposal
+        ? 2
+        : 1;
+  const activeDiffLabel = activeStage
+    ? formatDiff(activeStage.diffValue, activeStage.response.diff_metric)
+    : "Nog geen resultaat";
 
   useEffect(() => {
     isPlayingRef.current = isPlaying;
@@ -1296,12 +1434,11 @@ export default function GeoLifecycleManagerApp() {
       <section className="lifecycle-hero">
         <div className="lifecycle-hero-copy">
           <a className="viewer-home-link" href={import.meta.env.BASE_URL}>← Demo-overzicht</a>
-          <p className="lifecycle-eyebrow">GeoLifecycleManager</p>
-          <h1>Volg de geometrische levensloop van een dossier</h1>
+          <p className="lifecycle-eyebrow">{demoEyebrow}</p>
+          <h1>{demoName}</h1>
           <p className="lifecycle-intro">
-            Start met één geometrie en volg ze doorheen opeenvolgende AdpF-versies. BRDR gebruikt
-            de referentie van elk jaar om de beheerde geometrie automatisch bij te werken en stopt
-            alleen wanneer een manuele keuze nodig is.
+            {demoIntro ??
+              "Start met één geometrie en volg ze doorheen opeenvolgende AdpF-versies. BRDR gebruikt de referentie van elk jaar om de beheerde geometrie automatisch bij te werken en stopt alleen wanneer een manuele keuze nodig is."}
           </p>
         </div>
         <div className="lifecycle-hero-overview">
@@ -1313,6 +1450,60 @@ export default function GeoLifecycleManagerApp() {
             <span className="status-kpi-label">Lifecycle status</span>
             <strong>{pendingStage || baselineProposal ? "ACTIE VEREIST" : isPlaying ? "Automatisch actief" : "Klaar"}</strong>
           </div>
+          <div className="lifecycle-hero-metric">
+            <span className="status-kpi-label">Huidige doelversie</span>
+            <strong>{currentLifecycleCollection ? formatCollectionLabel(currentLifecycleCollection) : "Nog niet gekozen"}</strong>
+          </div>
+          <div className="lifecycle-hero-metric">
+            <span className="status-kpi-label">Laatste BRDR-verschil</span>
+            <strong>{activeDiffLabel}</strong>
+          </div>
+        </div>
+      </section>
+
+      <nav className="lifecycle-flow" aria-label="Lifecycle-stappen">
+        {[
+          [1, "Geometrie kiezen", draftGeometry ? "Klaar" : "Teken een polygon"],
+          [2, "Baseline vastleggen", baselineStage ? "Vastgelegd" : "Nog te doen"],
+          [3, "Versies opvolgen", acceptedStages.length > 0 ? "Actief" : "Wacht op baseline"],
+          [4, "Review", pendingStage || baselineProposal ? "Actie vereist" : "Automatisch indien mogelijk"],
+        ].map(([step, label, status]) => (
+          <div key={step} className={`lifecycle-flow-step${activeFlowStep === step ? " is-active" : ""}${Number(step) < activeFlowStep ? " is-complete" : ""}`}>
+            <span className="lifecycle-flow-number">{Number(step) < activeFlowStep ? "✓" : step}</span>
+            <span><strong>{label}</strong><small>{status}</small></span>
+          </div>
+        ))}
+      </nav>
+
+      <section className="lifecycle-compact-header" aria-label="Lifecycle-overzicht">
+        <div className="lifecycle-compact-title">
+          <a className="viewer-home-link" href={import.meta.env.BASE_URL}>← Demo-overzicht</a>
+          <strong>{demoName}</strong>
+          <span>{compactSubtitle}</span>
+        </div>
+        <div className="lifecycle-compact-steps">
+          {[
+            [1, "Geometrie", draftGeometry ? "klaar" : "nodig"],
+            [2, "Baseline", baselineStage ? "vastgelegd" : "nodig"],
+            [3, "Lifecycle", acceptedStages.length > 0 ? "actief" : "wacht"],
+            [4, "Review", pendingStage || baselineProposal ? "actie" : "automatisch"],
+          ].map(([step, label, status]) => (
+            <span
+              key={step}
+              className={`lifecycle-compact-step${activeFlowStep === step ? " is-active" : ""}${Number(step) < activeFlowStep ? " is-complete" : ""}`}
+              title={`${label}: ${status}`}
+            >
+              <b>{Number(step) < activeFlowStep ? "✓" : step}</b>{label}
+            </span>
+          ))}
+        </div>
+        <div className="lifecycle-compact-metrics">
+          <span title="Actieve baseline">Baseline <b>{baselineLabel}</b></span>
+          <span title="Huidige doelversie">Doel <b>{currentLifecycleCollection ? formatCollectionLabel(currentLifecycleCollection) : "-"}</b></span>
+          <span title="Laatste BRDR-verschil">Verschil <b>{activeDiffLabel}</b></span>
+          <span className={pendingStage || baselineProposal ? "is-alert" : ""} title="Lifecycle-status">
+            Status <b>{pendingStage || baselineProposal ? "review" : isPlaying ? "actief" : "klaar"}</b>
+          </span>
         </div>
       </section>
 
@@ -1336,8 +1527,52 @@ export default function GeoLifecycleManagerApp() {
       )}
 
       <div className="lifecycle-layout">
-        <div className="lifecycle-map-panel">
+        <section className="lifecycle-source-panel lifecycle-card">
+          <div className="lifecycle-module-heading">
+            <span className="lifecycle-module-kicker">Referentie</span>
+            <h2>Originele geometrie</h2>
+            <p>De startgeometrie en de CAPAKEY-impact vóór de lifecycle-beheersing.</p>
+          </div>
+          <details className="lifecycle-source-controls">
+            <summary>Nieuwe geometrie intekenen of kiezen</summary>
+            <div className="lifecycle-source-controls-body">
+            <div className="lifecycle-card-header">
+              <h3>Nieuwe geometrie kiezen</h3>
+              <button
+                type="button"
+                className="lifecycle-button lifecycle-button-secondary"
+                onClick={() => setDrawRequestToken((value) => value + 1)}
+              >
+                Teken opnieuw
+              </button>
+            </div>
+            <p className="lifecycle-help">
+              Werk in EPSG:31370. Teken een polygon op de kaart of kies een startpolygon.
+            </p>
+            {showPresetControls && <div className="lifecycle-preset-row" role="group" aria-label="Kies een startpolygon">
+              {DRAFT_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  className={`lifecycle-preset-button${draftPresetId === preset.id ? " is-active" : ""}`}
+                  onClick={() => resetLifecycleForNewGeometry(preset.geometry, preset.id)}
+                  disabled={loading}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>}
+            <div className="lifecycle-chip-row">
+              <span className={`lifecycle-chip${draftGeometry ? " is-active" : ""}`}>
+                {draftGeometry ? "geometrie klaar" : "nog geen geometrie"}
+              </span>
+              <span className="lifecycle-chip">{selectedDraftPresetLabel}</span>
+            </div>
+            </div>
+          </details>
           <GeoLifecycleMap
+            variant="source"
+            view={sharedMapView}
             referenceCollectionId={currentCollectionId}
             showReferenceLayer={showReferenceLayer}
             showGrbBackground={showGrbBackground}
@@ -1352,59 +1587,134 @@ export default function GeoLifecycleManagerApp() {
             drawRequestToken={drawRequestToken}
             onDrawn={resetLifecycleForNewGeometry}
           />
-        </div>
+        </section>
+
+        <section className="lifecycle-management-panel">
+          <div className="lifecycle-management-map lifecycle-card">
+            <div className="lifecycle-module-heading">
+              <span className="lifecycle-module-kicker">Managementmodule</span>
+              <h2>Beheerde geometrie</h2>
+              <p>De geometrie die BRDR beheert, met de bijhorende CAPAKEY-impact.</p>
+            </div>
+            <GeoLifecycleMap
+              variant="managed"
+              view={sharedMapView}
+              referenceCollectionId={currentCollectionId}
+              showReferenceLayer={showReferenceLayer}
+              showGrbBackground={showGrbBackground}
+              originalGeometry={initialGeometry ?? draftGeometry}
+              managedGeometry={managedGeometryForMap}
+              proposalGeometry={proposalGeometryForMap}
+              draftGeometry={draftGeometry}
+              unmanagedImpactItems={unmanagedImpactItems}
+              managedImpactItems={visibleManagedImpactItems}
+              impactContextLabel={impactContextLabel}
+              loading={loading || impactPreviewLoading}
+              drawRequestToken={drawRequestToken}
+              onDrawn={resetLifecycleForNewGeometry}
+              actionContent={
+                <div className="lifecycle-map-actions-content">
+                  <div className="lifecycle-map-action-row">
+                    {!baselineStage && !baselineProposal && !pendingStage && (
+                      <button
+                        type="button"
+                        className="lifecycle-map-action lifecycle-map-action-primary"
+                        onClick={() => void handleRunBaseline()}
+                        disabled={!draftGeometry || !baselineCollectionId || loading || collectionsLoading}
+                      >
+                        Baseline instellen
+                      </button>
+                    )}
+                    {acceptedStages.length > 0 && (
+                      <button
+                        type="button"
+                        className="lifecycle-map-action lifecycle-map-action-primary"
+                        onClick={() => {
+                          if (isPlaying) {
+                            isPlayingRef.current = false;
+                            setIsPlaying(false);
+                            setAutoBaselineMode(false);
+                            setStatusText("Automatische lifecycle gepauzeerd.");
+                          } else if (sliderValue < sliderMax) {
+                            isPlayingRef.current = true;
+                            setAutoPlayStartIndex(baselineProgressIndex);
+                            setIsPlaying(true);
+                            setAutoBaselineMode(true);
+                          }
+                        }}
+                        disabled={collectionsLoading || loading || Boolean(pendingStage)}
+                      >
+                        {isPlaying ? "Pauzeer" : "Play lifecycle"}
+                      </button>
+                    )}
+                    {(baselineProposal || pendingStage) && (
+                      <>
+                        <button
+                          type="button"
+                          className="lifecycle-map-action"
+                          onClick={() => document.getElementById("lifecycle-review-card")?.scrollIntoView({ behavior: "smooth" })}
+                        >
+                          Naar review
+                        </button>
+                        <button
+                          type="button"
+                          className="lifecycle-map-action lifecycle-map-action-review"
+                          onClick={baselineProposal ? handleApproveBaseline : handleApprovePending}
+                        >
+                          {baselineProposal ? "Baseline accepteren" : "Kandidaat accepteren"}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  {acceptedStages.length > 0 && (
+                    <div className="lifecycle-map-action-progress" aria-label={`Lifecycle voortgang ${Math.round(lifecycleProgress)} procent`}>
+                      <div className="lifecycle-map-action-progress-label">
+                        <span>Lifecycle-voortgang</span>
+                        <strong>{Math.round(lifecycleProgress)}%</strong>
+                      </div>
+                      <div className="lifecycle-map-action-progress-track">
+                        <div className="lifecycle-map-action-progress-value" style={{ width: `${lifecycleProgress}%` }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              }
+            />
+            <section className="lifecycle-card lifecycle-card-managed-metadata">
+              <details className="lifecycle-secondary-details">
+                <summary>Technische metadata en lifecycle-informatie</summary>
+                <p className="lifecycle-help">
+                  BRDR-metadata wordt opnieuw meegegeven zodat observaties en referentiecontext behouden blijven.
+                </p>
+                <div className="lifecycle-chip-row">
+                  <span className="lifecycle-chip">actuation: {metadataSummary.actuation}</span>
+                  <span className="lifecycle-chip">
+                    referentiegeometries: {activeStage?.observation.referenceFeatureCount ?? 0}
+                  </span>
+                  <span className="lifecycle-chip">
+                    relevant distance:{" "}
+                    {activeStage?.observation.referenceOdArea !== null &&
+                    activeStage?.observation.referenceOdArea !== undefined
+                      ? activeStage.observation.referenceOdArea.toFixed(2)
+                      : "-"}
+                  </span>
+                </div>
+                <details className="lifecycle-metadata-details">
+                  <summary>Toon technische BRDR-metadata</summary>
+                  <pre className="lifecycle-json">
+                    {JSON.stringify(activeStage?.metadata ?? null, null, 2)}
+                  </pre>
+                </details>
+              </details>
+            </section>
+          </div>
 
         <aside className="lifecycle-sidebar">
-          <section className={`lifecycle-card lifecycle-step-card${collapsedSteps[1] ? " is-collapsed" : ""}`}>
-            <div className="lifecycle-card-header">
-              <h2>1. Dossier</h2>
-              <button
-                type="button"
-                className="lifecycle-button lifecycle-button-secondary"
-                onClick={() => setDrawRequestToken((value) => value + 1)}
-              >
-                Teken opnieuw
-              </button>
-              <button
-                type="button"
-                className="lifecycle-step-toggle"
-                onClick={() => toggleStep(1)}
-                aria-expanded={!collapsedSteps[1]}
-                aria-label={`${collapsedSteps[1] ? "Open" : "Klap in"} stap 1`}
-              >
-                {collapsedSteps[1] ? "+" : "−"}
-              </button>
-            </div>
-            <p className="lifecycle-help">
-              Werk in EPSG:31370. De getekende polygon blijft zichtbaar als blauwe brongeometrie.
-            </p>
-            <div className="lifecycle-preset-row" role="group" aria-label="Kies een startpolygon">
-              {DRAFT_PRESETS.map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  className={`lifecycle-preset-button${
-                    draftPresetId === preset.id ? " is-active" : ""
-                  }`}
-                  onClick={() => resetLifecycleForNewGeometry(preset.geometry, preset.id)}
-                  disabled={loading}
-                >
-                  {preset.label}
-                </button>
-              ))}
-            </div>
-            <div className="lifecycle-chip-row">
-              <span className={`lifecycle-chip${draftGeometry ? " is-active" : ""}`}>
-                {draftGeometry ? "polygon klaar" : "nog geen polygon"}
-              </span>
-              <span className="lifecycle-chip">{selectedDraftPresetLabel}</span>
-              <span className="lifecycle-chip">{currentCollectionId || "geen collectie"}</span>
-            </div>
-
+          <section className={`lifecycle-card lifecycle-step-card${collapsedSteps[2] ? " is-collapsed" : ""}`}>
           <div className="lifecycle-step-divider" />
           <h3 className="lifecycle-step-subtitle">Initiële alignering</h3>
             <div className="lifecycle-card-header">
-              <h2>2. Leg de baseline vast</h2>
+              <h2>2. Baseline instellen</h2>
               <button
                 type="button"
                 className="lifecycle-step-toggle"
@@ -1486,34 +1796,37 @@ export default function GeoLifecycleManagerApp() {
           </section>
 
           {acceptedStages.length > 0 && (
-            <section className={`lifecycle-card lifecycle-step-card${collapsedSteps[2] ? " is-collapsed" : ""}`}>
+            <section className={`lifecycle-card lifecycle-step-card${collapsedSteps[3] ? " is-collapsed" : ""}`}>
               <div className="lifecycle-card-header">
-                <h2>2. Volg de levensloop</h2>
+                <h2>3. Volg de levensloop</h2>
                 <span className="lifecycle-stage-label">
                   {activeStageIndex === 0 ? "baseline" : "doelversie"}
                 </span>
                 <button
                   type="button"
                   className="lifecycle-step-toggle"
-                  onClick={() => toggleStep(2)}
-                  aria-expanded={!collapsedSteps[2]}
-                  aria-label={`${collapsedSteps[2] ? "Open" : "Klap in"} stap 2`}
+                  onClick={() => toggleStep(3)}
+                  aria-expanded={!collapsedSteps[3]}
+                  aria-label={`${collapsedSteps[3] ? "Open" : "Klap in"} stap 3`}
                 >
-                  {collapsedSteps[2] ? "+" : "−"}
+                  {collapsedSteps[3] ? "+" : "−"}
                 </button>
               </div>
-              <div className="lifecycle-slider-status">
+              <div
+                className="lifecycle-slider-status"
+                title="De gekozen doelversie wordt rechtstreeks vanaf de actieve baseline geëvalueerd."
+              >
                 <strong>
                   {currentLifecycleCollection
                     ? formatCollectionLabel(currentLifecycleCollection)
                     : "Geen lifecycle-versie"}
                 </strong>
-                <p>Kies een jaar of start de automatische opvolging vanaf de actieve baseline.</p>
+                <p>De actieve versie waarop de volgende lifecycle-stappen vertrekken.</p>
               </div>
-              {(isPlaying || loading) && (
+              {acceptedStages.length > 0 && (
                 <div className="lifecycle-play-progress" aria-live="polite">
                   <div className="lifecycle-play-progress-label">
-                    <span>Automatische lifecycle</span>
+                    <span>{isPlaying ? "Automatische lifecycle" : "Lifecycle-voortgang"}</span>
                     <strong>{Math.round(lifecycleProgress)}%</strong>
                   </div>
                   <div className="lifecycle-play-progress-track">
@@ -1584,9 +1897,13 @@ export default function GeoLifecycleManagerApp() {
                 </span>
               </div>
               <p className="lifecycle-help">
-                BRDR gaf hier geen voldoende eenduidige automatische beslissing. Kies expliciet een kandidaat.
+                BRDR vond meerdere mogelijke uitkomsten. Vergelijk de kandidaten en kies expliciet de geometrie die als baseline moet worden vastgelegd.
               </p>
-              <div className="lifecycle-review-alert" role="alert">
+              <div
+                className="lifecycle-review-alert"
+                role="alert"
+                title="BRDR vraagt een expliciete keuze omdat meerdere kandidaten mogelijk zijn."
+              >
                 <strong>{pendingStage ? "De automatische lifecycle is gepauzeerd." : "Een keuze is vereist om verder te gaan."}</strong>
                 <span>Kies de geometrie die je wilt vastleggen en bevestig daarna de kandidaat.</span>
               </div>
@@ -1608,10 +1925,10 @@ export default function GeoLifecycleManagerApp() {
                       }
                     >
                       <strong>{item.stepKey} m</strong>
-                      <span>status: {item.evaluation ?? "onbekend"}</span>
-                      <span>score: {item.predictionScore.toFixed(2)}</span>
+                      <span>Beoordeling: {item.evaluation ?? "onbekend"}</span>
+                      <span>Waarschijnlijkheid: {item.predictionScore.toFixed(2)}</span>
                       <span>
-                        diff:{" "}
+                        Afwijking:{" "}
                         {formatDiff(
                           item.diffValue,
                           (baselineProposal ?? pendingStage)?.response.diff_metric
@@ -1636,13 +1953,18 @@ export default function GeoLifecycleManagerApp() {
           )}
 
           {activeStage && (
-            <section className="lifecycle-card">
+            <section className="lifecycle-card lifecycle-card-stage-details">
               <div className="lifecycle-card-header">
-                <h2>Actieve stage</h2>
+                <h2>Actieve lifecycleversie</h2>
                 <span className={`lifecycle-decision ${activeStage.autoApplied ? "is-auto" : "is-manual"}`}>
                   {activeStage.autoApplied ? "auto" : "manueel"}
                 </span>
               </div>
+              <p className="lifecycle-help">
+                {formatCollectionLabel(activeStage.collection)} is momenteel de beheerde versie.
+              </p>
+              <details className="lifecycle-secondary-details">
+                <summary>Technische stage-details</summary>
               <dl className="lifecycle-facts">
                 <div>
                   <dt>Collectie</dt>
@@ -1669,6 +1991,7 @@ export default function GeoLifecycleManagerApp() {
                   <dd>{metadataSummary.referenceVersion}</dd>
                 </div>
               </dl>
+              </details>
               {!pendingStage && !baselineProposal && (
                 <button
                   type="button"
@@ -1681,12 +2004,11 @@ export default function GeoLifecycleManagerApp() {
             </section>
           )}
 
-          <section className="lifecycle-card">
-            <div className="lifecycle-card-header">
-            <h2>Lifecycle-geheugen</h2>
-            </div>
+          <section className="lifecycle-card lifecycle-card-memory">
+            <details className="lifecycle-secondary-details">
+            <summary>Technische metadata en lifecycle-informatie</summary>
             <p className="lifecycle-help">
-              Deze viewer geeft BRDR metadata telkens opnieuw mee als input, zodat observaties en referentiecontext een lifecycle doorheen versies kunnen dragen.
+              BRDR-metadata wordt opnieuw meegegeven zodat observaties en referentiecontext behouden blijven.
             </p>
             <div className="lifecycle-chip-row">
               <span className="lifecycle-chip">actuation: {metadataSummary.actuation}</span>
@@ -1707,18 +2029,20 @@ export default function GeoLifecycleManagerApp() {
                 {JSON.stringify(activeStage?.metadata ?? null, null, 2)}
               </pre>
             </details>
+            </details>
           </section>
 
           {(error || statusText) && (
             <section className="lifecycle-card lifecycle-card-status">
-              <div className="lifecycle-card-header">
-                <h2>Status</h2>
-              </div>
-              {error && <p className="lifecycle-error">{error}</p>}
-              <p className="lifecycle-status-text">{statusText}</p>
+              <details className="lifecycle-secondary-details" open={Boolean(error)}>
+                <summary>Status en meldingen</summary>
+                {error && <p className="lifecycle-error">{error}</p>}
+                <p className="lifecycle-status-text">{statusText}</p>
+              </details>
             </section>
           )}
         </aside>
+        </section>
       </div>
     </div>
   );

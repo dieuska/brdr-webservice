@@ -12,7 +12,8 @@ export function useBrdrLayers(
   step: BrdrStep | null,
   showDiffLayers: boolean,
   suspendLayers: boolean,
-  crs: BrdrSupportedCrs
+  crs: BrdrSupportedCrs,
+  diffLayersOnTop = false
 ) {
   const hasZoomedRef = useRef(false);
 
@@ -28,7 +29,7 @@ export function useBrdrLayers(
       return;
     }
 
-    const layers = createBrdrLayersWithOptions(step, { showDiffLayers }, crs);
+    const layers = createBrdrLayersWithOptions(step, { showDiffLayers, diffLayersOnTop }, crs);
 
     layers.forEach((layer) => {
       layer.set(BRDR_LAYER_KEY, true);
@@ -48,5 +49,5 @@ export function useBrdrLayers(
       });
       hasZoomedRef.current = true;
     }
-  }, [crs, map, step, showDiffLayers, suspendLayers]);
+  }, [crs, diffLayersOnTop, map, step, showDiffLayers, suspendLayers]);
 }

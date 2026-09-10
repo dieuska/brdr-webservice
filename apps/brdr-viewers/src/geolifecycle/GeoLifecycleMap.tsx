@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
+import type { ReactNode } from "react";
 import Map from "ol/Map";
 import Feature from "ol/Feature";
 import GeoJSON from "ol/format/GeoJSON";
@@ -15,7 +16,6 @@ import {
   createBaseLayers,
   DEFAULT_BASE_LAYER_VISIBILITY,
 } from "../components/map/layers/baseLayers";
-import { createDefaultView } from "../components/map/view";
 import type { Geometry } from "../types/brdr";
 import "../components/map/MapView.css";
 import "ol/ol.css";
@@ -101,6 +101,8 @@ function capakeyFromImpactItem(item: string) {
 }
 
 interface Props {
+  variant: "source" | "managed";
+  view: View;
   referenceCollectionId: string | null;
   showReferenceLayer: boolean;
   showGrbBackground: boolean;
@@ -114,6 +116,7 @@ interface Props {
   loading: boolean;
   drawRequestToken: number;
   onDrawn: (geometry: Geometry) => void;
+  actionContent?: ReactNode;
 }
 
 interface PaneProps {
@@ -364,7 +367,15 @@ function LifecycleMapPane({
     primarySourceRef.current = primarySource;
     secondarySourceRef.current = secondarySource;
 
+    // The lifecycle map is also embedded in the heritage demo. Its parent
+    // can receive its final flex dimensions one frame after map creation.
+    // Keep OpenLayers in sync with that late layout measurement.
+    const resizeObserver = new ResizeObserver(() => map.updateSize());
+    resizeObserver.observe(divRef.current);
+    requestAnimationFrame(() => map.updateSize());
+
     return () => {
+      resizeObserver.disconnect();
       if (drawRef.current) {
         map.removeInteraction(drawRef.current);
       }
@@ -407,6 +418,14 @@ function LifecycleMapPane({
       .find((layer) => layer.get(BASE_LAYER_KEY) === BASE_LAYER_GRB_GRAY);
     grbLayer?.setVisible(showGrbBackground);
   }, [showGrbBackground]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.updateSize();
+    const frame = requestAnimationFrame(() => map.updateSize());
+    return () => cancelAnimationFrame(frame);
+  }, [primaryGeometry, secondaryGeometry]);
 
   useEffect(() => {
     setSingleGeometryFeature(primarySourceRef.current, primaryGeometry, format);
@@ -455,7 +474,10 @@ function LifecycleMapPane({
           <h3>{title}</h3>
           <p>{subtitle}</p>
         </div>
-        {loading && <span className="lifecycle-map-badge">herberekenen</span>}
+        <div className="lifecycle-map-header-meta">
+          <span className="lifecycle-map-crs">EPSG:31370</span>
+          {loading && <span className="lifecycle-map-badge">herberekenen</span>}
+        </div>
       </div>
       <div ref={divRef} className="map-container" />
       <div className="lifecycle-map-legend">
@@ -508,6 +530,8 @@ function LifecycleMapPane({
 }
 
 export function GeoLifecycleMap({
+  variant,
+  view,
   referenceCollectionId,
   showReferenceLayer,
   showGrbBackground,
@@ -521,8 +545,9 @@ export function GeoLifecycleMap({
   loading,
   drawRequestToken,
   onDrawn,
+  actionContent,
 }: Props) {
-  const sharedView = useMemo(() => createDefaultView("EPSG:31370"), []);
+  const sharedView = view;
   const fitFormat = useMemo(() => new GeoJSON(), []);
   const referenceSource = useMemo(
     () => createReferenceSource(referenceCollectionId),
@@ -532,6 +557,7 @@ export function GeoLifecycleMap({
 
   useEffect(() => {
     const nextSignature = JSON.stringify({
+      variant,
       referenceCollectionId: referenceCollectionId ?? "",
       originalGeometry: originalGeometry ?? null,
       managedGeometry: managedGeometry ?? null,
@@ -556,11 +582,12 @@ export function GeoLifecycleMap({
     proposalGeometry,
     referenceCollectionId,
     sharedView,
+    variant,
   ]);
 
   return (
     <div
-      className={`lifecycle-map-split${loading ? " is-loading" : ""}`}
+      className={`lifecycle-map-split lifecycle-map-split-${variant}${loading ? " is-loading" : ""}`}
       aria-busy={loading}
     >
       {loading && (
@@ -569,9 +596,10 @@ export function GeoLifecycleMap({
           <span>BRDR verwerkt de nieuwe lifecycle-stap…</span>
         </div>
       )}
+      {variant === "source" && (
       <LifecycleMapPane
-        title="Onbeheerde geometrie"
-        subtitle="Initiële baseline en actuele draft."
+        title="Originele geometrie"
+        subtitle="Startpunt van de demo, vóór lifecycle-beheer."
         referenceSource={referenceSource}
         showReferenceLayer={showReferenceLayer}
         showGrbBackground={showGrbBackground}
@@ -580,9 +608,9 @@ export function GeoLifecycleMap({
         secondaryGeometry={draftGeometry}
         primaryStyle={originalStyle}
         secondaryStyle={draftStyle}
-        primaryLabel="baseline"
-        secondaryLabel="draft"
-        impactTitle="Onbeheerd"
+        primaryLabel="Blauw = originele geometrie"
+        secondaryLabel="Oranje = nieuwe draft"
+        impactTitle="Originele geometrie"
         impactItems={unmanagedImpactItems}
         impactContextLabel={impactContextLabel}
         compareTitle="beheerd"
@@ -592,9 +620,11 @@ export function GeoLifecycleMap({
         drawRequestToken={drawRequestToken}
         onDrawn={onDrawn}
       />
+      )}
+      {variant === "managed" && (
       <LifecycleMapPane
         title="Beheerde geometrie"
-        subtitle="Huidige managed versie en eventuele kandidaat."
+        subtitle="Resultaat van lifecycle-beheer en eventuele BRDR-kandidaat."
         referenceSource={referenceSource}
         showReferenceLayer={showReferenceLayer}
         showGrbBackground={showGrbBackground}
@@ -603,8 +633,8 @@ export function GeoLifecycleMap({
         secondaryGeometry={proposalGeometry}
         primaryStyle={managedStyle}
         secondaryStyle={proposalStyle}
-        primaryLabel="beheerd"
-        secondaryLabel="voorstel"
+        primaryLabel="Groen = beheerde baseline"
+        secondaryLabel="Rood = BRDR-voorstel"
         impactTitle="Beheerd"
         impactItems={managedImpactItems}
         impactContextLabel={impactContextLabel}
@@ -612,6 +642,12 @@ export function GeoLifecycleMap({
         compareItems={unmanagedImpactItems}
         loading={loading}
       />
+      )}
+      {variant === "managed" && actionContent && (
+        <aside className="lifecycle-map-actions" aria-label="Lifecycle-bediening">
+          {actionContent}
+        </aside>
+      )}
     </div>
   );
 }
