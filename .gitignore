@@ -166,9 +166,6 @@ cython_debug/
 node_modules/
 dist/
 *.tgz
-
-
-
 /.quarto/
 **/*.quarto_ipynb
 /docs_src/_site/
